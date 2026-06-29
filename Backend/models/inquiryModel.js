@@ -81,6 +81,9 @@ const getAllInquiries = async () => {
         FROM inquiries i
         LEFT JOIN users u ON i.added_by = u.id
         LEFT JOIN label_master lm ON i.label_id = lm.id
+        WHERE i.id NOT IN (
+            SELECT inquiry_id FROM in_process_franchises WHERE inquiry_id IS NOT NULL
+        )
         ORDER BY i.timestamp DESC
     `;
     const [results] = await db.execute(query);

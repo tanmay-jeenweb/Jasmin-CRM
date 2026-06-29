@@ -549,6 +549,7 @@ export default function Inquiries() {
       if (response.data.success) {
         toast.success("Converted to In Process Franchise successfully!");
         setIsInProcessModalOpen(false);
+        setSelectedInquiry(null);
         await loadInquiries();
       } else {
         toast.error(response.data.message || "Failed to convert");
