@@ -10,6 +10,8 @@ import LogCallModal from "./LogCallModal";
 import SetReminderModal from "./SetReminderModal";
 import NoteModal from "./NoteModal";
 import LabelModal from "./LabelModal";
+import InProcessFranchiseModal from "./InProcessFranchiseModal";
+import { createInProcessFranchise } from "../../api/inProcessFranchiseApi";
 import toast from "react-hot-toast";
 
 // ─── Detailed View Modal ──────────────────────────────────────────────────────
@@ -440,6 +442,7 @@ export default function Inquiries() {
   const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
+  const [isInProcessModalOpen, setIsInProcessModalOpen] = useState(false);
 
   const [callLogs, setCallLogs] = useState([]);
   const [loadingCallLogs, setLoadingCallLogs] = useState(false);
@@ -534,6 +537,25 @@ export default function Inquiries() {
     } catch (err) {
       console.error("Error assigning label:", err);
       toast.error(err?.response?.data?.message || "Failed to assign label.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInProcessSave = async (franchiseData) => {
+    setSaving(true);
+    try {
+      const response = await createInProcessFranchise(franchiseData);
+      if (response.data.success) {
+        toast.success("Converted to In Process Franchise successfully!");
+        setIsInProcessModalOpen(false);
+        await loadInquiries();
+      } else {
+        toast.error(response.data.message || "Failed to convert");
+      }
+    } catch (err) {
+      console.error("Error converting:", err);
+      toast.error(err?.response?.data?.message || "Failed to convert.");
     } finally {
       setSaving(false);
     }
@@ -762,6 +784,14 @@ export default function Inquiries() {
         saving={saving}
       />
 
+      <InProcessFranchiseModal
+        isOpen={isInProcessModalOpen}
+        inquiry={selectedInquiry}
+        onClose={() => setIsInProcessModalOpen(false)}
+        onSave={handleInProcessSave}
+        saving={saving}
+      />
+
       {/* Main CRM Workspace (2-Column Setup) */}
       <div className="flex-1 flex overflow-hidden mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 gap-6">
 
@@ -884,14 +914,22 @@ export default function Inquiries() {
                     <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-0.5">{selectedInquiry.inquirySource || "Direct Lead"}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedInquiry(null)}
-                  className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setIsInProcessModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-[#6804a1] hover:bg-[#52037e] text-white font-bold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
+                  >
+                    In Process
+                  </button>
+                  <button
+                    onClick={() => setSelectedInquiry(null)}
+                    className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               {/* Actions Bar */}

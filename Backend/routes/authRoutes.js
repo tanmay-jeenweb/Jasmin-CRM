@@ -5,7 +5,8 @@ const {
     logout,
     updateProfileController,
     requestDeviceRegistration,
-    getMyPermissions
+    getMyPermissions,
+    getActiveUsersController
 } = require("../controllers/authControllers.js");
 const { verifyToken } = require("../middleware/authMiddleware.js");
 
@@ -16,5 +17,6 @@ router.post("/request-device", requestDeviceRegistration);
 router.post("/logout", logout);
 router.put("/update-profile", verifyToken, updateProfileController);
 router.get("/my-permissions", verifyToken, getMyPermissions);
+router.get("/active-users", verifyToken, getActiveUsersController);
 
 module.exports = router;
