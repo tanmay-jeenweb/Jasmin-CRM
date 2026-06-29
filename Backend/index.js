@@ -16,6 +16,7 @@ const inquirySourceRoutes = require("./routes/inquirySourceRoutes.js");
 const companyBrandRoutes = require("./routes/companyBrandRoutes.js");
 const documentRoutes = require("./routes/documentRoutes.js");
 const teamRoleRoutes = require("./routes/teamRoleRoutes.js");
+const inquiryRoutes = require("./routes/inquiryRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -27,6 +28,7 @@ const { createInquirySourcesTable } = require("./models/inquirySourceModel.js");
 const { createCompanyBrandsTable } = require("./models/companyBrandModel.js");
 const { createDocumentsTable } = require("./models/documentModel.js");
 const { createTeamRolesTable } = require("./models/teamRoleModel.js");
+const { createInquiriesTable } = require("./models/inquiryModel.js");
 
 
 const app = express();
@@ -72,6 +74,7 @@ app.use(["/api/inquirysources", "/inquirysources"], inquirySourceRoutes);
 app.use(["/api/companybrands", "/companybrands"], companyBrandRoutes);
 app.use(["/api/documents", "/documents"], documentRoutes);
 app.use(["/api/teamroles", "/teamroles"], teamRoleRoutes);
+app.use(["/api/inquiries", "/inquiries"], inquiryRoutes);
 
 
 // Global 404 handler
@@ -101,6 +104,7 @@ const startServer = async () => {
         await createCompanyBrandsTable();
         await createDocumentsTable();
         await createTeamRolesTable();
+        await createInquiriesTable();
 
         console.log("All database tables are initialized and ready.");
 
