@@ -2,6 +2,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { logoutUser } from "../api/authApi";
 import { usePermission } from "../context/PermissionContext";
+import toast from "react-hot-toast";
+import { getUnreadReminders, markReminderAsRead } from "../api/reminderApi";
 
 const logo = "/Jasmin-Logo.png";
 
@@ -12,7 +14,80 @@ export default function Navbar() {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const [isOpen, setIsOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [prevNotificationIds, setPrevNotificationIds] = useState(new Set());
+    const [hasUnseen, setHasUnseen] = useState(false);
     const { hasPermission } = usePermission();
+
+    const fetchNotifications = async () => {
+        if (!user.id) return;
+        try {
+            const res = await getUnreadReminders();
+            if (res.data?.success) {
+                const newList = res.data.data || [];
+                setNotifications(newList);
+
+                // Toast only on updates after initial load
+                if (prevNotificationIds.size > 0) {
+                    let hasNew = false;
+                    newList.forEach(item => {
+                        if (!prevNotificationIds.has(item.id)) {
+                            hasNew = true;
+                            toast.success(`Reminder: ${item.reminder_text}`, {
+                                icon: '⏰',
+                                duration: 6000
+                            });
+                            if (Notification.permission === "granted") {
+                                new Notification("Jasmin CRM Reminder", {
+                                    body: item.reminder_text,
+                                    icon: logo
+                                });
+                            }
+                        }
+                    });
+                    if (hasNew && !isNotificationsOpen) {
+                        setHasUnseen(true);
+                    }
+                } else {
+                    if (newList.length > 0 && !isNotificationsOpen) {
+                        setHasUnseen(true);
+                    }
+                }
+
+                const newIds = new Set(newList.map(item => item.id));
+                setPrevNotificationIds(newIds);
+            }
+        } catch (error) {
+            console.error("Failed to fetch unread reminders:", error);
+        }
+    };
+
+    const handleDismissReminder = async (id) => {
+        try {
+            await markReminderAsRead(id);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+            setPrevNotificationIds(prev => {
+                const updated = new Set(prev);
+                updated.delete(id);
+                return updated;
+            });
+        } catch (error) {
+            console.error("Failed to dismiss reminder:", error);
+        }
+    };
+
+    useEffect(() => {
+        if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (user.id) {
+            fetchNotifications();
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         const handleOutsideClick = (e) => {
@@ -22,10 +97,13 @@ export default function Navbar() {
             if (isProfileOpen && !e.target.closest("#profile-dropdown")) {
                 setIsProfileOpen(false);
             }
+            if (isNotificationsOpen && !e.target.closest("#notifications-dropdown")) {
+                setIsNotificationsOpen(false);
+            }
         };
         document.addEventListener("click", handleOutsideClick);
         return () => document.removeEventListener("click", handleOutsideClick);
-    }, [isOpen, isProfileOpen]);
+    }, [isOpen, isProfileOpen, isNotificationsOpen]);
 
     const handleLogout = async () => {
         try {
@@ -127,13 +205,102 @@ export default function Navbar() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    {/* Notification Icon (Dummy) */}
-                    <button className="text-slate-500 hover:text-indigo-600 transition-colors relative cursor-not-allowed" title="Notifications">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                        </svg>
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
-                    </button>
+                    {/* Notification Dropdown */}
+                    <div className="relative" id="notifications-dropdown">
+                        <button
+                            onClick={() => {
+                                setIsNotificationsOpen(!isNotificationsOpen);
+                                if (!isNotificationsOpen) {
+                                    setHasUnseen(false);
+                                }
+                            }}
+                            className="text-slate-500 hover:text-indigo-600 transition-colors relative cursor-pointer focus:outline-none flex items-center justify-center p-1.5 rounded-full hover:bg-slate-50"
+                            title="Notifications"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                            </svg>
+                            {hasUnseen && notifications.length > 0 && (
+                                <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+                                    {notifications.length}
+                                </span>
+                            )}
+                        </button>
+
+                        {isNotificationsOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-150">
+                                {/* Header */}
+                                <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                                    <h3 className="text-sm font-semibold text-slate-800">Active Reminders</h3>
+                                    {notifications.length > 0 && (
+                                        <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                                            {notifications.length} active
+                                        </span>
+                                    )}
+                                </div>
+
+                                {/* List */}
+                                <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor" className="w-8 h-8 text-slate-300 mx-auto mb-2">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.143 17.082a24.248 24.248 0 0 0 3.844.148m-3.844-.148a23.856 23.856 0 0 1-5.455-1.31 8.961 8.961 0 0 1-2.3-5.523m5.455 1.31s.515-3.064 1.391-4.882c.114-.236.29-.452.508-.606a5.976 5.976 0 0 1 7.98 0c.218.154.394.37.508.606.876 1.818 1.391 4.882 1.391 4.882M18.857 17.082a23.848 23.848 0 0 0 5.454-1.31 8.962 8.962 0 0 0-2.3-5.523m-3.15 11.33c.705-1.666 1.346-3.707 1.346-5.81a8.95 8.95 0 0 0-1.347-4.882M18.857 17.082a24.257 24.257 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M9 9h.008v.008H9V9Zm3 0h.008v.008H12V9Zm3 0h.008v.008H15V9Z" />
+                                            </svg>
+                                            <p className="text-xs text-slate-500">No active reminders</p>
+                                        </div>
+                                    ) : (
+                                        notifications.map((notif) => {
+                                            const timeString = notif.reminder_time.slice(0, 5); // HH:MM
+                                            const dateString = new Date(notif.reminder_date).toLocaleDateString(undefined, {
+                                                month: 'short',
+                                                day: 'numeric'
+                                            });
+
+                                            return (
+                                                <div key={notif.id} className="p-3 hover:bg-slate-50 flex items-start gap-2.5 transition-colors group">
+                                                    {/* Indicator */}
+                                                    <div className="mt-1.5 w-2 h-2 rounded-full bg-indigo-500 shrink-0"></div>
+                                                    
+                                                    {/* Content */}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs text-slate-700 font-medium break-words">
+                                                            {notif.reminder_text}
+                                                        </p>
+                                                        {notif.inquiry_name && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setIsNotificationsOpen(false);
+                                                                    navigate("/user/inquiries");
+                                                                }}
+                                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left"
+                                                            >
+                                                                Inquiry: {notif.inquiry_name}
+                                                            </button>
+                                                        )}
+                                                        <span className="text-[10px] text-slate-400 mt-1 block">
+                                                            {dateString} at {timeString}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Dismiss button */}
+                                                    <button
+                                                        onClick={() => handleDismissReminder(notif.id)}
+                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-100 transition-all shrink-0 cursor-pointer self-center"
+                                                        title="Mark as read"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            );
+                                        })
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
 
                     {/* Profile Dropdown */}
                     <div className="relative" id="profile-dropdown">

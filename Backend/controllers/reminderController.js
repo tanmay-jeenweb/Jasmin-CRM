@@ -1,6 +1,8 @@
 const {
     createReminder,
-    getRemindersByInquiry
+    getRemindersByInquiry,
+    getUnreadReminders,
+    markReminderAsRead
 } = require('../models/reminderModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
 
@@ -80,7 +82,57 @@ const getRemindersController = async (req, res) => {
     }
 };
 
+const getUnreadRemindersController = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const reminders = await getUnreadReminders(userId);
+
+        res.status(200).json({
+            success: true,
+            message: 'Unread reminders retrieved successfully',
+            data: reminders
+        });
+    } catch (error) {
+        console.error('Error retrieving unread reminders:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const markAsReadController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        if (!id) {
+            return res.status(400).json({ success: false, message: 'Reminder ID is required' });
+        }
+
+        const result = await markReminderAsRead(id, userId);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, message: 'Reminder not found or unauthorized' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'Reminder marked as read successfully'
+        });
+    } catch (error) {
+        console.error('Error marking reminder as read:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addReminderController,
-    getRemindersController
+    getRemindersController,
+    getUnreadRemindersController,
+    markAsReadController
 };
