@@ -17,6 +17,9 @@ const companyBrandRoutes = require("./routes/companyBrandRoutes.js");
 const documentRoutes = require("./routes/documentRoutes.js");
 const teamRoleRoutes = require("./routes/teamRoleRoutes.js");
 const inquiryRoutes = require("./routes/inquiryRoutes.js");
+const callLogRoutes = require("./routes/callLogRoutes.js");
+const reminderRoutes = require("./routes/reminderRoutes.js");
+const noteRoutes = require("./routes/noteRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -29,6 +32,9 @@ const { createCompanyBrandsTable } = require("./models/companyBrandModel.js");
 const { createDocumentsTable } = require("./models/documentModel.js");
 const { createTeamRolesTable } = require("./models/teamRoleModel.js");
 const { createInquiriesTable } = require("./models/inquiryModel.js");
+const { createCallLogsTable } = require("./models/callLogModel.js");
+const { createRemindersTable } = require("./models/reminderModel.js");
+const { createNotesTable } = require("./models/noteModel.js");
 
 
 const app = express();
@@ -75,6 +81,9 @@ app.use(["/api/companybrands", "/companybrands"], companyBrandRoutes);
 app.use(["/api/documents", "/documents"], documentRoutes);
 app.use(["/api/teamroles", "/teamroles"], teamRoleRoutes);
 app.use(["/api/inquiries", "/inquiries"], inquiryRoutes);
+app.use(["/api/call-logs", "/call-logs"], callLogRoutes);
+app.use(["/api/reminders", "/reminders"], reminderRoutes);
+app.use(["/api/notes", "/notes"], noteRoutes);
 
 
 // Global 404 handler
@@ -105,6 +114,9 @@ const startServer = async () => {
         await createDocumentsTable();
         await createTeamRolesTable();
         await createInquiriesTable();
+        await createCallLogsTable();
+        await createRemindersTable();
+        await createNotesTable();
 
         console.log("All database tables are initialized and ready.");
 
