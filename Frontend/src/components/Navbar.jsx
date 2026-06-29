@@ -123,7 +123,7 @@ export default function Navbar() {
             {/* First Row */}
             <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <img src={logo} alt="Jasmin Logo" className="h-14 w-auto" />
+                    <img src={logo} alt="Jasmin Logo" className="h-12 w-auto" />
                 </div>
 
                 <div className="flex items-center gap-6">
