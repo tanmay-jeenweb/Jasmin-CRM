@@ -11,12 +11,22 @@ const { connectDB } = require("./config/db.js");
 const authRoutes = require("./routes/authRoutes.js");
 const adminRoutes = require("./routes/adminRoutes.js");
 const userTypeMasterRoutes = require("./routes/userTypeMasterRoutes.js");
+const labelRoutes = require("./routes/labelRoutes.js");
+const inquirySourceRoutes = require("./routes/inquirySourceRoutes.js");
+const companyBrandRoutes = require("./routes/companyBrandRoutes.js");
+const documentRoutes = require("./routes/documentRoutes.js");
+const teamRoleRoutes = require("./routes/teamRoleRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
 const { createUserTypesTable, createUserTypePermissionsTable } = require("./models/userTypeModel.js");
 const { createAuditLogsTable } = require("./models/auditLogModel.js");
 const { createUserDevicesTable } = require("./models/deviceModel.js");
+const { createLabelsTable } = require("./models/labelModel.js");
+const { createInquirySourcesTable } = require("./models/inquirySourceModel.js");
+const { createCompanyBrandsTable } = require("./models/companyBrandModel.js");
+const { createDocumentsTable } = require("./models/documentModel.js");
+const { createTeamRolesTable } = require("./models/teamRoleModel.js");
 
 
 const app = express();
@@ -57,6 +67,11 @@ app.use((req, res, next) => {
 app.use(["/api/auth", "/auth"], authRoutes);
 app.use(["/api/admin", "/admin"], adminRoutes);
 app.use(["/api/usertypes", "/usertypes"], userTypeMasterRoutes);
+app.use(["/api/labels", "/labels"], labelRoutes);
+app.use(["/api/inquirysources", "/inquirysources"], inquirySourceRoutes);
+app.use(["/api/companybrands", "/companybrands"], companyBrandRoutes);
+app.use(["/api/documents", "/documents"], documentRoutes);
+app.use(["/api/teamroles", "/teamroles"], teamRoleRoutes);
 
 
 // Global 404 handler
@@ -81,6 +96,11 @@ const startServer = async () => {
         await createUserTypePermissionsTable();
         await createAuditLogsTable();
         await createUserDevicesTable();
+        await createLabelsTable();
+        await createInquirySourcesTable();
+        await createCompanyBrandsTable();
+        await createDocumentsTable();
+        await createTeamRolesTable();
 
         console.log("All database tables are initialized and ready.");
 

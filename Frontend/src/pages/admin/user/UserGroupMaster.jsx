@@ -9,6 +9,11 @@ import { usePermission } from "../../../context/PermissionContext";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const MASTERS = [
   { key: "user_type",             label: "User Type Master" },
+  { key: "label_master",          label: "Label Master" },
+  { key: "inquiry_source_master", label: "Inquiry Source Master" },
+  { key: "company_brand_master",  label: "Company Brand Master" },
+  { key: "document_master",       label: "Document Master" },
+  { key: "team_role_master",      label: "Team Role Master" },
 ];
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
 const PERM_LABELS = { canRead: "Read", canWrite: "Write", canUpdate: "Update", canDelete: "Delete" };

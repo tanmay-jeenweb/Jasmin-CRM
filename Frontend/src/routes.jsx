@@ -9,6 +9,11 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
 import CreateUserType from "./pages/admin/user/CreateUserType";
+import LabelMaster from "./pages/admin/LabelMaster";
+import InquirySourceMaster from "./pages/admin/InquirySourceMaster";
+import CompanyBrandMaster from "./pages/admin/CompanyBrandMaster";
+import DocumentMaster from "./pages/admin/DocumentMaster";
+import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -68,6 +73,41 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/user-types/create"
                     element={<CreateUserType />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="label_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/labels"
+                    element={<LabelMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="inquiry_source_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/inquiry-sources"
+                    element={<InquirySourceMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="company_brand_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/company-brands"
+                    element={<CompanyBrandMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="document_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/documents"
+                    element={<DocumentMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="team_role_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/team-roles"
+                    element={<TeamRoleMaster />}
                 />
             </Route>
 
