@@ -61,6 +61,51 @@ export default function Navbar() {
             color: "bg-violet-50 text-violet-600 border border-violet-100/50",
             activeColor: "bg-violet-100 text-violet-700",
             desc: "Configure access roles & permissions"
+        },
+        {
+            name: "Label Master",
+            path: "/admin/labels",
+            masterKey: "label_master",
+            icon: "fa-solid fa-tags",
+            color: "bg-pink-50 text-pink-600 border border-pink-100/50",
+            activeColor: "bg-pink-100 text-pink-700",
+            desc: "Manage system-wide labels"
+        },
+        {
+            name: "Inquiry Source Master",
+            path: "/admin/inquiry-sources",
+            masterKey: "inquiry_source_master",
+            icon: "fa-solid fa-share-nodes",
+            color: "bg-cyan-50 text-cyan-600 border border-cyan-100/50",
+            activeColor: "bg-cyan-100 text-cyan-700",
+            desc: "Manage lead/inquiry sources"
+        },
+        {
+            name: "Company Brand Master",
+            path: "/admin/company-brands",
+            masterKey: "company_brand_master",
+            icon: "fa-solid fa-copyright",
+            color: "bg-orange-50 text-orange-600 border border-orange-100/50",
+            activeColor: "bg-orange-100 text-orange-700",
+            desc: "Manage company brands"
+        },
+        {
+            name: "Document Type Master",
+            path: "/admin/documents",
+            masterKey: "document_master",
+            icon: "fa-solid fa-file-invoice",
+            color: "bg-blue-50 text-blue-600 border border-blue-100/50",
+            activeColor: "bg-blue-100 text-blue-700",
+            desc: "Manage document types"
+        },
+        {
+            name: "Team Role Master",
+            path: "/admin/team-roles",
+            masterKey: "team_role_master",
+            icon: "fa-solid fa-user-tie",
+            color: "bg-amber-50 text-amber-600 border border-amber-100/50",
+            activeColor: "bg-amber-100 text-amber-700",
+            desc: "Manage team roles"
         }
     ];
 
