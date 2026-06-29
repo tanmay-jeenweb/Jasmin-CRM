@@ -5,6 +5,8 @@ import DeviceRegistration from "./pages/DeviceRegistration";
 import PendingApproval from "./pages/PendingApproval";
 
 import UserHome from "./pages/user/UserHome";
+import Inquiries from "./pages/user/Inquiries";
+import CreateInquiry from "./pages/user/CreateInquiry";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
@@ -41,6 +43,14 @@ export default function AppRoutes() {
                 <Route
                     path="/user/home"
                     element={<UserHome />}
+                />
+                <Route
+                    path="/user/inquiries"
+                    element={<Inquiries />}
+                />
+                <Route
+                    path="/user/inquiries/create"
+                    element={<CreateInquiry />}
                 />
                 <Route
                     path="/profile"
