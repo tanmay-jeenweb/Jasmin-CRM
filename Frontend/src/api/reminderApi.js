@@ -7,3 +7,12 @@ export const createReminder = async (data) => {
 export const getReminders = async (inquiryId) => {
     return apiClient.get(`/reminders/inquiry/${inquiryId}`);
 };
+
+export const getUnreadReminders = async () => {
+    return apiClient.get("/reminders/unread");
+};
+
+export const markReminderAsRead = async (id) => {
+    return apiClient.put(`/reminders/${id}/read`);
+};
+

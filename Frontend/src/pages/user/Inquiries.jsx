@@ -830,17 +830,19 @@ export default function Inquiries() {
 
                     {/* Contact Meta */}
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-bold text-slate-800 truncate">
-                        {inquiry.name}
-                      </h4>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <h4 className="text-sm font-bold text-slate-800 truncate">
+                          {inquiry.name}
+                        </h4>
+                        {inquiry.label_name && (
+                          <span className="shrink-0 px-1.5 py-0.5 bg-indigo-50 text-[#6804a1] text-[9px] font-bold rounded-md border border-indigo-100/50">
+                            {inquiry.label_name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-slate-500 truncate mt-0.5 font-medium">
                         {inquiry.detail}
                       </p>
-                      {inquiry.label_name && (
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-50 text-[#6804a1] text-[9px] font-bold rounded-md border border-indigo-100/50">
-                          {inquiry.label_name}
-                        </span>
-                      )}
                     </div>
                   </div>
                 );
@@ -952,182 +954,188 @@ export default function Inquiries() {
                 </button>
               </div>
 
-              {/* Call Logs & Reminders Feed (Below Action Bar) */}
-              <div className="flex-[3] min-h-0 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 overflow-y-auto custom-scrollbar">
+              {/* Unified Scrollable Workspace Area */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col min-h-0">
 
-                {/* Left Column: Call Logs */}
-                <div className="p-4 flex flex-col">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                      </svg>
-                      Your Call Logs
-                    </h3>
-                    <span className="px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded-full text-[10px] font-bold">
-                      {callLogs.length} {callLogs.length === 1 ? "log" : "logs"}
-                    </span>
-                  </div>
+                {/* Call Logs & Reminders Feed */}
+                <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 bg-white shrink-0">
 
-                  {loadingCallLogs ? (
-                    <div className="flex items-center justify-center py-4 flex-1">
-                      <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
+                  {/* Left Column: Call Logs */}
+                  <div className="p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                        </svg>
+                        Your Call Logs
+                      </h3>
+                      <span className="px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded-full text-[10px] font-bold">
+                        {callLogs.length} {callLogs.length === 1 ? "log" : "logs"}
+                      </span>
                     </div>
-                  ) : callLogs.length > 0 ? (
-                    <div className="space-y-2.5 flex-1">
-                      {callLogs.map((log) => {
-                        const formattedDate = new Date(log.call_date).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric"
-                        });
-                        const formattedTime = log.call_time.substring(0, 5);
 
-                        let outcomeClass = "bg-slate-100 text-slate-700 border-slate-200";
-                        if (log.call_outcome === "Connected") {
-                          outcomeClass = "bg-emerald-50 text-emerald-700 border-emerald-200/60";
-                        } else if (log.call_outcome === "Busy") {
-                          outcomeClass = "bg-amber-50 text-amber-700 border-amber-200/60";
-                        } else if (log.call_outcome === "No Answer") {
-                          outcomeClass = "bg-rose-50 text-rose-700 border-rose-200/60";
-                        } else if (log.call_outcome === "Wrong number") {
-                          outcomeClass = "bg-red-50 text-red-700 border-red-200/60";
-                        } else if (log.call_outcome.includes("Message") || log.call_outcome.includes("voicemail")) {
-                          outcomeClass = "bg-blue-50 text-blue-700 border-blue-200/60";
-                        }
+                    {loadingCallLogs ? (
+                      <div className="flex items-center justify-center py-4 flex-1">
+                        <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
+                      </div>
+                    ) : callLogs.length > 0 ? (
+                      <div className="space-y-2.5 flex-1">
+                        {callLogs.map((log) => {
+                          const formattedDate = new Date(log.call_date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                          });
+                          const formattedTime = log.call_time.substring(0, 5);
 
-                        return (
-                          <div key={log.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1.5 transition-all hover:border-slate-300">
-                            <div className="flex items-center justify-between">
-                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${outcomeClass}`}>
-                                {log.call_outcome}
-                              </span>
-                              <span className="text-[10px] text-slate-400 font-semibold">
-                                {formattedDate} at {formattedTime}
-                              </span>
-                            </div>
-                            {log.description && (
-                              <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
-                                {log.description}
-                              </p>
-                            )}
-                            {log.reminder_id && (
-                              <div className="mt-1 flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50/60 border border-amber-100 rounded-lg text-[10px] font-semibold text-amber-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-amber-600">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
-                                </svg>
-                                Linked Reminder: {log.reminder_text} ({new Date(log.reminder_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} at {log.reminder_time.substring(0, 5)})
+                          let outcomeClass = "bg-slate-100 text-slate-700 border-slate-200";
+                          if (log.call_outcome === "Connected") {
+                            outcomeClass = "bg-emerald-50 text-emerald-700 border-emerald-200/60";
+                          } else if (log.call_outcome === "Busy") {
+                            outcomeClass = "bg-amber-50 text-amber-700 border-amber-200/60";
+                          } else if (log.call_outcome === "No Answer") {
+                            outcomeClass = "bg-rose-50 text-rose-700 border-rose-200/60";
+                          } else if (log.call_outcome === "Wrong number") {
+                            outcomeClass = "bg-red-50 text-red-700 border-red-200/60";
+                          } else if (log.call_outcome.includes("Message") || log.call_outcome.includes("voicemail")) {
+                            outcomeClass = "bg-blue-50 text-blue-700 border-blue-200/60";
+                          }
+
+                          return (
+                            <div key={log.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1.5 transition-all hover:border-slate-300">
+                              <div className="flex items-center justify-between">
+                                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${outcomeClass}`}>
+                                  {log.call_outcome}
+                                </span>
+                                <span className="text-[10px] text-slate-400 font-semibold">
+                                  {formattedDate} at {formattedTime}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                              {log.description && (
+                                <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
+                                  {log.description}
+                                </p>
+                              )}
+                              {log.reminder_id && (
+                                <div className="mt-1 flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50/60 border border-amber-100 rounded-lg text-[10px] font-semibold text-amber-700">
+                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-amber-600">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                                  </svg>
+                                  Linked Reminder: {log.reminder_text} ({new Date(log.reminder_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} at {log.reminder_time.substring(0, 5)})
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-white border border-dashed border-slate-200 rounded-xl flex-1 flex items-center justify-center">
+                        <p className="text-[11px] font-semibold text-slate-400">No calls logged yet.</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Reminders */}
+                  <div className="p-4 flex flex-col">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                        </svg>
+                        Your Reminders
+                      </h3>
+                      <span className="px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded-full text-[10px] font-bold">
+                        {reminders.length} {reminders.length === 1 ? "reminder" : "reminders"}
+                      </span>
                     </div>
-                  ) : (
-                    <div className="text-center py-6 bg-white border border-dashed border-slate-200 rounded-xl flex-1 flex items-center justify-center">
-                      <p className="text-[11px] font-semibold text-slate-400">No calls logged yet.</p>
-                    </div>
-                  )}
+
+                    {loadingReminders ? (
+                      <div className="flex items-center justify-center py-4 flex-1">
+                        <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
+                      </div>
+                    ) : reminders.length > 0 ? (
+                      <div className="space-y-2.5 flex-1">
+                        {reminders.map((reminder) => {
+                          const formattedDate = new Date(reminder.reminder_date).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric"
+                          });
+                          const formattedTime = reminder.reminder_time.substring(0, 5);
+
+                          return (
+                            <div key={reminder.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1 transition-all hover:border-slate-300">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-slate-400 font-semibold">
+                                  Due: {formattedDate} at {formattedTime}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
+                                {reminder.reminder_text}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 bg-white border border-dashed border-slate-200 rounded-xl flex-1 flex items-center justify-center">
+                        <p className="text-[11px] font-semibold text-slate-400">No reminders set yet.</p>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
 
-                {/* Right Column: Reminders */}
-                <div className="p-4 flex flex-col">
+                {/* Notes Feed */}
+                <div className="border-t border-slate-100 p-4 bg-slate-50/25 flex flex-col shrink-0">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                       </svg>
-                      Your Reminders
+                      Your Notes
                     </h3>
                     <span className="px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded-full text-[10px] font-bold">
-                      {reminders.length} {reminders.length === 1 ? "reminder" : "reminders"}
+                      {notes.length} {notes.length === 1 ? "note" : "notes"}
                     </span>
                   </div>
 
-                  {loadingReminders ? (
-                    <div className="flex items-center justify-center py-4 flex-1">
-                      <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
-                    </div>
-                  ) : reminders.length > 0 ? (
-                    <div className="space-y-2.5 flex-1">
-                      {reminders.map((reminder) => {
-                        const formattedDate = new Date(reminder.reminder_date).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric"
-                        });
-                        const formattedTime = reminder.reminder_time.substring(0, 5);
+                  <div>
+                    {loadingNotes ? (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
+                      </div>
+                    ) : notes.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3 pb-2">
+                        {notes.map((note) => {
+                          const formattedDate = new Date(note.timestamp).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          });
 
-                        return (
-                          <div key={reminder.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1 transition-all hover:border-slate-300">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 font-semibold">
-                                Due: {formattedDate} at {formattedTime}
+                          return (
+                            <div key={note.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1.5 transition-all hover:border-slate-300">
+                              <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
+                                {note.note_text}
+                              </p>
+                              <span className="text-[10px] text-slate-400 font-bold text-right self-end">
+                                {formattedDate}
                               </span>
                             </div>
-                            <p className="text-xs text-slate-600 font-medium leading-relaxed bg-slate-50/50 p-2.5 rounded-lg border border-slate-100">
-                              {reminder.reminder_text}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 bg-white border border-dashed border-slate-200 rounded-xl flex-1 flex items-center justify-center">
-                      <p className="text-[11px] font-semibold text-slate-400">No reminders set yet.</p>
-                    </div>
-                  )}
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 bg-white border border-dashed border-slate-200 rounded-xl flex items-center justify-center">
+                        <p className="text-[11px] font-semibold text-slate-400">No notes added yet.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-              </div>
-              {/* Notes Feed (Below Call Logs & Reminders Feed) */}
-              <div className="border-t border-slate-100 p-4 bg-slate-50/25 flex flex-col flex-[2] min-h-0 overflow-hidden">
-                <div className="flex items-center justify-between mb-3 shrink-0">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                    </svg>
-                    Your Notes
-                  </h3>
-                  <span className="px-2 py-0.5 bg-slate-200/70 text-slate-600 rounded-full text-[10px] font-bold">
-                    {notes.length} {notes.length === 1 ? "note" : "notes"}
-                  </span>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                  {loadingNotes ? (
-                    <div className="flex items-center justify-center h-full">
-                      <div className="w-5 h-5 border-2 border-slate-200 border-t-[#6804a1] rounded-full animate-spin"></div>
-                    </div>
-                  ) : notes.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pb-2">
-                      {notes.map((note) => {
-                        const formattedDate = new Date(note.timestamp).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        });
-
-                        return (
-                          <div key={note.id} className="p-3 bg-white border border-slate-200/70 rounded-xl shadow-xs flex flex-col gap-1.5 transition-all hover:border-slate-300">
-                            <p className="text-xs text-slate-600 font-medium leading-relaxed whitespace-pre-wrap">
-                              {note.note_text}
-                            </p>
-                            <span className="text-[10px] text-slate-400 font-bold text-right self-end">
-                              {formattedDate}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 bg-white border border-dashed border-slate-200 rounded-xl h-full flex flex-col items-center justify-center">
-                      <p className="text-[11px] font-semibold text-slate-400">No notes added yet.</p>
-                    </div>
-                  )}
-                </div>
               </div>
 
 
