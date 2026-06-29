@@ -3,6 +3,8 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 
+const path = require("path");
+const uploadConfig = require("./config/uploadConfig.js");
 const { connectDB } = require("./config/db.js");
 
 // Routes
@@ -36,6 +38,12 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve uploaded files statically if set to express
+if (uploadConfig.serveMethod === "express") {
+    console.log(`Serving uploaded files statically from: ${uploadConfig.uploadDir}`);
+    app.use("/uploads", express.static(uploadConfig.uploadDir));
+}
 
 // HTTP Method Override middleware for environments that block PUT and DELETE requests
 app.use((req, res, next) => {
