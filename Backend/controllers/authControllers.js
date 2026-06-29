@@ -350,10 +350,34 @@ const getMyPermissions = async (req, res) => {
     }
 };
 
+const getActiveUsersController = async (req, res) => {
+    try {
+        const { getAllUsers } = require("../models/userModel.js");
+        const users = await getAllUsers(false);
+        const mapped = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            username: u.username,
+            email: u.email
+        }));
+        return res.status(200).json({
+            success: true,
+            data: mapped
+        });
+    } catch (error) {
+        console.error("Get Active Users Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+};
+
 module.exports = {
     login,
     logout,
     updateProfileController,
     requestDeviceRegistration,
-    getMyPermissions
+    getMyPermissions,
+    getActiveUsersController
 };

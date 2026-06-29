@@ -7,6 +7,8 @@ import PendingApproval from "./pages/PendingApproval";
 import UserHome from "./pages/user/UserHome";
 import Inquiries from "./pages/user/Inquiries";
 import CreateInquiry from "./pages/user/CreateInquiry";
+import InProcessFranchise from "./pages/user/InProcessFranchise";
+import CreateInProcessFranchise from "./pages/user/CreateInProcessFranchise";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
@@ -51,6 +53,14 @@ export default function AppRoutes() {
                 <Route
                     path="/user/inquiries/create"
                     element={<CreateInquiry />}
+                />
+                <Route
+                    path="/user/in-process-franchises"
+                    element={<InProcessFranchise />}
+                />
+                <Route
+                    path="/user/in-process-franchises/create"
+                    element={<CreateInProcessFranchise />}
                 />
                 <Route
                     path="/profile"

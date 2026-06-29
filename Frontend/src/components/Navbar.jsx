@@ -411,6 +411,22 @@ export default function Navbar() {
                             </button>
                         </div>
 
+                        {/* In Process Franchise Tab */}
+                        <div className="relative">
+                            <button
+                                onClick={() => {
+                                    navigate("/user/in-process-franchises");
+                                }}
+                                className={`flex items-center justify-between w-48 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                    location.pathname === "/user/in-process-franchises" ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                }`}
+                            >
+                                <span className="flex items-center gap-2.5 truncate mx-auto">
+                                    <span className="font-semibold text-white truncate">In Process Franchise</span>
+                                </span>
+                            </button>
+                        </div>
+
                         {/* Masters Dropdown */}
                         {availableMasters.length > 0 && (
                             <div className="relative">

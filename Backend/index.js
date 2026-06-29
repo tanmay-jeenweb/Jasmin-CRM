@@ -20,6 +20,7 @@ const inquiryRoutes = require("./routes/inquiryRoutes.js");
 const callLogRoutes = require("./routes/callLogRoutes.js");
 const reminderRoutes = require("./routes/reminderRoutes.js");
 const noteRoutes = require("./routes/noteRoutes.js");
+const inProcessFranchiseRoutes = require("./routes/inProcessFranchiseRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -35,6 +36,7 @@ const { createInquiriesTable } = require("./models/inquiryModel.js");
 const { createCallLogsTable } = require("./models/callLogModel.js");
 const { createRemindersTable } = require("./models/reminderModel.js");
 const { createNotesTable } = require("./models/noteModel.js");
+const { createInProcessFranchiseTable } = require("./models/inProcessFranchiseModel.js");
 
 
 const app = express();
@@ -84,6 +86,7 @@ app.use(["/api/inquiries", "/inquiries"], inquiryRoutes);
 app.use(["/api/call-logs", "/call-logs"], callLogRoutes);
 app.use(["/api/reminders", "/reminders"], reminderRoutes);
 app.use(["/api/notes", "/notes"], noteRoutes);
+app.use(["/api/in-process-franchises", "/in-process-franchises"], inProcessFranchiseRoutes);
 
 
 // Global 404 handler
@@ -117,6 +120,7 @@ const startServer = async () => {
         await createCallLogsTable();
         await createRemindersTable();
         await createNotesTable();
+        await createInProcessFranchiseTable();
 
         console.log("All database tables are initialized and ready.");
 
