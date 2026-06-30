@@ -56,6 +56,13 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
         addedBy,
         deviceId
     ]);
+
+    // If converted from an inquiry, update the inquiry status to 'in process'
+    if (data.inquiryId) {
+        const updateStatusQuery = `UPDATE inquiries SET status = 'in process' WHERE id = ?`;
+        await db.execute(updateStatusQuery, [data.inquiryId]);
+    }
+
     return result;
 };
 

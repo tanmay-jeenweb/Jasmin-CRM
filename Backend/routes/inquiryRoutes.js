@@ -3,7 +3,8 @@ const {
     addInquiryController,
     getAllInquiriesController,
     updateInquiryController,
-    updateInquiryLabelController
+    updateInquiryLabelController,
+    updateInquiryStatusController
 } = require('../controllers/inquiryController.js');
 const { verifyToken } = require('../middleware/authMiddleware.js');
 
@@ -13,5 +14,6 @@ router.post('/add', verifyToken, addInquiryController);
 router.get('/all', verifyToken, getAllInquiriesController);
 router.put('/update/:id', verifyToken, updateInquiryController);
 router.put('/update-label/:id', verifyToken, updateInquiryLabelController);
+router.put('/update-status/:id', verifyToken, updateInquiryStatusController);
 
 module.exports = router;

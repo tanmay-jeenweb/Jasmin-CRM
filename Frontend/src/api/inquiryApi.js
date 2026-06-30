@@ -15,3 +15,7 @@ export const updateInquiry = async (id, data) => {
 export const updateInquiryLabel = async (id, labelId) => {
     return apiClient.put(`/inquiries/update-label/${id}`, { labelId });
 };
+
+export const updateInquiryStatus = async (id, status) => {
+    return apiClient.put(`/inquiries/update-status/${id}`, { status });
+};

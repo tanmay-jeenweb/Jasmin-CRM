@@ -18,6 +18,7 @@ const createInquiriesTable = async () => {
             max_budget DECIMAL(15, 2) NOT NULL,
             added_by INT NOT NULL,
             device_id VARCHAR(255),
+            status VARCHAR(50) NOT NULL DEFAULT 'inquiry',
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE CASCADE
@@ -41,6 +42,22 @@ const createInquiriesTable = async () => {
         }
     } catch (err) {
         console.error("Error checking/adding label_id column:", err);
+    }
+
+    // Check if status column exists, if not add it
+    try {
+        const checkColumnQuery = `SHOW COLUMNS FROM inquiries LIKE 'status'`;
+        const [columns] = await db.query(checkColumnQuery);
+        if (columns.length === 0) {
+            const addColumnQuery = `
+                ALTER TABLE inquiries 
+                ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'inquiry';
+            `;
+            await db.query(addColumnQuery);
+            console.log("Inquiries table updated with status column.");
+        }
+    } catch (err) {
+        console.error("Error checking/adding status column:", err);
     }
 };
 
@@ -81,9 +98,7 @@ const getAllInquiries = async () => {
         FROM inquiries i
         LEFT JOIN users u ON i.added_by = u.id
         LEFT JOIN label_master lm ON i.label_id = lm.id
-        WHERE i.id NOT IN (
-            SELECT inquiry_id FROM in_process_franchises WHERE inquiry_id IS NOT NULL
-        )
+        WHERE i.status = 'inquiry'
         ORDER BY i.timestamp DESC
     `;
     const [results] = await db.execute(query);
@@ -131,6 +146,12 @@ const updateInquiryLabel = async (id, labelId) => {
     return result;
 };
 
+const updateInquiryStatus = async (id, status) => {
+    const query = `UPDATE inquiries SET status = ? WHERE id = ?`;
+    const [result] = await db.execute(query, [status, id]);
+    return result;
+};
+
 const getInquiryById = async (id) => {
     const query = `
         SELECT i.*, lm.label_name 
@@ -148,5 +169,6 @@ module.exports = {
     getAllInquiries,
     updateInquiry,
     updateInquiryLabel,
+    updateInquiryStatus,
     getInquiryById
 };

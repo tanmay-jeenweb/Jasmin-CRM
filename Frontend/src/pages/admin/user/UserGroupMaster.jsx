@@ -8,18 +8,18 @@ import { usePermission } from "../../../context/PermissionContext";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const MASTERS = [
-  { key: "user_type",             label: "User Type Master" },
-  { key: "label_master",          label: "Label Master" },
+  { key: "user_type", label: "User Type Master" },
+  { key: "label_master", label: "Label Master" },
   { key: "inquiry_source_master", label: "Inquiry Source Master" },
-  { key: "company_brand_master",  label: "Company Brand Master" },
-  { key: "document_master",       label: "Document Master" },
-  { key: "team_role_master",      label: "Team Role Master" },
+  { key: "company_brand_master", label: "Company Brand Master" },
+  { key: "document_master", label: "Document Master" },
+  { key: "team_role_master", label: "Team Role Master" },
 ];
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
 const PERM_LABELS = { canRead: "Read", canWrite: "Write", canUpdate: "Update", canDelete: "Delete" };
 const PERM_COLORS = {
-  canRead:   { bg: "#f3e8ff", border: "#d8b4fe", text: "#6804a1", check: "#6804a1" },
-  canWrite:  { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d", check: "#16a34a" },
+  canRead: { bg: "#f3e8ff", border: "#d8b4fe", text: "#6804a1", check: "#6804a1" },
+  canWrite: { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d", check: "#16a34a" },
   canUpdate: { bg: "#fffbeb", border: "#fde68a", text: "#b45309", check: "#d97706" },
   canDelete: { bg: "#fff1f2", border: "#fecdd3", text: "#be123c", check: "#e11d48" },
 };
@@ -332,7 +332,7 @@ export default function UserGroupMaster() {
       { key: "id", label: "ID", minWidth: "60px" },
       {
         key: "type_name", label: "User Type",
-        render: (row) => <span style={{ fontWeight: 700, color: "#6804a1" }}>{row.type_name}</span>
+        render: (row) => <span style={{ fontWeight: 700 }}>{row.type_name}</span>
       },
       {
         key: "permissions", label: "Permissions",
