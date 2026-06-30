@@ -5,16 +5,17 @@ import {
   getInProcessFranchiseById,
   getActiveUsers,
   updateInProcessFranchise,
-  submitFindStoreForm,
   approveFindStoreForm,
-  rejectFindStoreForm,
-  submitAgreementGstForm,
-  submitDocPrepForm,
-  submitStorePlanningForm,
-  submitStoreAmbianceForm
+  rejectFindStoreForm
 } from "../../api/inProcessFranchiseApi";
 import { getDocuments } from "../../api/documentApi";
 import toast from "react-hot-toast";
+
+import FindStoreForm from "./components/FindStoreForm";
+import AgreementGstForm from "./components/AgreementGstForm";
+import DocPrepForm from "./components/DocPrepForm";
+import StorePlanningForm from "./components/StorePlanningForm";
+import StoreAmbianceForm from "./components/StoreAmbianceForm";
 
 export default function InProcessFranchiseDetails() {
   const { id } = useParams();
@@ -30,78 +31,22 @@ export default function InProcessFranchiseDetails() {
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
 
-  // Form states for editable fields
+  // Form states for editable fields (top level details)
   const [tentativeOpeningDate, setTentativeOpeningDate] = useState("");
   const [finalOpeningDate, setFinalOpeningDate] = useState("");
   const [bdmArea, setBdmArea] = useState("");
   const [inquiryManagerId, setInquiryManagerId] = useState("");
   const [storeName, setStoreName] = useState("");
 
-  // Find store form states
-  const [storeLocation, setStoreLocation] = useState("");
-  const [storeMapLink, setStoreMapLink] = useState("");
-  const [storePhotoFile, setStorePhotoFile] = useState(null);
-  const [storePhotoName, setStorePhotoName] = useState(""); // existing filename from DB
-  const [businessArea, setBusinessArea] = useState("");
-  const [clusterValue, setClusterValue] = useState("");
-  const [processActiveValue, setProcessActiveValue] = useState("");
-  const [authorityCertificateFile, setAuthorityCertificateFile] = useState(null);
-  const [authorityCertificateName, setAuthorityCertificateName] = useState(""); // existing filename from DB
-  const [submittingFindStore, setSubmittingFindStore] = useState(false);
-
   // Admin approval states
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [processingAdminAction, setProcessingAdminAction] = useState(false);
 
-  // Agreement & GST states
+  // Master docs list for Agreement & GST
   const [masterDocs, setMasterDocs] = useState([]);
-  const [partnerDate, setPartnerDate] = useState("");
-  const [gstRegistrationDate, setGstRegistrationDate] = useState("");
-  const [gstNumber, setGstNumber] = useState("");
-  const [agreementGstDocs, setAgreementGstDocs] = useState([]);
-  const [submittingAgreementGst, setSubmittingAgreementGst] = useState(false);
 
-  // Document Preparation states
-  const [dispatchDate, setDispatchDate] = useState("");
-  const [dispatchName, setDispatchName] = useState("");
-  const [dispatchFile, setDispatchFile] = useState(null);
-  const [dispatchFileName, setDispatchFileName] = useState("");
-  const [receiverDate, setReceiverDate] = useState("");
-  const [receiverName, setReceiverName] = useState("");
-  const [receiverFile, setReceiverFile] = useState(null);
-  const [receiverFileName, setReceiverFileName] = useState("");
-  const [submittingDocPrep, setSubmittingDocPrep] = useState(false);
-
-  // Store Planning states
-  const [mainBoardSignSize, setMainBoardSignSize] = useState("");
-  const [interiorFile, setInteriorFile] = useState(null);
-  const [interiorFileName, setInteriorFileName] = useState("");
-  const [inshopBrandingFile, setInshopBrandingFile] = useState(null);
-  const [inshopBrandingFileName, setInshopBrandingFileName] = useState("");
-  const [floorPlanFile, setFloorPlanFile] = useState(null);
-  const [floorPlanFileName, setFloorPlanFileName] = useState("");
-  const [billingFormatFile, setBillingFormatFile] = useState(null);
-  const [billingFormatFileName, setBillingFormatFileName] = useState("");
-  const [submittingStorePlanning, setSubmittingStorePlanning] = useState(false);
-
-  // Store Ambiance states
-  const [furnitureFixingFile, setFurnitureFixingFile] = useState(null);
-  const [furnitureFixingFileName, setFurnitureFixingFileName] = useState("");
-  const [companyFurnitureFittingFile, setCompanyFurnitureFittingFile] = useState(null);
-  const [companyFurnitureFittingFileName, setCompanyFurnitureFittingFileName] = useState("");
-  const [shineBoardFile, setShineBoardFile] = useState(null);
-  const [shineBoardFileName, setShineBoardFileName] = useState("");
-  const [inShopBrandingFile, setInShopBrandingFile] = useState(null);
-  const [inShopBrandingFileName, setInShopBrandingFileName] = useState("");
-  const [templeLocationFile, setTempleLocationFile] = useState(null);
-  const [templeLocationFileName, setTempleLocationFileName] = useState("");
-  const [ambiancePhotoFile, setAmbiancePhotoFile] = useState(null);
-  const [ambiancePhotoFileName, setAmbiancePhotoFileName] = useState("");
-  const [ambianceRemark, setAmbianceRemark] = useState("");
-  const [submittingStoreAmbiance, setSubmittingStoreAmbiance] = useState(false);
-
-  const [openAccordion, setOpenAccordion] = useState("find-store"); // "find-store" or "agreement-gst" or "doc-prep" or "store-planning" or "store-ambiance" or null
+  const [openAccordion, setOpenAccordion] = useState("find-store");
   const [showApprovedBanner, setShowApprovedBanner] = useState(true);
 
   const getLocalDateString = (dateStr) => {
@@ -115,49 +60,6 @@ export default function InProcessFranchiseDetails() {
     }
   };
 
-  const mergeAndSetDocuments = (f, masterDocsList) => {
-    const savedDocs = f.agreementGst?.documents || [];
-    const mergedDocs = [];
-
-    // 1. Add required docs
-    masterDocsList.forEach(reqDoc => {
-      const existingSaved = savedDocs.find(sd => sd.doc_type.toLowerCase() === reqDoc.doc_type.toLowerCase());
-      if (existingSaved) {
-        mergedDocs.push({
-          doc_type: reqDoc.doc_type,
-          document_path: existingSaved.document_path,
-          expiry_date: getLocalDateString(existingSaved.expiry_date),
-          file: null,
-          is_custom: false
-        });
-      } else {
-        mergedDocs.push({
-          doc_type: reqDoc.doc_type,
-          document_path: "",
-          expiry_date: "",
-          file: null,
-          is_custom: false
-        });
-      }
-    });
-
-    // 2. Add custom saved docs
-    savedDocs.forEach(sd => {
-      const isReq = masterDocsList.some(reqDoc => reqDoc.doc_type.toLowerCase() === sd.doc_type.toLowerCase());
-      if (!isReq) {
-        mergedDocs.push({
-          doc_type: sd.doc_type,
-          document_path: sd.document_path,
-          expiry_date: getLocalDateString(sd.expiry_date),
-          file: null,
-          is_custom: true
-        });
-      }
-    });
-
-    setAgreementGstDocs(mergedDocs);
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -168,10 +70,9 @@ export default function InProcessFranchiseDetails() {
           getDocuments().catch(() => ({ data: { success: false, data: [] } }))
         ]);
         
-        let loadedMasterDocs = [];
         if (docsRes.data?.success) {
           const allDocs = docsRes.data.data || [];
-          loadedMasterDocs = allDocs.filter(d => d.is_required === 1 || d.is_required === true);
+          const loadedMasterDocs = allDocs.filter(d => d.is_required === 1 || d.is_required === true);
           setMasterDocs(loadedMasterDocs);
         }
 
@@ -184,57 +85,6 @@ export default function InProcessFranchiseDetails() {
           setBdmArea(f.bdm_area || "");
           setInquiryManagerId(f.inquiry_manager_id || "");
           setStoreName(f.store_name || "JASMIN");
-
-          // Initialize find store states
-          if (f.findStore) {
-            setStoreLocation(f.findStore.store_location || "");
-            setStoreMapLink(f.findStore.store_map_link || "");
-            setStorePhotoName(f.findStore.store_photo || "");
-            setBusinessArea(f.findStore.business_area || "");
-            setClusterValue(f.findStore.cluster_value || "");
-            setProcessActiveValue(f.findStore.process_active_value || "");
-            setAuthorityCertificateName(f.findStore.authority_certificate || "");
-          }
-
-          // Initialize Agreement & GST states
-          if (f.agreementGst) {
-            setPartnerDate(getLocalDateString(f.agreementGst.partner_date));
-            setGstRegistrationDate(getLocalDateString(f.agreementGst.gst_registration_date));
-            setGstNumber(f.agreementGst.gst_number || "");
-          }
-
-          // Initialize Document Preparation states
-          if (f.docPrep) {
-            setDispatchDate(getLocalDateString(f.docPrep.dispatch_date));
-            setDispatchName(f.docPrep.dispatch_name || "");
-            setDispatchFileName(f.docPrep.dispatch_file || "");
-            setReceiverDate(getLocalDateString(f.docPrep.receiver_date));
-            setReceiverName(f.docPrep.receiver_name || "");
-            setReceiverFileName(f.docPrep.receiver_file || "");
-          }
-
-          // Initialize Store Planning states
-          if (f.storePlanning) {
-            setMainBoardSignSize(f.storePlanning.main_board_sign_size || "");
-            setInteriorFileName(f.storePlanning.interior_file || "");
-            setInshopBrandingFileName(f.storePlanning.inshop_branding_file || "");
-            setFloorPlanFileName(f.storePlanning.floor_plan_file || "");
-            setBillingFormatFileName(f.storePlanning.billing_format_file || "");
-          }
-
-          // Initialize Store Ambiance states
-          if (f.storeAmbiance) {
-            setFurnitureFixingFileName(f.storeAmbiance.furniture_fixing_file || "");
-            setCompanyFurnitureFittingFileName(f.storeAmbiance.company_furniture_fitting_file || "");
-            setShineBoardFileName(f.storeAmbiance.shine_board_file || "");
-            setInShopBrandingFileName(f.storeAmbiance.in_shop_branding_file || "");
-            setTempleLocationFileName(f.storeAmbiance.temple_location_file || "");
-            setAmbiancePhotoFileName(f.storeAmbiance.ambiance_photo_file || "");
-            setAmbianceRemark(f.storeAmbiance.remark || "");
-          }
-
-          // Merge and set documents
-          mergeAndSetDocuments(f, loadedMasterDocs);
         } else {
           toast.error("Failed to fetch franchise details.");
         }
@@ -251,7 +101,6 @@ export default function InProcessFranchiseDetails() {
     };
     loadData();
   }, [id]);
-
 
   const formatDate = (dateStr) => {
     if (!dateStr) return "N/A";
@@ -316,264 +165,10 @@ export default function InProcessFranchiseDetails() {
     try {
       const res = await getInProcessFranchiseById(id);
       if (res.data?.success) {
-        const f = res.data.data;
-        setFranchise(f);
-        if (f.findStore) {
-          setStoreLocation(f.findStore.store_location || "");
-          setStoreMapLink(f.findStore.store_map_link || "");
-          setStorePhotoName(f.findStore.store_photo || "");
-          setBusinessArea(f.findStore.business_area || "");
-          setClusterValue(f.findStore.cluster_value || "");
-          setProcessActiveValue(f.findStore.process_active_value || "");
-          setAuthorityCertificateName(f.findStore.authority_certificate || "");
-        }
-        if (f.agreementGst) {
-          setPartnerDate(getLocalDateString(f.agreementGst.partner_date));
-          setGstRegistrationDate(getLocalDateString(f.agreementGst.gst_registration_date));
-          setGstNumber(f.agreementGst.gst_number || "");
-        }
-        if (f.docPrep) {
-          setDispatchDate(getLocalDateString(f.docPrep.dispatch_date));
-          setDispatchName(f.docPrep.dispatch_name || "");
-          setDispatchFileName(f.docPrep.dispatch_file || "");
-          setReceiverDate(getLocalDateString(f.docPrep.receiver_date));
-          setReceiverName(f.docPrep.receiver_name || "");
-          setReceiverFileName(f.docPrep.receiver_file || "");
-        }
-        if (f.storePlanning) {
-          setMainBoardSignSize(f.storePlanning.main_board_sign_size || "");
-          setInteriorFileName(f.storePlanning.interior_file || "");
-          setInshopBrandingFileName(f.storePlanning.inshop_branding_file || "");
-          setFloorPlanFileName(f.storePlanning.floor_plan_file || "");
-          setBillingFormatFileName(f.storePlanning.billing_format_file || "");
-        }
-        if (f.storeAmbiance) {
-          setFurnitureFixingFileName(f.storeAmbiance.furniture_fixing_file || "");
-          setCompanyFurnitureFittingFileName(f.storeAmbiance.company_furniture_fitting_file || "");
-          setShineBoardFileName(f.storeAmbiance.shine_board_file || "");
-          setInShopBrandingFileName(f.storeAmbiance.in_shop_branding_file || "");
-          setTempleLocationFileName(f.storeAmbiance.temple_location_file || "");
-          setAmbiancePhotoFileName(f.storeAmbiance.ambiance_photo_file || "");
-          setAmbianceRemark(f.storeAmbiance.remark || "");
-        }
-        mergeAndSetDocuments(f, masterDocs);
+        setFranchise(res.data.data);
       }
     } catch (err) {
       console.error("Failed to reload data:", err);
-    }
-  };
-
-  const handleFindStoreSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!storeLocation.trim()) return toast.error("Store Location is required");
-    if (!storeMapLink.trim()) return toast.error("Store Map Link is required");
-    if (!businessArea.trim()) return toast.error("Business Area is required");
-    if (!storePhotoFile && !storePhotoName) return toast.error("Store Photo is required");
-
-    setSubmittingFindStore(true);
-    try {
-      const fd = new FormData();
-      fd.append("storeLocation", storeLocation.trim());
-      fd.append("storeMapLink", storeMapLink.trim());
-      fd.append("businessArea", businessArea.trim());
-      fd.append("clusterValue", clusterValue.trim());
-      fd.append("processActiveValue", processActiveValue.trim());
-
-      if (storePhotoFile) {
-        fd.append("storePhoto", storePhotoFile);
-      }
-      if (authorityCertificateFile) {
-        fd.append("authorityCertificate", authorityCertificateFile);
-      }
-
-      const res = await submitFindStoreForm(id, fd);
-      if (res.data?.success) {
-        toast.success("Find Store details submitted successfully!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to submit store details");
-      }
-    } catch (err) {
-      console.error("Error submitting find store form:", err);
-      toast.error(err?.response?.data?.message || "Failed to submit store details.");
-    } finally {
-      setSubmittingFindStore(false);
-    }
-  };
-
-  const handleAddDoc = () => {
-    setAgreementGstDocs([
-      ...agreementGstDocs,
-      {
-        doc_type: "",
-        document_path: "",
-        expiry_date: "",
-        file: null,
-        is_custom: true
-      }
-    ]);
-  };
-
-  const handleRemoveDoc = (index) => {
-    const updated = [...agreementGstDocs];
-    updated.splice(index, 1);
-    setAgreementGstDocs(updated);
-  };
-
-  const handleDocFieldChange = (index, field, value) => {
-    const updated = [...agreementGstDocs];
-    updated[index][field] = value;
-    setAgreementGstDocs(updated);
-  };
-
-  const handleAgreementGstSubmit = async (e) => {
-    e.preventDefault();
-
-    // Client-side validations
-    for (const doc of agreementGstDocs) {
-      if (!doc.doc_type.trim()) {
-        return toast.error("Document type is required for all documents.");
-      }
-      if (!doc.document_path && !doc.file) {
-        return toast.error(`Please upload a document file for ${doc.doc_type}`);
-      }
-    }
-
-    setSubmittingAgreementGst(true);
-    try {
-      const fd = new FormData();
-      fd.append("partnerDate", partnerDate);
-      fd.append("gstRegistrationDate", gstRegistrationDate);
-      fd.append("gstNumber", gstNumber.trim());
-
-      const docsPayload = agreementGstDocs.map((doc) => {
-        return {
-          doc_type: doc.doc_type,
-          expiry_date: doc.expiry_date || "",
-          document_path: doc.document_path || ""
-        };
-      });
-
-      fd.append("documents", JSON.stringify(docsPayload));
-
-      agreementGstDocs.forEach((doc, idx) => {
-        if (doc.file) {
-          fd.append(`file_${idx}`, doc.file);
-        }
-      });
-
-      const res = await submitAgreementGstForm(id, fd);
-      if (res.data?.success) {
-        toast.success("Agreement & GST details saved successfully!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to save details");
-      }
-    } catch (err) {
-      console.error("Error saving Agreement & GST details:", err);
-      toast.error(err?.response?.data?.message || "Failed to save Agreement & GST details.");
-    } finally {
-      setSubmittingAgreementGst(false);
-    }
-  };
-
-  const handleDocPrepSubmit = async (e) => {
-    e.preventDefault();
-
-    setSubmittingDocPrep(true);
-    try {
-      const fd = new FormData();
-      fd.append("dispatchDate", dispatchDate);
-      fd.append("dispatchName", dispatchName.trim());
-      fd.append("receiverDate", receiverDate);
-      fd.append("receiverName", receiverName.trim());
-
-      if (dispatchFile) {
-        fd.append("dispatchFile", dispatchFile);
-      }
-      if (receiverFile) {
-        fd.append("receiverFile", receiverFile);
-      }
-
-      const res = await submitDocPrepForm(id, fd);
-      if (res.data?.success) {
-        toast.success("Document Preparation details saved successfully!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to save details");
-      }
-    } catch (err) {
-      console.error("Error saving Document Preparation details:", err);
-      toast.error(err?.response?.data?.message || "Failed to save Document Preparation details.");
-    } finally {
-      setSubmittingDocPrep(false);
-    }
-  };
-
-  const handleStorePlanningSubmit = async (e) => {
-    e.preventDefault();
-
-    setSubmittingStorePlanning(true);
-    try {
-      const fd = new FormData();
-      fd.append("mainBoardSignSize", mainBoardSignSize.trim());
-
-      if (interiorFile) {
-        fd.append("interiorFile", interiorFile);
-      }
-      if (inshopBrandingFile) {
-        fd.append("inshopBrandingFile", inshopBrandingFile);
-      }
-      if (floorPlanFile) {
-        fd.append("floorPlanFile", floorPlanFile);
-      }
-      if (billingFormatFile) {
-        fd.append("billingFormatFile", billingFormatFile);
-      }
-
-      const res = await submitStorePlanningForm(id, fd);
-      if (res.data?.success) {
-        toast.success("Store Planning details saved successfully!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to save details");
-      }
-    } catch (err) {
-      console.error("Error saving Store Planning details:", err);
-      toast.error(err?.response?.data?.message || "Failed to save Store Planning details.");
-    } finally {
-      setSubmittingStorePlanning(false);
-    }
-  };
-
-  const handleStoreAmbianceSubmit = async (e) => {
-    e.preventDefault();
-
-    setSubmittingStoreAmbiance(true);
-    try {
-      const fd = new FormData();
-      fd.append("remark", ambianceRemark.trim());
-
-      if (furnitureFixingFile) fd.append("furnitureFixingFile", furnitureFixingFile);
-      if (companyFurnitureFittingFile) fd.append("companyFurnitureFittingFile", companyFurnitureFittingFile);
-      if (shineBoardFile) fd.append("shineBoardFile", shineBoardFile);
-      if (inShopBrandingFile) fd.append("inShopBrandingFile", inShopBrandingFile);
-      if (templeLocationFile) fd.append("templeLocationFile", templeLocationFile);
-      if (ambiancePhotoFile) fd.append("ambiancePhotoFile", ambiancePhotoFile);
-
-      const res = await submitStoreAmbianceForm(id, fd);
-      if (res.data?.success) {
-        toast.success("Store Ambiance details saved successfully!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to save details");
-      }
-    } catch (err) {
-      console.error("Error saving Store Ambiance details:", err);
-      toast.error(err?.response?.data?.message || "Failed to save Store Ambiance details.");
-    } finally {
-      setSubmittingStoreAmbiance(false);
     }
   };
 
@@ -989,151 +584,13 @@ export default function InProcessFranchiseDetails() {
 
               {openAccordion === "find-store" && (
                 <div className="p-6">
-                  <form onSubmit={handleFindStoreSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Store Location *</label>
-                        <input
-                          type="text"
-                          disabled={findStoreStatus === "approved"}
-                          value={storeLocation}
-                          onChange={(e) => setStoreLocation(e.target.value)}
-                          placeholder="Enter specific store location"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-50 disabled:text-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Store Map Link *</label>
-                        <input
-                          type="url"
-                          disabled={findStoreStatus === "approved"}
-                          value={storeMapLink}
-                          onChange={(e) => setStoreMapLink(e.target.value)}
-                          placeholder="Google Maps link"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-50 disabled:text-slate-400"
-                        />
-                        {storeMapLink && (
-                          <a
-                            href={storeMapLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-[#6804a1] hover:underline font-bold mt-1 inline-block"
-                          >
-                            Open Map Link →
-                          </a>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Business Area *</label>
-                        <input
-                          type="text"
-                          disabled={findStoreStatus === "approved"}
-                          value={businessArea}
-                          onChange={(e) => setBusinessArea(e.target.value)}
-                          placeholder="e.g. Retail, Commercial Area"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-50 disabled:text-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Cluster Value</label>
-                        <input
-                          type="text"
-                          disabled={findStoreStatus === "approved"}
-                          value={clusterValue}
-                          onChange={(e) => setClusterValue(e.target.value)}
-                          placeholder="Cluster name / value"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-50 disabled:text-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Process Active Value</label>
-                        <input
-                          type="text"
-                          disabled={findStoreStatus === "approved"}
-                          value={processActiveValue}
-                          onChange={(e) => setProcessActiveValue(e.target.value)}
-                          placeholder="e.g. Active, Under Setup"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-50 disabled:text-slate-400"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">
-                          Store Photo * <span className="text-[10px] text-slate-400 font-semibold">(Attachment)</span>
-                        </label>
-                        {findStoreStatus !== "approved" && (
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setStorePhotoFile(e.target.files[0])}
-                            className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                          />
-                        )}
-                        {storePhotoName && (
-                          <div className="mt-2.5 flex items-center gap-3">
-                            <img
-                              src={getFileUrl(storePhotoName)}
-                              alt="Store Photo"
-                              className="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-sm"
-                            />
-                            <a
-                              href={getFileUrl(storePhotoName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold"
-                            >
-                              View Full Image
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">
-                          Authority Certificate <span className="text-[10px] text-slate-400 font-semibold">(Attachment)</span>
-                        </label>
-                        {findStoreStatus !== "approved" && (
-                          <input
-                            type="file"
-                            onChange={(e) => setAuthorityCertificateFile(e.target.files[0])}
-                            className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                          />
-                        )}
-                        {authorityCertificateName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(authorityCertificateName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={authorityCertificateName}
-                            >
-                              View Certificate
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {findStoreStatus !== "approved" && (
-                      <div className="pt-2 flex justify-end">
-                        <button
-                          type="submit"
-                          disabled={submittingFindStore}
-                          className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-                        >
-                          {submittingFindStore ? "Saving..." : "Submit Store Details"}
-                        </button>
-                      </div>
-                    )}
-                  </form>
+                  <FindStoreForm
+                    franchiseId={id}
+                    findStoreData={franchise.findStore}
+                    findStoreStatus={findStoreStatus}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
               )}
             </div>
@@ -1170,137 +627,13 @@ export default function InProcessFranchiseDetails() {
 
               {openAccordion === "agreement-gst" && (
                 <div className="p-6">
-                  <form onSubmit={handleAgreementGstSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Partner Date</label>
-                        <input
-                          type="date"
-                          value={partnerDate}
-                          onChange={(e) => setPartnerDate(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">GST Registration Date</label>
-                        <input
-                          type="date"
-                          value={gstRegistrationDate}
-                          onChange={(e) => setGstRegistrationDate(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">GST Number</label>
-                        <input
-                          type="text"
-                          value={gstNumber}
-                          onChange={(e) => setGstNumber(e.target.value)}
-                          placeholder="Enter GST Registration Number"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Dynamic Documents List */}
-                    <div className="mt-8 border-t border-slate-100 pt-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Documents</h4>
-                        <button
-                          type="button"
-                          onClick={handleAddDoc}
-                          className="flex items-center gap-1.5 text-xs text-[#6804a1] hover:text-[#52037e] font-bold transition-colors cursor-pointer"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                          Add Document
-                        </button>
-                      </div>
-
-                      {agreementGstDocs.length === 0 ? (
-                        <p className="text-xs text-slate-400 italic">No documents required or added yet.</p>
-                      ) : (
-                        <div className="space-y-4">
-                          {agreementGstDocs.map((doc, idx) => (
-                            <div key={idx} className="flex flex-col md:flex-row md:items-end gap-4 p-4 bg-slate-50/50 border border-slate-150 rounded-xl">
-                              <div className="flex-1">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Doc Type</label>
-                                <input
-                                  type="text"
-                                  disabled={!doc.is_custom}
-                                  value={doc.doc_type}
-                                  onChange={(e) => handleDocFieldChange(idx, "doc_type", e.target.value)}
-                                  placeholder="e.g. Aadhar Card"
-                                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 bg-white focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] disabled:bg-slate-100 disabled:text-slate-500"
-                                />
-                              </div>
-
-                              <div className="flex-1">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                                  Document File {!doc.document_path && <span className="text-red-500">*</span>}
-                                </label>
-                                <input
-                                  type="file"
-                                  onChange={(e) => handleDocFieldChange(idx, "file", e.target.files[0])}
-                                  className="w-full text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                                />
-                                {doc.document_path && (
-                                  <div className="mt-1 flex items-center gap-1.5">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#6804a1]">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
-                                    <a
-                                      href={getFileUrl(doc.document_path)}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-[10px] text-[#6804a1] hover:underline font-bold truncate max-w-xs"
-                                      title={doc.document_path}
-                                    >
-                                      View Document
-                                    </a>
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex-1">
-                                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Expiry Date</label>
-                                <input
-                                  type="date"
-                                  value={doc.expiry_date}
-                                  onChange={(e) => handleDocFieldChange(idx, "expiry_date", e.target.value)}
-                                  className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                                />
-                              </div>
-
-                              {doc.is_custom && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveDoc(idx)}
-                                  className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100 cursor-pointer md:mb-0.5"
-                                  title="Delete Document Type"
-                                >
-                                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
-                                  </svg>
-                                </button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={submittingAgreementGst}
-                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {submittingAgreementGst ? "Saving..." : "Save Agreement & GST"}
-                      </button>
-                    </div>
-                  </form>
+                  <AgreementGstForm
+                    franchiseId={id}
+                    agreementGstData={franchise.agreementGst}
+                    masterDocs={masterDocs}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
               )}
             </div>
@@ -1337,109 +670,12 @@ export default function InProcessFranchiseDetails() {
 
               {openAccordion === "doc-prep" && (
                 <div className="p-6">
-                  <form onSubmit={handleDocPrepSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                      {/* Dispatch Fields */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch Date</label>
-                        <input
-                          type="date"
-                          value={dispatchDate}
-                          onChange={(e) => setDispatchDate(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch Name</label>
-                        <input
-                          type="text"
-                          value={dispatchName}
-                          onChange={(e) => setDispatchName(e.target.value)}
-                          placeholder="Enter Dispatch Name"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setDispatchFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {dispatchFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(dispatchFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={dispatchFileName}
-                            >
-                              View Dispatch File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Receiver Fields */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver Date</label>
-                        <input
-                          type="date"
-                          value={receiverDate}
-                          onChange={(e) => setReceiverDate(e.target.value)}
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver Name</label>
-                        <input
-                          type="text"
-                          value={receiverName}
-                          onChange={(e) => setReceiverName(e.target.value)}
-                          placeholder="Enter Receiver Name"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setReceiverFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {receiverFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(receiverFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={receiverFileName}
-                            >
-                              View Receiver File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={submittingDocPrep}
-                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {submittingDocPrep ? "Saving..." : "Save Document Preparation"}
-                      </button>
-                    </div>
-                  </form>
+                  <DocPrepForm
+                    franchiseId={id}
+                    docPrepData={franchise.docPrep}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
               )}
             </div>
@@ -1476,135 +712,12 @@ export default function InProcessFranchiseDetails() {
 
               {openAccordion === "store-planning" && (
                 <div className="p-6">
-                  <form onSubmit={handleStorePlanningSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                      {/* Main Board Sign Size */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Main Board Sign Size</label>
-                        <input
-                          type="text"
-                          value={mainBoardSignSize}
-                          onChange={(e) => setMainBoardSignSize(e.target.value)}
-                          placeholder="Enter main board sign size"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-
-                      {/* Interior File */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Interior File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setInteriorFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {interiorFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(interiorFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={interiorFileName}
-                            >
-                              View Interior File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Inshop Branding File */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Inshop Branding File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setInshopBrandingFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {inshopBrandingFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(inshopBrandingFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={inshopBrandingFileName}
-                            >
-                              View Inshop Branding File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Floor Plan File */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Floor Plan File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setFloorPlanFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {floorPlanFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(floorPlanFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={floorPlanFileName}
-                            >
-                              View Floor Plan File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Billing Format File */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Billing Format File</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setBillingFormatFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {billingFormatFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(billingFormatFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={billingFormatFileName}
-                            >
-                              View Billing Format File
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={submittingStorePlanning}
-                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {submittingStorePlanning ? "Saving..." : "Save Store Planning"}
-                      </button>
-                    </div>
-                  </form>
+                  <StorePlanningForm
+                    franchiseId={id}
+                    storePlanningData={franchise.storePlanning}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
               )}
             </div>
@@ -1641,187 +754,12 @@ export default function InProcessFranchiseDetails() {
 
               {openAccordion === "store-ambiance" && (
                 <div className="p-6">
-                  <form onSubmit={handleStoreAmbianceSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
-                      {/* Furniture fixing */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Furniture fixing</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setFurnitureFixingFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {furnitureFixingFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(furnitureFixingFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={furnitureFixingFileName}
-                            >
-                              View Furniture fixing
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Company furniture fitting */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Company furniture fitting</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setCompanyFurnitureFittingFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {companyFurnitureFittingFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(companyFurnitureFittingFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={companyFurnitureFittingFileName}
-                            >
-                              View Furniture fitting
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Shine board */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Shine board</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setShineBoardFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {shineBoardFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(shineBoardFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={shineBoardFileName}
-                            >
-                              View Shine board
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* In-shop branding */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">In-shop branding</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setInShopBrandingFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {inShopBrandingFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(inShopBrandingFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={inShopBrandingFileName}
-                            >
-                              View In-shop branding
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Temple location */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Temple location</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setTempleLocationFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {templeLocationFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(templeLocationFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={templeLocationFileName}
-                            >
-                              View Temple location
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Ambiance Photo */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Ambiance Photo</label>
-                        <input
-                          type="file"
-                          onChange={(e) => setAmbiancePhotoFile(e.target.files[0])}
-                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-                        />
-                        {ambiancePhotoFileName && (
-                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                            <a
-                              href={getFileUrl(ambiancePhotoFileName)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
-                              title={ambiancePhotoFileName}
-                            >
-                              View Ambiance Photo
-                            </a>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Remark */}
-                      <div className="md:col-span-3">
-                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Remark</label>
-                        <textarea
-                          rows={3}
-                          value={ambianceRemark}
-                          onChange={(e) => setAmbianceRemark(e.target.value)}
-                          placeholder="Enter store ambiance remarks"
-                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="pt-2 flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={submittingStoreAmbiance}
-                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-                      >
-                        {submittingStoreAmbiance ? "Saving..." : "Save Store Ambiance"}
-                      </button>
-                    </div>
-                  </form>
+                  <StoreAmbianceForm
+                    franchiseId={id}
+                    storeAmbianceData={franchise.storeAmbiance}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
               )}
             </div>
