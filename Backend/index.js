@@ -37,6 +37,7 @@ const { createCallLogsTable } = require("./models/callLogModel.js");
 const { createRemindersTable } = require("./models/reminderModel.js");
 const { createNotesTable } = require("./models/noteModel.js");
 const { createInProcessFranchiseTable } = require("./models/inProcessFranchiseModel.js");
+const { createFindStoreTable } = require("./models/findStoreModel.js");
 
 
 const app = express();
@@ -121,6 +122,7 @@ const startServer = async () => {
         await createRemindersTable();
         await createNotesTable();
         await createInProcessFranchiseTable();
+        await createFindStoreTable();
 
         console.log("All database tables are initialized and ready.");
 

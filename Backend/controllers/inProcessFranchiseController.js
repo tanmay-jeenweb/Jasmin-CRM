@@ -6,6 +6,13 @@ const {
     getInProcessFranchiseById
 } = require('../models/inProcessFranchiseModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
+const {
+    upsertFindStore,
+    getFindStoreByFranchiseId,
+    approveFindStore,
+    rejectFindStore,
+    getAllFindStores
+} = require('../models/findStoreModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -203,13 +210,192 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         if (!franchise) {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
+        const findStore = await getFindStoreByFranchiseId(id);
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',
-            data: franchise
+            data: {
+                ...franchise,
+                findStore
+            }
         });
     } catch (error) {
         console.error('Error retrieving in process franchise by ID:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const upsertFindStoreController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { storeLocation, storeMapLink, businessArea, clusterValue, processActiveValue } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Validate text fields
+        if (!storeLocation || !storeLocation.trim()) {
+            return res.status(400).json({ success: false, message: 'Store Location is required' });
+        }
+        if (!storeMapLink || !storeMapLink.trim()) {
+            return res.status(400).json({ success: false, message: 'Store Map Link is required' });
+        }
+        if (!businessArea || !businessArea.trim()) {
+            return res.status(400).json({ success: false, message: 'Business Area is required' });
+        }
+
+        // Get files
+        const storePhotoFile = req.files && req.files['storePhoto'] ? req.files['storePhoto'][0] : null;
+        const authorityCertificateFile = req.files && req.files['authorityCertificate'] ? req.files['authorityCertificate'][0] : null;
+
+        const existing = await getFindStoreByFranchiseId(id);
+
+        let storePhotoPath = undefined;
+        let authorityCertificatePath = undefined;
+
+        if (storePhotoFile) {
+            storePhotoPath = storePhotoFile.filename;
+        } else if (!existing) {
+            return res.status(400).json({ success: false, message: 'Store Photo is required' });
+        }
+
+        if (authorityCertificateFile) {
+            authorityCertificatePath = authorityCertificateFile.filename;
+        }
+
+        const data = {
+            inProcessFranchiseId: id,
+            storeLocation: storeLocation.trim(),
+            storeMapLink: storeMapLink.trim(),
+            storePhoto: storePhotoPath,
+            businessArea: businessArea.trim(),
+            clusterValue: clusterValue ? clusterValue.trim() : null,
+            processActiveValue: processActiveValue ? processActiveValue.trim() : null,
+            authorityCertificate: authorityCertificatePath,
+            submittedBy
+        };
+
+        const result = await upsertFindStore(data);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Find Store',
+            result.action,
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `Find Store form successfully ${result.action === 'created' ? 'submitted' : 'updated'}.`,
+            data: await getFindStoreByFranchiseId(id)
+        });
+    } catch (error) {
+        console.error('Error upserting find store details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const approveFindStoreController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const approvedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existing = await getFindStoreByFranchiseId(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Find Store details not found' });
+        }
+
+        await approveFindStore(id, approvedBy);
+
+        await createAuditLog(
+            approvedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Find Store',
+            'approved',
+            existing,
+            { ...existing, status: 'approved', approved_by: approvedBy }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Find Store form approved successfully'
+        });
+    } catch (error) {
+        console.error('Error approving find store details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const rejectFindStoreController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const rejectedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+        }
+
+        const existing = await getFindStoreByFranchiseId(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Find Store details not found' });
+        }
+
+        await rejectFindStore(id, reason.trim(), rejectedBy);
+
+        await createAuditLog(
+            rejectedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Find Store',
+            'rejected',
+            existing,
+            { ...existing, status: 'rejected', rejection_reason: reason.trim() }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Find Store form rejected successfully'
+        });
+    } catch (error) {
+        console.error('Error rejecting find store details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const getAllFindStoresController = async (req, res) => {
+    try {
+        const findStores = await getAllFindStores();
+        res.status(200).json({
+            success: true,
+            message: 'Find Store submissions retrieved successfully',
+            data: findStores
+        });
+    } catch (error) {
+        console.error('Error retrieving all find store submissions:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -222,5 +408,9 @@ module.exports = {
     getAllInProcessFranchisesController,
     updateInProcessFranchiseController,
     deleteInProcessFranchiseController,
-    getInProcessFranchiseByIdController
+    getInProcessFranchiseByIdController,
+    upsertFindStoreController,
+    approveFindStoreController,
+    rejectFindStoreController,
+    getAllFindStoresController
 };

@@ -13,6 +13,7 @@ export default function Navbar() {
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const [isOpen, setIsOpen] = useState(false);
+    const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -99,6 +100,9 @@ export default function Navbar() {
             }
             if (isNotificationsOpen && !e.target.closest("#notifications-dropdown")) {
                 setIsNotificationsOpen(false);
+            }
+            if (isApprovalsOpen && !e.target.closest("#approvals-dropdown-container")) {
+                setIsApprovalsOpen(false);
             }
         };
         document.addEventListener("click", handleOutsideClick);
@@ -426,6 +430,63 @@ export default function Navbar() {
                                 </span>
                             </button>
                         </div>
+
+                        {/* Approvals Dropdown */}
+                        {isAdmin && (
+                            <div className="relative" id="approvals-dropdown-container">
+                                <button
+                                    onClick={() => setIsApprovalsOpen(!isApprovalsOpen)}
+                                    className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                        isApprovalsOpen || location.pathname.startsWith("/admin/store-details-approval") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2.5 truncate mx-auto">
+                                        <span className="font-semibold text-white truncate">Approvals</span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth={2.5}
+                                            stroke="currentColor"
+                                            className={`w-3.5 h-3.5 text-slate-300 transition-transform duration-200 ${isApprovalsOpen ? "rotate-180 text-white" : ""}`}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                        </svg>
+                                    </span>
+                                </button>
+
+                                {isApprovalsOpen && (
+                                    <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 z-50 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="flex flex-col gap-1.5">
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/store-details-approval");
+                                                    setIsApprovalsOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/store-details-approval"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/store-details-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
+                                                }`}>
+                                                    <i className="fa-solid fa-store text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
+                                                        location.pathname === "/admin/store-details-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                                    }`}>
+                                                        Store Details Approval
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Masters Dropdown */}
                         {availableMasters.length > 0 && (
