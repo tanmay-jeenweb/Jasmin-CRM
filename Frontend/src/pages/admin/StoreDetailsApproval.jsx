@@ -121,11 +121,10 @@ export default function StoreDetailsApproval() {
                 setActiveFilter(filter);
                 setSelectedSubId(null);
               }}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer capitalize ${
-                activeFilter === filter
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer capitalize ${activeFilter === filter
                   ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
                   : "bg-white hover:bg-slate-50 text-slate-600 border border-slate-200"
-              }`}
+                }`}
             >
               {filter === "all" ? "All Submissions" : `${filter} Review`}
             </button>
@@ -134,7 +133,7 @@ export default function StoreDetailsApproval() {
 
         {/* Modal / Dialog inline overlay for Rejection reason */}
         {selectedSubId && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-6 shadow-sm max-w-xl">
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-6 shadow-sm">
             <h3 className="text-sm font-bold text-rose-800 mb-2">Reject Store Details</h3>
             <form onSubmit={handleRejectSubmit} className="space-y-3">
               <div>
@@ -197,13 +196,12 @@ export default function StoreDetailsApproval() {
                       <span className="text-xs bg-[#f5f3ff] text-[#6804a1] border border-indigo-100 font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                         {sub.store_name}
                       </span>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                        sub.status === "approved"
+                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${sub.status === "approved"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                           : sub.status === "rejected"
-                          ? "bg-rose-50 text-rose-700 border-rose-100"
-                          : "bg-amber-50 text-amber-700 border-amber-100"
-                      }`}>
+                            ? "bg-rose-50 text-rose-700 border-rose-100"
+                            : "bg-amber-50 text-amber-700 border-amber-100"
+                        }`}>
                         {sub.status}
                       </span>
                     </h2>
