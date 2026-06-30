@@ -9,6 +9,7 @@ import {
   rejectFindStoreForm
 } from "../../api/inProcessFranchiseApi";
 import { getDocuments } from "../../api/documentApi";
+import { getCompanyBrands } from "../../api/companyBrandApi";
 import toast from "react-hot-toast";
 
 import FindStoreForm from "./components/FindStoreForm";
@@ -30,6 +31,7 @@ export default function InProcessFranchiseDetails() {
 
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [companyBrands, setCompanyBrands] = useState([]);
 
   // Form states for editable fields (top level details)
   const [tentativeOpeningDate, setTentativeOpeningDate] = useState("");
@@ -64,10 +66,11 @@ export default function InProcessFranchiseDetails() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [franchiseRes, usersRes, docsRes] = await Promise.all([
+        const [franchiseRes, usersRes, docsRes, brandsRes] = await Promise.all([
           getInProcessFranchiseById(id),
           getActiveUsers(),
-          getDocuments().catch(() => ({ data: { success: false, data: [] } }))
+          getDocuments().catch(() => ({ data: { success: false, data: [] } })),
+          getCompanyBrands().catch(() => ({ data: { success: false, data: [] } }))
         ]);
         
         if (docsRes.data?.success) {
@@ -91,6 +94,10 @@ export default function InProcessFranchiseDetails() {
         
         if (usersRes.data?.success) {
           setUsers(usersRes.data.data || []);
+        }
+
+        if (brandsRes.data?.success) {
+          setCompanyBrands(brandsRes.data.data || []);
         }
       } catch (err) {
         console.error("Failed to load details:", err);
@@ -402,25 +409,24 @@ export default function InProcessFranchiseDetails() {
             {/* Row 4 - Store Name */}
             <div className="md:col-span-4">
               <label className="block text-xs font-bold text-slate-600 mb-2">Store Name :</label>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                {[
-                  { val: "8 to 9", label: "8 TO 9" },
-                  { val: "BIG PHONE", label: "BIG PHONE" },
-                  { val: "JASMIN", label: "JASMIN" },
-                  { val: "PHONE 2 PHONE", label: "Phone 2 Phone" }
-                ].map((store) => (
-                  <label key={store.val} className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-500 uppercase">
-                    <input
-                      type="radio"
-                      name="storeName"
-                      value={store.val}
-                      checked={storeName === store.val}
-                      onChange={(e) => setStoreName(e.target.value)}
-                      className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1] accent-[#6804a1]"
-                    />
-                    {store.label}
-                  </label>
-                ))}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                {companyBrands.length > 0 ? (
+                  companyBrands.map((brand) => (
+                    <label key={brand.id} className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-500 uppercase">
+                      <input
+                        type="radio"
+                        name="storeName"
+                        value={brand.brand_name}
+                        checked={storeName === brand.brand_name}
+                        onChange={(e) => setStoreName(e.target.value)}
+                        className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1] accent-[#6804a1]"
+                      />
+                      {brand.brand_name}
+                    </label>
+                  ))
+                ) : (
+                  <span className="text-xs text-slate-400 italic">No brands available in Company Brand Master</span>
+                )}
               </div>
             </div>
           </div>
