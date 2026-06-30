@@ -16,6 +16,10 @@ export const deleteInProcessFranchise = async (id) => {
     return apiClient.delete(`/in-process-franchises/delete/${id}`);
 };
 
+export const getInProcessFranchiseById = async (id) => {
+    return apiClient.get(`/in-process-franchises/${id}`);
+};
+
 export const getActiveUsers = async () => {
     return apiClient.get("/auth/active-users");
 };

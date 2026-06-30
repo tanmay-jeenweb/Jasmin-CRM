@@ -196,9 +196,31 @@ const deleteInProcessFranchiseController = async (req, res) => {
     }
 };
 
+const getInProcessFranchiseByIdController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+        res.status(200).json({
+            success: true,
+            message: 'In Process Franchise retrieved successfully',
+            data: franchise
+        });
+    } catch (error) {
+        console.error('Error retrieving in process franchise by ID:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
     updateInProcessFranchiseController,
-    deleteInProcessFranchiseController
+    deleteInProcessFranchiseController,
+    getInProcessFranchiseByIdController
 };
