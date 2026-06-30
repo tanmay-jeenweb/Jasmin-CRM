@@ -17,6 +17,7 @@ const createInProcessFranchiseTable = async () => {
             bdm_area VARCHAR(255) NOT NULL,
             inquiry_manager_id INT NOT NULL,
             store_name VARCHAR(50) NOT NULL,
+            status VARCHAR(50) DEFAULT 'in_process',
             added_by INT NOT NULL,
             device_id VARCHAR(255) NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -28,6 +29,11 @@ const createInProcessFranchiseTable = async () => {
     `;
     await db.execute(query);
     console.log("In Process Franchise table ready");
+
+    // Migration to add status column if it doesn't exist
+    try {
+        await db.execute(`ALTER TABLE in_process_franchises ADD COLUMN status VARCHAR(50) DEFAULT 'in_process'`);
+    } catch (e) {}
 };
 
 const createInProcessFranchise = async (data, addedBy, deviceId) => {
@@ -36,8 +42,8 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
             inquiry_id, partner_name, partner_mobile, partner_email,
             city, district, state, franchise_category,
             tentative_opening_date, final_opening_date, bdm_area,
-            inquiry_manager_id, store_name, added_by, device_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            inquiry_manager_id, store_name, added_by, device_id, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'in_process')
     `;
     const [result] = await db.execute(query, [
         data.inquiryId || null,
@@ -75,6 +81,23 @@ const getAllInProcessFranchises = async () => {
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
+        WHERE ipf.status = 'in_process'
+        ORDER BY ipf.timestamp DESC
+    `;
+    const [results] = await db.execute(query);
+    return results;
+};
+
+const getAllCompletedFranchises = async () => {
+    const query = `
+        SELECT 
+            ipf.*,
+            u_mgr.name AS inquiry_manager_name,
+            u_add.name AS added_by_name
+        FROM in_process_franchises ipf
+        LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
+        LEFT JOIN users u_add ON ipf.added_by = u_add.id
+        WHERE ipf.status = 'completed'
         ORDER BY ipf.timestamp DESC
     `;
     const [results] = await db.execute(query);
@@ -141,6 +164,7 @@ module.exports = {
     createInProcessFranchiseTable,
     createInProcessFranchise,
     getAllInProcessFranchises,
+    getAllCompletedFranchises,
     updateInProcessFranchise,
     deleteInProcessFranchise,
     getInProcessFranchiseById

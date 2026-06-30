@@ -88,3 +88,35 @@ export const submitFranchiseMarketingForm = async (id, formData) => {
     });
 };
 
+export const submitFranchiseInstallationForm = async (id, data) => {
+    return apiClient.post(`/in-process-franchises/${id}/installation`, data);
+};
+
+export const submitFranchiseSwipeMachineForm = async (id, data) => {
+    return apiClient.post(`/in-process-franchises/${id}/swipe-machine`, data);
+};
+
+export const submitFranchiseTrainingForm = async (id, modules) => {
+    return apiClient.post(`/in-process-franchises/${id}/training`, { modules });
+};
+
+export const submitFranchiseDepositStockForm = async (id, data) => {
+    return apiClient.post(`/in-process-franchises/${id}/deposit-stock`, data);
+};
+
+export const getAllCompletedFranchises = async () => {
+    return apiClient.get("/in-process-franchises/completed/all");
+};
+
+export const getAllDepositStocks = async () => {
+    return apiClient.get("/in-process-franchises/deposit-stocks/all");
+};
+
+export const approveDepositStockForm = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/deposit-stock/approve`);
+};
+
+export const rejectDepositStockForm = async (id, reason) => {
+    return apiClient.post(`/in-process-franchises/${id}/deposit-stock/reject`, { reason });
+};
+

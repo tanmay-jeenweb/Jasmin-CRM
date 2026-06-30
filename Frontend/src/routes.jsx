@@ -10,6 +10,7 @@ import CreateInquiry from "./pages/user/CreateInquiry";
 import InProcessFranchise from "./pages/user/InProcessFranchise";
 import CreateInProcessFranchise from "./pages/user/CreateInProcessFranchise";
 import InProcessFranchiseDetails from "./pages/user/InProcessFranchiseDetails";
+import Franchise from "./pages/user/Franchise";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
@@ -21,6 +22,7 @@ import DocumentMaster from "./pages/admin/DocumentMaster";
 import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
 import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
+import DepositStockApproval from "./pages/admin/DepositStockApproval";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -62,6 +64,10 @@ export default function AppRoutes() {
                     element={<InProcessFranchise />}
                 />
                 <Route
+                    path="/user/franchises"
+                    element={<Franchise />}
+                />
+                <Route
                     path="/user/in-process-franchises/create"
                     element={<CreateInProcessFranchise />}
                 />
@@ -83,6 +89,10 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/store-details-approval"
                     element={<StoreDetailsApproval />}
+                />
+                <Route
+                    path="/admin/deposit-stock-approval"
+                    element={<DepositStockApproval />}
                 />
             </Route>
 

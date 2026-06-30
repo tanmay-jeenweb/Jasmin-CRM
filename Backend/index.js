@@ -45,6 +45,10 @@ const { createStorePlanningTable } = require("./models/storePlanningModel.js");
 const { createStoreAmbianceTable } = require("./models/storeAmbianceModel.js");
 const { createFranchiseTeamTable } = require("./models/franchiseTeamModel.js");
 const { createFranchiseMarketingTable } = require("./models/franchiseMarketingModel.js");
+const { createFranchiseInstallationTable } = require("./models/franchiseInstallationModel.js");
+const { createFranchiseSwipeMachineTable } = require("./models/franchiseSwipeMachineModel.js");
+const { createFranchiseTrainingTable } = require("./models/franchiseTrainingModel.js");
+const { createFranchiseDepositStockTable } = require("./models/franchiseDepositStockModel.js");
 const { createCallOutcomesTable } = require("./models/callOutcomeModel.js");
 
 
@@ -138,6 +142,10 @@ const startServer = async () => {
         await createStoreAmbianceTable();
         await createFranchiseTeamTable();
         await createFranchiseMarketingTable();
+        await createFranchiseInstallationTable();
+        await createFranchiseSwipeMachineTable();
+        await createFranchiseTrainingTable();
+        await createFranchiseDepositStockTable();
         await createCallOutcomesTable();
 
         console.log("All database tables are initialized and ready.");

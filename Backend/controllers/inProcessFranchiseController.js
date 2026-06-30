@@ -1,6 +1,7 @@
 const {
     createInProcessFranchise,
     getAllInProcessFranchises,
+    getAllCompletedFranchises,
     updateInProcessFranchise,
     deleteInProcessFranchise,
     getInProcessFranchiseById
@@ -37,6 +38,25 @@ const {
     getFranchiseMarketingByFranchiseId,
     upsertFranchiseMarketing
 } = require('../models/franchiseMarketingModel.js');
+const {
+    getFranchiseInstallationByFranchiseId,
+    upsertFranchiseInstallation
+} = require('../models/franchiseInstallationModel.js');
+const {
+    getFranchiseSwipeMachineByFranchiseId,
+    upsertFranchiseSwipeMachine
+} = require('../models/franchiseSwipeMachineModel.js');
+const {
+    getFranchiseTrainingByFranchiseId,
+    saveFranchiseTraining
+} = require('../models/franchiseTrainingModel.js');
+const {
+    getFranchiseDepositStockByFranchiseId,
+    upsertFranchiseDepositStock,
+    approveFranchiseDepositStock,
+    rejectFranchiseDepositStock,
+    getAllDepositStocks
+} = require('../models/franchiseDepositStockModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -241,6 +261,10 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const storeAmbiance = await getStoreAmbianceByFranchiseId(id);
         const franchiseTeam = await getFranchiseTeamByFranchiseId(id);
         const franchiseMarketing = await getFranchiseMarketingByFranchiseId(id);
+        const franchiseInstallation = await getFranchiseInstallationByFranchiseId(id);
+        const franchiseSwipeMachine = await getFranchiseSwipeMachineByFranchiseId(id);
+        const franchiseTraining = await getFranchiseTrainingByFranchiseId(id);
+        const franchiseDepositStock = await getFranchiseDepositStockByFranchiseId(id);
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',
@@ -252,7 +276,11 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 storePlanning,
                 storeAmbiance,
                 franchiseTeam,
-                franchiseMarketing
+                franchiseMarketing,
+                franchiseInstallation,
+                franchiseSwipeMachine,
+                franchiseTraining,
+                franchiseDepositStock
             }
         });
     } catch (error) {
@@ -903,6 +931,334 @@ const saveFranchiseMarketingController = async (req, res) => {
     }
 };
 
+const saveFranchiseInstallationController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { apx, firewallDevice, priceList, internetConnection, installationDate, remarks } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseInstallationByFranchiseId(id);
+
+        const data = {
+            apx: apx === true || apx === 'true' || apx === 1 || apx === '1',
+            firewallDevice: firewallDevice === true || firewallDevice === 'true' || firewallDevice === 1 || firewallDevice === '1',
+            priceList: priceList === true || priceList === 'true' || priceList === 1 || priceList === '1',
+            internetConnection: internetConnection === true || internetConnection === 'true' || internetConnection === 1 || internetConnection === '1',
+            installationDate: installationDate || null,
+            remarks: remarks ? remarks.trim() : null,
+            submittedBy
+        };
+
+        await upsertFranchiseInstallation(id, data);
+
+        const updated = await getFranchiseInstallationByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Installation',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Installation details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Franchise Installation details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveFranchiseSwipeMachineController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { agreementPhotoReceiptDate, qrBharatPay, qrHdfc, brands } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseSwipeMachineByFranchiseId(id);
+
+        const data = {
+            agreementPhotoReceiptDate: agreementPhotoReceiptDate || null,
+            qrBharatPay: qrBharatPay === true || qrBharatPay === 'true' || qrBharatPay === 1 || qrBharatPay === '1',
+            qrHdfc: qrHdfc === true || qrHdfc === 'true' || qrHdfc === 1 || qrHdfc === '1',
+            brands: Array.isArray(brands) ? brands : [],
+            submittedBy
+        };
+
+        await upsertFranchiseSwipeMachine(id, data);
+
+        const updated = await getFranchiseSwipeMachineByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Swipe Machine',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Swipe Machine details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Swipe Machine details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveFranchiseTrainingController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { modules } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseTrainingByFranchiseId(id);
+
+        const modulesData = Array.isArray(modules) ? modules : [];
+
+        await saveFranchiseTraining(id, modulesData, submittedBy);
+
+        const updated = await getFranchiseTrainingByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Training',
+            'updated',
+            existing,
+            modulesData
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Training details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Franchise Training details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveFranchiseDepositStockController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            poCreationDate,
+            poNumber,
+            expectedOpeningDate,
+            chkStock,
+            chkBillPaper,
+            chkBag,
+            chkBlueChit,
+            chkStamp,
+            chkSwipeMachine,
+            chkQrCode,
+            stockReceivedApx,
+            stockReceivedApxDate,
+            status
+        } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseDepositStockByFranchiseId(id);
+
+        const data = {
+            poCreationDate: poCreationDate || null,
+            poNumber: poNumber || null,
+            expectedOpeningDate: expectedOpeningDate || null,
+            chkStock: chkStock === true || chkStock === 'true' || chkStock === 1 || chkStock === '1',
+            chkBillPaper: chkBillPaper === true || chkBillPaper === 'true' || chkBillPaper === 1 || chkBillPaper === '1',
+            chkBag: chkBag === true || chkBag === 'true' || chkBag === 1 || chkBag === '1',
+            chkBlueChit: chkBlueChit === true || chkBlueChit === 'true' || chkBlueChit === 1 || chkBlueChit === '1',
+            chkStamp: chkStamp === true || chkStamp === 'true' || chkStamp === 1 || chkStamp === '1',
+            chkSwipeMachine: chkSwipeMachine === true || chkSwipeMachine === 'true' || chkSwipeMachine === 1 || chkSwipeMachine === '1',
+            chkQrCode: chkQrCode === true || chkQrCode === 'true' || chkQrCode === 1 || chkQrCode === '1',
+            stockReceivedApx: stockReceivedApx === true || stockReceivedApx === 'true' || stockReceivedApx === 1 || stockReceivedApx === '1',
+            stockReceivedApxDate: stockReceivedApxDate || null,
+            status: status || null,
+            submittedBy
+        };
+
+        await upsertFranchiseDepositStock(id, data);
+
+        const updated = await getFranchiseDepositStockByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Deposit Stock',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Deposit & Stock details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Franchise Deposit & Stock details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const getAllCompletedFranchisesController = async (req, res) => {
+    try {
+        const franchises = await getAllCompletedFranchises();
+        res.status(200).json({
+            success: true,
+            message: 'Completed Franchises retrieved successfully',
+            data: franchises
+        });
+    } catch (error) {
+        console.error('Error fetching completed franchises:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const getAllDepositStocksController = async (req, res) => {
+    try {
+        const submissions = await getAllDepositStocks();
+        res.status(200).json({
+            success: true,
+            message: 'Deposit & Stock submissions retrieved successfully',
+            data: submissions
+        });
+    } catch (error) {
+        console.error('Error fetching Deposit & Stock submissions:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const approveFranchiseDepositStockController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const approvedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existing = await getFranchiseDepositStockByFranchiseId(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Deposit & Stock record not found' });
+        }
+
+        await approveFranchiseDepositStock(id, approvedBy);
+
+        // Create audit log
+        await createAuditLog(
+            approvedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Deposit Stock Approval',
+            'approved',
+            existing,
+            { ...existing, status: 'approved', approved_by: approvedBy }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Deposit & Stock details approved. Franchise moved to Franchise Module!'
+        });
+    } catch (error) {
+        console.error('Error approving Franchise Deposit & Stock:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const rejectFranchiseDepositStockController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body;
+        const rejectedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ success: false, message: 'Rejection reason is required' });
+        }
+
+        const existing = await getFranchiseDepositStockByFranchiseId(id);
+        if (!existing) {
+            return res.status(404).json({ success: false, message: 'Deposit & Stock record not found' });
+        }
+
+        await rejectFranchiseDepositStock(id, reason.trim(), rejectedBy);
+
+        // Create audit log
+        await createAuditLog(
+            rejectedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Deposit Stock Rejection',
+            'rejected',
+            existing,
+            { ...existing, status: 'rejected', rejection_reason: reason.trim() }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Deposit & Stock details rejected.'
+        });
+    } catch (error) {
+        console.error('Error rejecting Franchise Deposit & Stock:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -918,5 +1274,13 @@ module.exports = {
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,
-    saveFranchiseMarketingController
+    saveFranchiseMarketingController,
+    saveFranchiseInstallationController,
+    saveFranchiseSwipeMachineController,
+    saveFranchiseTrainingController,
+    saveFranchiseDepositStockController,
+    getAllCompletedFranchisesController,
+    getAllDepositStocksController,
+    approveFranchiseDepositStockController,
+    rejectFranchiseDepositStockController
 };
