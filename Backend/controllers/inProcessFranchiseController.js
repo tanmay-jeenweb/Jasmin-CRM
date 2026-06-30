@@ -29,6 +29,14 @@ const {
     getStoreAmbianceByFranchiseId,
     upsertStoreAmbiance
 } = require('../models/storeAmbianceModel.js');
+const {
+    getFranchiseTeamByFranchiseId,
+    saveFranchiseTeam
+} = require('../models/franchiseTeamModel.js');
+const {
+    getFranchiseMarketingByFranchiseId,
+    upsertFranchiseMarketing
+} = require('../models/franchiseMarketingModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -231,6 +239,8 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const docPrep = await getDocPrepByFranchiseId(id);
         const storePlanning = await getStorePlanningByFranchiseId(id);
         const storeAmbiance = await getStoreAmbianceByFranchiseId(id);
+        const franchiseTeam = await getFranchiseTeamByFranchiseId(id);
+        const franchiseMarketing = await getFranchiseMarketingByFranchiseId(id);
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',
@@ -240,7 +250,9 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 agreementGst,
                 docPrep,
                 storePlanning,
-                storeAmbiance
+                storeAmbiance,
+                franchiseTeam,
+                franchiseMarketing
             }
         });
     } catch (error) {
@@ -739,6 +751,134 @@ const saveStoreAmbianceController = async (req, res) => {
     }
 };
 
+const saveFranchiseTeamController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { roles } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const beforeData = await getFranchiseTeamByFranchiseId(id);
+
+        await saveFranchiseTeam(id, roles, submittedBy);
+
+        const afterData = await getFranchiseTeamByFranchiseId(id);
+
+        await createAuditLog(
+            req.user.id,
+            req.user.name || req.user.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Team',
+            beforeData && beforeData.some(r => r.is_selected) ? 'updated' : 'created',
+            beforeData,
+            afterData
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Team saved successfully',
+            data: afterData
+        });
+    } catch (error) {
+        console.error('Error saving franchise team:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveFranchiseMarketingController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Get files
+        const comingSoonPostFile = req.files && req.files.find(f => f.fieldname === 'comingSoonPost');
+        const openingPhotoFile = req.files && req.files.find(f => f.fieldname === 'openingPhoto');
+        const thankYouPostFile = req.files && req.files.find(f => f.fieldname === 'thankYouPost');
+
+        const existing = await getFranchiseMarketingByFranchiseId(id);
+
+        let comingSoonPostPath = undefined;
+        let openingPhotoPath = undefined;
+        let thankYouPostPath = undefined;
+
+        if (comingSoonPostFile) comingSoonPostPath = comingSoonPostFile.filename;
+        if (openingPhotoFile) openingPhotoPath = openingPhotoFile.filename;
+        if (thankYouPostFile) thankYouPostPath = thankYouPostFile.filename;
+
+        // Parse checkboxes
+        const invitationCard = req.body.invitationCard === 'true' || req.body.invitationCard === '1';
+        const visitingCard = req.body.visitingCard === 'true' || req.body.visitingCard === '1';
+        const grandOpening = req.body.grandOpening === 'true' || req.body.grandOpening === '1';
+        
+        const offerPamphlet = req.body.offerPamphlet === 'true' || req.body.offerPamphlet === '1';
+        const rickshawBanner = req.body.rickshawBanner === 'true' || req.body.rickshawBanner === '1';
+        const hoarding = req.body.hoarding === 'true' || req.body.hoarding === '1';
+        const newspaperAdd = req.body.newspaperAdd === 'true' || req.body.newspaperAdd === '1';
+        const cinemaSlide = req.body.cinemaSlide === 'true' || req.body.cinemaSlide === '1';
+        const reels = req.body.reels === 'true' || req.body.reels === '1';
+        const fmRadio = req.body.fmRadio === 'true' || req.body.fmRadio === '1';
+        const socialMediaPostBoosting = req.body.socialMediaPostBoosting === 'true' || req.body.socialMediaPostBoosting === '1';
+
+        const data = {
+            comingSoonPost: comingSoonPostPath,
+            openingPhoto: openingPhotoPath,
+            thankYouPost: thankYouPostPath,
+            invitationCard,
+            visitingCard,
+            grandOpening,
+            offerPamphlet,
+            rickshawBanner,
+            hoarding,
+            newspaperAdd,
+            cinemaSlide,
+            reels,
+            fmRadio,
+            socialMediaPostBoosting,
+            openingCityAddress: req.body.openingCityAddress ? req.body.openingCityAddress.trim() : null,
+            googleMyBusinessLink: req.body.googleMyBusinessLink ? req.body.googleMyBusinessLink.trim() : null,
+            facebookBusinessPageLink: req.body.facebookBusinessPageLink ? req.body.facebookBusinessPageLink.trim() : null,
+            submittedBy
+        };
+
+        await upsertFranchiseMarketing(id, data);
+
+        const updated = await getFranchiseMarketingByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Marketing',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Marketing details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Franchise Marketing details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -752,5 +892,7 @@ module.exports = {
     saveAgreementGstController,
     saveDocPrepController,
     saveStorePlanningController,
-    saveStoreAmbianceController
+    saveStoreAmbianceController,
+    saveFranchiseTeamController,
+    saveFranchiseMarketingController
 };

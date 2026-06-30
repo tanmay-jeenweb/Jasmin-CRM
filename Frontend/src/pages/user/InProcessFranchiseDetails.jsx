@@ -16,6 +16,8 @@ import AgreementGstForm from "./components/AgreementGstForm";
 import DocPrepForm from "./components/DocPrepForm";
 import StorePlanningForm from "./components/StorePlanningForm";
 import StoreAmbianceForm from "./components/StoreAmbianceForm";
+import FranchiseTeamForm from "./components/FranchiseTeamForm";
+import FranchiseMarketingForm from "./components/FranchiseMarketingForm";
 
 export default function InProcessFranchiseDetails() {
   const { id } = useParams();
@@ -226,6 +228,7 @@ export default function InProcessFranchiseDetails() {
   const handleStageClick = (stageId) => {
     if (stageId === "store-operations") {
       setActiveStage(stageId);
+      setOpenAccordion("find-store");
       return;
     }
 
@@ -235,6 +238,11 @@ export default function InProcessFranchiseDetails() {
     }
 
     setActiveStage(stageId);
+    if (stageId === "teams-marketing") {
+      setOpenAccordion("team");
+    } else {
+      setOpenAccordion(null);
+    }
   };
 
   if (loading) {
@@ -766,8 +774,97 @@ export default function InProcessFranchiseDetails() {
           </div>
         )}
 
+        {/* Tab Content: Teams and Marketing Stage */}
+        {activeStage === "teams-marketing" && (
+          <div className="space-y-4">
+            {/* Accordion 1: Team */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "team" ? null : "team")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 20c-2.302 0-4.474-.685-6.294-1.859A4.125 4.125 0 0 1 7.5 14.25c1.472 0 2.793.774 3.537 1.95M20.25 8.253a3.75 3.75 0 1 0-3.75-3.75 3.75 3.75 0 0 0 3.75 3.75ZM9 10.5a3.75 3.75 0 1 0-3.75-3.75A3.75 3.75 0 0 0 9 10.5Z" />
+                  </svg>
+                  Team
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseTeam && franchise.franchiseTeam.some(t => t.is_selected) && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "team" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "team" && (
+                <div className="p-6">
+                  <FranchiseTeamForm
+                    franchiseId={id}
+                    franchiseTeamData={franchise.franchiseTeam}
+                    reloadFranchiseData={reloadFranchiseData}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 2: Marketing */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "marketing" ? null : "marketing")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                  </svg>
+                  Marketing
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseMarketing && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "marketing" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "marketing" && (
+                <div className="p-6">
+                  <FranchiseMarketingForm
+                    franchiseId={id}
+                    franchiseMarketingData={franchise.franchiseMarketing}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tab Content: Other Unlocked Stages */}
-        {activeStage !== "store-operations" && (
+        {activeStage !== "store-operations" && activeStage !== "teams-marketing" && (
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-8 text-center max-w-2xl mx-auto my-12">
             <div className="w-16 h-16 bg-[#f5f3ff] text-[#6804a1] rounded-full flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
