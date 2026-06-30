@@ -14,7 +14,15 @@ const {
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,
-    saveFranchiseMarketingController
+    saveFranchiseMarketingController,
+    saveFranchiseInstallationController,
+    saveFranchiseSwipeMachineController,
+    saveFranchiseTrainingController,
+    saveFranchiseDepositStockController,
+    getAllCompletedFranchisesController,
+    getAllDepositStocksController,
+    approveFranchiseDepositStockController,
+    rejectFranchiseDepositStockController
 } = require('../controllers/inProcessFranchiseController.js');
 const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
@@ -23,14 +31,16 @@ const router = express.Router();
 
 router.post('/add', verifyToken, addInProcessFranchiseController);
 router.get('/all', verifyToken, getAllInProcessFranchisesController);
+router.get('/completed/all', verifyToken, getAllCompletedFranchisesController);
 router.get('/find-stores/all', verifyToken, verifyAdmin, getAllFindStoresController);
+router.get('/deposit-stocks/all', verifyToken, verifyAdmin, getAllDepositStocksController);
 router.get('/:id', verifyToken, getInProcessFranchiseByIdController);
 router.put('/update/:id', verifyToken, updateInProcessFranchiseController);
 router.delete('/delete/:id', verifyToken, deleteInProcessFranchiseController);
 
 // Find Store stage routes
 router.post('/:id/find-store', verifyToken, upload.fields([
-    { name: 'storePhoto', maxCount: 10 },
+    { name: 'storePhoto', maxCount: 1 },
     { name: 'authorityCertificate', maxCount: 1 }
 ]), upsertFindStoreController);
 
@@ -54,6 +64,20 @@ router.post('/:id/team', verifyToken, saveFranchiseTeamController);
 
 // Marketing route
 router.post('/:id/marketing', verifyToken, upload.any(), saveFranchiseMarketingController);
+
+// Installation route
+router.post('/:id/installation', verifyToken, saveFranchiseInstallationController);
+
+// Swipe Machine route
+router.post('/:id/swipe-machine', verifyToken, saveFranchiseSwipeMachineController);
+
+// Training route
+router.post('/:id/training', verifyToken, saveFranchiseTrainingController);
+
+// Deposit & Stock route
+router.post('/:id/deposit-stock', verifyToken, saveFranchiseDepositStockController);
+router.post('/:id/deposit-stock/approve', verifyToken, verifyAdmin, approveFranchiseDepositStockController);
+router.post('/:id/deposit-stock/reject', verifyToken, verifyAdmin, rejectFranchiseDepositStockController);
 
 module.exports = router;
 

@@ -431,11 +431,27 @@ export default function Navbar() {
                                     navigate("/user/in-process-franchises");
                                 }}
                                 className={`flex items-center justify-between w-48 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                    location.pathname === "/user/in-process-franchises" ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                    location.pathname.startsWith("/user/in-process-franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
                                 }`}
                             >
                                 <span className="flex items-center gap-2.5 truncate mx-auto">
                                     <span className="font-semibold text-white truncate">In Process Franchise</span>
+                                </span>
+                            </button>
+                        </div>
+
+                        {/* Franchise Tab */}
+                        <div className="relative">
+                            <button
+                                onClick={() => {
+                                    navigate("/user/franchises");
+                                }}
+                                className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                    location.pathname.startsWith("/user/franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                }`}
+                            >
+                                <span className="flex items-center gap-2.5 truncate mx-auto">
+                                    <span className="font-semibold text-white truncate">Franchise</span>
                                 </span>
                             </button>
                         </div>
@@ -446,7 +462,7 @@ export default function Navbar() {
                                 <button
                                     onClick={() => setIsApprovalsOpen(!isApprovalsOpen)}
                                     className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                        isApprovalsOpen || location.pathname.startsWith("/admin/store-details-approval") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                        isApprovalsOpen || location.pathname.startsWith("/admin/store-details-approval") || location.pathname.startsWith("/admin/deposit-stock-approval") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
                                     }`}
                                 >
                                     <span className="flex items-center gap-2.5 truncate mx-auto">
@@ -488,6 +504,31 @@ export default function Navbar() {
                                                         location.pathname === "/admin/store-details-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
                                                     }`}>
                                                         Store Details Approval
+                                                    </p>
+                                                </div>
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/deposit-stock-approval");
+                                                    setIsApprovalsOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/deposit-stock-approval"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/deposit-stock-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
+                                                }`}>
+                                                    <i className="fa-solid fa-file-invoice text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
+                                                        location.pathname === "/admin/deposit-stock-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                                    }`}>
+                                                        Deposit & Stock Approval
                                                     </p>
                                                 </div>
                                             </button>
