@@ -57,6 +57,14 @@ const {
     rejectFranchiseDepositStock,
     getAllDepositStocks
 } = require('../models/franchiseDepositStockModel.js');
+const {
+    getFranchiseMappingsByFranchiseId,
+    saveFranchiseMappings
+} = require('../models/franchiseMappingModel.js');
+const {
+    getFranchiseInsuranceByFranchiseId,
+    upsertFranchiseInsurance
+} = require('../models/franchiseInsuranceModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -267,6 +275,8 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const franchiseSwipeMachine = isApproved ? await getFranchiseSwipeMachineByFranchiseId(id) : null;
         const franchiseTraining = isApproved ? await getFranchiseTrainingByFranchiseId(id) : [];
         const franchiseDepositStock = isApproved ? await getFranchiseDepositStockByFranchiseId(id) : null;
+        const franchiseMapping = isApproved ? await getFranchiseMappingsByFranchiseId(id) : [];
+        const franchiseInsurance = isApproved ? await getFranchiseInsuranceByFranchiseId(id) : null;
 
         res.status(200).json({
             success: true,
@@ -283,7 +293,9 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 franchiseInstallation,
                 franchiseSwipeMachine,
                 franchiseTraining,
-                franchiseDepositStock
+                franchiseDepositStock,
+                franchiseMapping,
+                franchiseInsurance
             }
         });
     } catch (error) {
@@ -1262,6 +1274,110 @@ const rejectFranchiseDepositStockController = async (req, res) => {
     }
 };
 
+const saveFranchiseMappingController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { mappings } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseMappingsByFranchiseId(id);
+        const mappingsData = Array.isArray(mappings) ? mappings : [];
+
+        await saveFranchiseMappings(id, mappingsData, submittedBy);
+
+        const updated = await getFranchiseMappingsByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Mapping',
+            'updated',
+            existing,
+            mappingsData
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise Brand/Bank Mapping saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Franchise Mapping details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveFranchiseInsuranceController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { gstLocation, startDate, endDate, amount } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const imageFile = req.files && req.files.find(f => f.fieldname === 'imageFile');
+        const existing = await getFranchiseInsuranceByFranchiseId(id);
+
+        let imagePath = undefined;
+        if (imageFile) {
+            imagePath = imageFile.filename;
+        }
+
+        const data = {
+            gstLocation: gstLocation || null,
+            startDate: startDate || null,
+            endDate: endDate || null,
+            amount: amount ? parseFloat(amount) : null,
+            imagePath,
+            submittedBy
+        };
+
+        await upsertFranchiseInsurance(id, data);
+
+        const updated = await getFranchiseInsuranceByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Insurance',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Insurance details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Insurance details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -1282,6 +1398,8 @@ module.exports = {
     saveFranchiseSwipeMachineController,
     saveFranchiseTrainingController,
     saveFranchiseDepositStockController,
+    saveFranchiseMappingController,
+    saveFranchiseInsuranceController,
     getAllCompletedFranchisesController,
     getAllDepositStocksController,
     approveFranchiseDepositStockController,

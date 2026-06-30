@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { getAllDepositStocks, approveDepositStockForm, rejectDepositStockForm } from "../../api/inProcessFranchiseApi";
 import toast from "react-hot-toast";
+import { usePermission } from "../../context/PermissionContext";
 
 export default function DepositStockApproval() {
+  const { hasPermission } = usePermission();
+  const canApprove = hasPermission("deposit_stock_approval", "write");
+
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("pending"); // pending, approved, rejected, all
@@ -275,7 +279,7 @@ export default function DepositStockApproval() {
                 </div>
 
                 {/* Approve/Reject Buttons */}
-                {sub.status === "pending" && (
+                {sub.status === "pending" && canApprove && (
                   <div className="flex flex-row md:flex-col gap-2 shrink-0 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-slate-100 ml-auto md:ml-0">
                     <button
                       onClick={() => handleApprove(sub.in_process_franchise_id)}

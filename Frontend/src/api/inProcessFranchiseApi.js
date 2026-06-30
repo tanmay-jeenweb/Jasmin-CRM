@@ -104,6 +104,18 @@ export const submitFranchiseDepositStockForm = async (id, data) => {
     return apiClient.post(`/in-process-franchises/${id}/deposit-stock`, data);
 };
 
+export const submitFranchiseMappingForm = async (id, mappings) => {
+    return apiClient.post(`/in-process-franchises/${id}/mapping`, { mappings });
+};
+
+export const submitFranchiseInsuranceForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/insurance`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
 export const getAllCompletedFranchises = async () => {
     return apiClient.get("/in-process-franchises/completed/all");
 };

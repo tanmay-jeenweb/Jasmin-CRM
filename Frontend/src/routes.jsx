@@ -21,6 +21,8 @@ import CompanyBrandMaster from "./pages/admin/CompanyBrandMaster";
 import DocumentMaster from "./pages/admin/DocumentMaster";
 import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
 import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
+import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
+import BankMaster from "./pages/admin/BankMaster";
 import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
 import DepositStockApproval from "./pages/admin/DepositStockApproval";
 import Profile from "./pages/Profile";
@@ -86,10 +88,16 @@ export default function AppRoutes() {
                     path="/admin/dashboard"
                     element={<AdminDashboard />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="store_details_approval" requiredAction="read" />}>
                 <Route
                     path="/admin/store-details-approval"
                     element={<StoreDetailsApproval />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="deposit_stock_approval" requiredAction="read" />}>
                 <Route
                     path="/admin/deposit-stock-approval"
                     element={<DepositStockApproval />}
@@ -156,6 +164,20 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/call-outcomes"
                     element={<CallOutcomeMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="mobile_brand_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/mobile-brands"
+                    element={<MobileBrandMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="bank_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/banks"
+                    element={<BankMaster />}
                 />
             </Route>
 

@@ -9,6 +9,10 @@ const MASTERS = [
     { key: 'document_master', label: 'Document Master' },
     { key: 'team_role_master', label: 'Team Role Master' },
     { key: 'call_outcome_master', label: 'Call Outcome Master' },
+    { key: 'mobile_brand_master', label: 'Mobile Brand Master' },
+    { key: 'bank_master', label: 'Bank Master' },
+    { key: 'store_details_approval', label: 'Store Details Approval' },
+    { key: 'deposit_stock_approval', label: 'Deposit & Stock Approval' },
 ];
 
 // ─── Table creation ──────────────────────────────────────────────────────────

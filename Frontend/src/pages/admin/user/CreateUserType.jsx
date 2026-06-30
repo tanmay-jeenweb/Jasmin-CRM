@@ -12,10 +12,14 @@ const MASTERS = [
   { key: "document_master",       label: "Document Master" },
   { key: "team_role_master",      label: "Team Role Master" },
   { key: "call_outcome_master",   label: "Call Outcome Master" },
+  { key: "mobile_brand_master",   label: "Mobile Brand Master" },
+  { key: "bank_master",           label: "Bank Master" },
+  { key: "store_details_approval", label: "Store Details Approval" },
+  { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
 ];
 
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
-const PERM_LABELS = { canRead: "Read", canWrite: "Write", canUpdate: "Update", canDelete: "Delete" };
+const PERM_LABELS = { canRead: "Read", canWrite: "Write / Approval", canUpdate: "Update", canDelete: "Delete" };
 const PERM_COLORS = {
   canRead:   { bg: "#f3e8ff", border: "#d8b4fe", text: "#6804a1", check: "#6804a1" },
   canWrite:  { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d", check: "#16a34a" },
@@ -51,12 +55,20 @@ export default function CreateUserType() {
 
   // Toggle entire row (all perms for one master)
   const toggleRow = (masterKey) => {
+    const isApprovalRow = masterKey.endsWith("_approval");
     const row = permissions.find((p) => p.masterName === masterKey);
-    const allChecked = PERMS.every((perm) => row[perm]);
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const allChecked = applicablePerms.every((perm) => row[perm]);
     setPermissions((prev) =>
       prev.map((p) =>
         p.masterName === masterKey
-          ? { ...p, canRead: !allChecked, canWrite: !allChecked, canUpdate: !allChecked, canDelete: !allChecked }
+          ? {
+              ...p,
+              canRead: !allChecked,
+              canWrite: !allChecked,
+              canUpdate: isApprovalRow ? false : !allChecked,
+              canDelete: isApprovalRow ? false : !allChecked,
+            }
           : p
       )
     );
@@ -65,30 +77,56 @@ export default function CreateUserType() {
   // Toggle entire column (one perm across all masters)
   const toggleColumn = (perm) => {
     const allChecked = permissions.every((p) => p[perm]);
-    setPermissions((prev) => prev.map((p) => ({ ...p, [perm]: !allChecked })));
+    setPermissions((prev) => prev.map((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+        return { ...p, [perm]: false };
+      }
+      return { ...p, [perm]: !allChecked };
+    }));
   };
 
   // Select / deselect all
   const toggleAll = () => {
-    const allChecked = permissions.every((p) => PERMS.every((perm) => p[perm]));
+    const allChecked = permissions.every((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+      return applicablePerms.every((perm) => p[perm]);
+    });
     setPermissions((prev) =>
-      prev.map((p) => ({
-        ...p,
-        canRead: !allChecked,
-        canWrite: !allChecked,
-        canUpdate: !allChecked,
-        canDelete: !allChecked,
-      }))
+      prev.map((p) => {
+        const isApprovalRow = p.masterName.endsWith("_approval");
+        return {
+          ...p,
+          canRead: !allChecked,
+          canWrite: !allChecked,
+          canUpdate: isApprovalRow ? false : !allChecked,
+          canDelete: isApprovalRow ? false : !allChecked,
+        };
+      })
     );
   };
 
   const isRowAll = (masterKey) => {
+    const isApprovalRow = masterKey.endsWith("_approval");
     const row = permissions.find((p) => p.masterName === masterKey);
-    return PERMS.every((perm) => row[perm]);
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    return applicablePerms.every((perm) => row[perm]);
   };
 
-  const isColAll = (perm) => permissions.every((p) => p[perm]);
-  const isAllAll = () => permissions.every((p) => PERMS.every((perm) => p[perm]));
+  const isColAll = (perm) => permissions.every((p) => {
+    const isApprovalRow = p.masterName.endsWith("_approval");
+    if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+      return true; // treat as matched so it doesn't block "all"
+    }
+    return p[perm];
+  });
+  
+  const isAllAll = () => permissions.every((p) => {
+    const isApprovalRow = p.masterName.endsWith("_approval");
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    return applicablePerms.every((perm) => p[perm]);
+  });
 
   const handleAddType = async (event) => {
     event.preventDefault();
@@ -257,6 +295,16 @@ export default function CreateUserType() {
                         {PERMS.map((perm) => {
                           const c = PERM_COLORS[perm];
                           const checked = row[perm];
+                          const isApprovalRow = master.key.endsWith("_approval");
+
+                          if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+                            return (
+                              <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
+                                —
+                              </td>
+                            );
+                          }
+
                           return (
                             <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9" }}>
                               <div
