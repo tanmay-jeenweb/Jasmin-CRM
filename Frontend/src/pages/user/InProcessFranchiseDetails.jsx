@@ -618,173 +618,181 @@ export default function InProcessFranchiseDetails() {
             </div>
 
             {/* Accordion 2: Agreement and GST */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                  Agreement and GST
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.agreementGst && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "agreement-gst" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </button>
+            {isUnlocked && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")}
+                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Agreement and GST
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.agreementGst && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "agreement-gst" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </button>
 
-              {openAccordion === "agreement-gst" && (
-                <div className="p-6">
-                  <AgreementGstForm
-                    franchiseId={id}
-                    agreementGstData={franchise.agreementGst}
-                    masterDocs={masterDocs}
-                    reloadFranchiseData={reloadFranchiseData}
-                    getFileUrl={getFileUrl}
-                  />
-                </div>
-              )}
-            </div>
+                {openAccordion === "agreement-gst" && (
+                  <div className="p-6">
+                    <AgreementGstForm
+                      franchiseId={id}
+                      agreementGstData={franchise.agreementGst}
+                      masterDocs={masterDocs}
+                      reloadFranchiseData={reloadFranchiseData}
+                      getFileUrl={getFileUrl}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Accordion 3: Document Preparation */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                  Document Preparation
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.docPrep && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-prep" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </button>
+            {isUnlocked && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")}
+                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Document Preparation
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.docPrep && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-prep" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </button>
 
-              {openAccordion === "doc-prep" && (
-                <div className="p-6">
-                  <DocPrepForm
-                    franchiseId={id}
-                    docPrepData={franchise.docPrep}
-                    reloadFranchiseData={reloadFranchiseData}
-                    getFileUrl={getFileUrl}
-                  />
-                </div>
-              )}
-            </div>
+                {openAccordion === "doc-prep" && (
+                  <div className="p-6">
+                    <DocPrepForm
+                      franchiseId={id}
+                      docPrepData={franchise.docPrep}
+                      reloadFranchiseData={reloadFranchiseData}
+                      getFileUrl={getFileUrl}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Accordion 4: Store Planning */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                  Store Planning
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.storePlanning && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-planning" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </button>
+            {isUnlocked && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")}
+                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Store Planning
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.storePlanning && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-planning" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </button>
 
-              {openAccordion === "store-planning" && (
-                <div className="p-6">
-                  <StorePlanningForm
-                    franchiseId={id}
-                    storePlanningData={franchise.storePlanning}
-                    reloadFranchiseData={reloadFranchiseData}
-                    getFileUrl={getFileUrl}
-                  />
-                </div>
-              )}
-            </div>
+                {openAccordion === "store-planning" && (
+                  <div className="p-6">
+                    <StorePlanningForm
+                      franchiseId={id}
+                      storePlanningData={franchise.storePlanning}
+                      reloadFranchiseData={reloadFranchiseData}
+                      getFileUrl={getFileUrl}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Accordion 5: Store ambiance */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                  Store ambiance
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.storeAmbiance && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-ambiance" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </button>
+            {isUnlocked && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")}
+                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Store ambiance
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.storeAmbiance && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-ambiance" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </button>
 
-              {openAccordion === "store-ambiance" && (
-                <div className="p-6">
-                  <StoreAmbianceForm
-                    franchiseId={id}
-                    storeAmbianceData={franchise.storeAmbiance}
-                    reloadFranchiseData={reloadFranchiseData}
-                    getFileUrl={getFileUrl}
-                  />
-                </div>
-              )}
-            </div>
+                {openAccordion === "store-ambiance" && (
+                  <div className="p-6">
+                    <StoreAmbianceForm
+                      franchiseId={id}
+                      storeAmbianceData={franchise.storeAmbiance}
+                      reloadFranchiseData={reloadFranchiseData}
+                      getFileUrl={getFileUrl}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 

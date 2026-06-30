@@ -24,7 +24,7 @@ const {
     approveFranchiseDepositStockController,
     rejectFranchiseDepositStockController
 } = require('../controllers/inProcessFranchiseController.js');
-const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware.js');
+const { verifyToken, verifyAdmin, verifyFindStoreApproved } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
 
 const router = express.Router();
@@ -48,36 +48,36 @@ router.post('/:id/find-store/approve', verifyToken, verifyAdmin, approveFindStor
 router.post('/:id/find-store/reject', verifyToken, verifyAdmin, rejectFindStoreController);
 
 // Agreement & GST route
-router.post('/:id/agreement-gst', verifyToken, upload.any(), saveAgreementGstController);
+router.post('/:id/agreement-gst', verifyToken, verifyFindStoreApproved, upload.any(), saveAgreementGstController);
 
 // Document Preparation route
-router.post('/:id/doc-prep', verifyToken, upload.any(), saveDocPrepController);
+router.post('/:id/doc-prep', verifyToken, verifyFindStoreApproved, upload.any(), saveDocPrepController);
 
 // Store Planning route
-router.post('/:id/store-planning', verifyToken, upload.any(), saveStorePlanningController);
+router.post('/:id/store-planning', verifyToken, verifyFindStoreApproved, upload.any(), saveStorePlanningController);
 
 // Store Ambiance route
-router.post('/:id/store-ambiance', verifyToken, upload.any(), saveStoreAmbianceController);
+router.post('/:id/store-ambiance', verifyToken, verifyFindStoreApproved, upload.any(), saveStoreAmbianceController);
 
 // Team route
-router.post('/:id/team', verifyToken, saveFranchiseTeamController);
+router.post('/:id/team', verifyToken, verifyFindStoreApproved, saveFranchiseTeamController);
 
 // Marketing route
-router.post('/:id/marketing', verifyToken, upload.any(), saveFranchiseMarketingController);
+router.post('/:id/marketing', verifyToken, verifyFindStoreApproved, upload.any(), saveFranchiseMarketingController);
 
 // Installation route
-router.post('/:id/installation', verifyToken, saveFranchiseInstallationController);
+router.post('/:id/installation', verifyToken, verifyFindStoreApproved, saveFranchiseInstallationController);
 
 // Swipe Machine route
-router.post('/:id/swipe-machine', verifyToken, saveFranchiseSwipeMachineController);
+router.post('/:id/swipe-machine', verifyToken, verifyFindStoreApproved, saveFranchiseSwipeMachineController);
 
 // Training route
-router.post('/:id/training', verifyToken, saveFranchiseTrainingController);
+router.post('/:id/training', verifyToken, verifyFindStoreApproved, saveFranchiseTrainingController);
 
 // Deposit & Stock route
-router.post('/:id/deposit-stock', verifyToken, saveFranchiseDepositStockController);
-router.post('/:id/deposit-stock/approve', verifyToken, verifyAdmin, approveFranchiseDepositStockController);
-router.post('/:id/deposit-stock/reject', verifyToken, verifyAdmin, rejectFranchiseDepositStockController);
+router.post('/:id/deposit-stock', verifyToken, verifyFindStoreApproved, saveFranchiseDepositStockController);
+router.post('/:id/deposit-stock/approve', verifyToken, verifyAdmin, verifyFindStoreApproved, approveFranchiseDepositStockController);
+router.post('/:id/deposit-stock/reject', verifyToken, verifyAdmin, verifyFindStoreApproved, rejectFranchiseDepositStockController);
 
 module.exports = router;
 

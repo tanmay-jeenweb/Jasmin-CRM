@@ -255,16 +255,19 @@ const getInProcessFranchiseByIdController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
         const findStore = await getFindStoreByFranchiseId(id);
-        const agreementGst = await getAgreementGstByFranchiseId(id);
-        const docPrep = await getDocPrepByFranchiseId(id);
-        const storePlanning = await getStorePlanningByFranchiseId(id);
-        const storeAmbiance = await getStoreAmbianceByFranchiseId(id);
-        const franchiseTeam = await getFranchiseTeamByFranchiseId(id);
-        const franchiseMarketing = await getFranchiseMarketingByFranchiseId(id);
-        const franchiseInstallation = await getFranchiseInstallationByFranchiseId(id);
-        const franchiseSwipeMachine = await getFranchiseSwipeMachineByFranchiseId(id);
-        const franchiseTraining = await getFranchiseTrainingByFranchiseId(id);
-        const franchiseDepositStock = await getFranchiseDepositStockByFranchiseId(id);
+        const isApproved = findStore && findStore.status === 'approved';
+
+        const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
+        const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
+        const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
+        const storeAmbiance = isApproved ? await getStoreAmbianceByFranchiseId(id) : null;
+        const franchiseTeam = isApproved ? await getFranchiseTeamByFranchiseId(id) : [];
+        const franchiseMarketing = isApproved ? await getFranchiseMarketingByFranchiseId(id) : null;
+        const franchiseInstallation = isApproved ? await getFranchiseInstallationByFranchiseId(id) : null;
+        const franchiseSwipeMachine = isApproved ? await getFranchiseSwipeMachineByFranchiseId(id) : null;
+        const franchiseTraining = isApproved ? await getFranchiseTrainingByFranchiseId(id) : [];
+        const franchiseDepositStock = isApproved ? await getFranchiseDepositStockByFranchiseId(id) : null;
+
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',

@@ -122,5 +122,36 @@ const verifyPermission = (masterName, action) => {
         }
     };
 };
+const verifyFindStoreApproved = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({
+                success: false,
+                message: "Franchise ID is required."
+            });
+        }
 
-module.exports = { verifyToken, verifyAdmin, verifyPermission };
+        const [rows] = await db.execute(
+            "SELECT status FROM in_process_franchise_find_stores WHERE in_process_franchise_id = ?",
+            [id]
+        );
+
+        if (rows.length === 0 || rows[0].status !== "approved") {
+            return res.status(403).json({
+                success: false,
+                message: "Access Denied. Find Store details must be approved first."
+            });
+        }
+
+        next();
+    } catch (error) {
+        console.error("Error in verifyFindStoreApproved middleware:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error during permission check."
+        });
+    }
+};
+
+module.exports = { verifyToken, verifyAdmin, verifyPermission, verifyFindStoreApproved };

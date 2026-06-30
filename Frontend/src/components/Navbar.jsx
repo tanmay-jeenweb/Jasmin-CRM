@@ -210,9 +210,9 @@ export default function Navbar() {
 
 
     return (
-        <nav className="bg-white shadow-sm border-b border-slate-200 flex flex-col">
+        <nav className="bg-white shadow-sm border-b border-slate-200 flex flex-col relative z-50">
             {/* First Row */}
-            <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative z-40">
                 <div className="flex items-center gap-3">
                     <img src={logo} alt="Jasmin Logo" className="h-12 w-auto" />
                 </div>
@@ -391,7 +391,7 @@ export default function Navbar() {
             {/* Second Row: Custom Navigation & Master Dropdown */}
             {user.role && (
                 <div className="bg-[#6804a1] border-t border-slate-200 px-4 sm:px-6 lg:px-8 py-0 flex flex-wrap items-center gap-4">
-                    <div className="flex items-center relative z-50" id="custom-nav-dropdown">
+                    <div className="flex items-center relative z-30" id="custom-nav-dropdown">
                         {/* User Dashboard Tab */}
                         <div className="relative">
                             <button
