@@ -188,6 +188,15 @@ export default function Navbar() {
             color: "bg-amber-50 text-amber-600 border border-amber-100/50",
             activeColor: "bg-amber-100 text-amber-700",
             desc: "Manage team roles"
+        },
+        {
+            name: "Call Outcome Master",
+            path: "/admin/call-outcomes",
+            masterKey: "call_outcome_master",
+            icon: "fa-solid fa-phone-slash",
+            color: "bg-indigo-50 text-indigo-600 border border-indigo-100/50",
+            activeColor: "bg-indigo-100 text-indigo-700",
+            desc: "Manage call outcomes"
         }
     ];
 

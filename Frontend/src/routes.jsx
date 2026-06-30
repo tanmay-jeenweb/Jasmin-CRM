@@ -19,6 +19,7 @@ import InquirySourceMaster from "./pages/admin/InquirySourceMaster";
 import CompanyBrandMaster from "./pages/admin/CompanyBrandMaster";
 import DocumentMaster from "./pages/admin/DocumentMaster";
 import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
+import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -138,6 +139,13 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/team-roles"
                     element={<TeamRoleMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="call_outcome_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/call-outcomes"
+                    element={<CallOutcomeMaster />}
                 />
             </Route>
 

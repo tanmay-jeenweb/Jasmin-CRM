@@ -11,6 +11,7 @@ const MASTERS = [
   { key: "company_brand_master",  label: "Company Brand Master" },
   { key: "document_master",       label: "Document Master" },
   { key: "team_role_master",      label: "Team Role Master" },
+  { key: "call_outcome_master",   label: "Call Outcome Master" },
 ];
 
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
