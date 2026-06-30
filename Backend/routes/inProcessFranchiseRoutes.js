@@ -8,7 +8,8 @@ const {
     upsertFindStoreController,
     approveFindStoreController,
     rejectFindStoreController,
-    getAllFindStoresController
+    getAllFindStoresController,
+    saveAgreementGstController
 } = require('../controllers/inProcessFranchiseController.js');
 const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
@@ -30,6 +31,9 @@ router.post('/:id/find-store', verifyToken, upload.fields([
 
 router.post('/:id/find-store/approve', verifyToken, verifyAdmin, approveFindStoreController);
 router.post('/:id/find-store/reject', verifyToken, verifyAdmin, rejectFindStoreController);
+
+// Agreement & GST route
+router.post('/:id/agreement-gst', verifyToken, upload.any(), saveAgreementGstController);
 
 module.exports = router;
 
