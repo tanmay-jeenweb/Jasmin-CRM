@@ -16,6 +16,31 @@ export const deleteInProcessFranchise = async (id) => {
     return apiClient.delete(`/in-process-franchises/delete/${id}`);
 };
 
+export const getInProcessFranchiseById = async (id) => {
+    return apiClient.get(`/in-process-franchises/${id}`);
+};
+
 export const getActiveUsers = async () => {
     return apiClient.get("/auth/active-users");
 };
+
+export const submitFindStoreForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/find-store`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const approveFindStoreForm = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/find-store/approve`);
+};
+
+export const rejectFindStoreForm = async (id, reason) => {
+    return apiClient.post(`/in-process-franchises/${id}/find-store/reject`, { reason });
+};
+
+export const getAllFindStores = async () => {
+    return apiClient.get("/in-process-franchises/find-stores/all");
+};
+

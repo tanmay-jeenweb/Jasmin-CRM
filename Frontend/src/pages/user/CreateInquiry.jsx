@@ -86,13 +86,13 @@ export default function CreateInquiry() {
         if (!formData.minBudget || isNaN(minBudgetVal)) {
             newErrors.minBudget = "Minimum Budget is required";
         } else if (minBudgetVal < 1000000) {
-            newErrors.minBudget = "Minimum Budget must not be less than 1,000,000";
+            newErrors.minBudget = "Minimum Budget must not be less than 10,00,000";
         }
 
         if (!formData.maxBudget || isNaN(maxBudgetVal)) {
             newErrors.maxBudget = "Maximum Budget is required";
         } else if (maxBudgetVal < 5000000) {
-            newErrors.maxBudget = "Maximum Budget must not be less than 5,000,000";
+            newErrors.maxBudget = "Maximum Budget must not be less than 50,00,000";
         } else if (minBudgetVal && maxBudgetVal < minBudgetVal) {
             newErrors.maxBudget = "Maximum Budget must be greater than or equal to Minimum Budget";
         }
@@ -373,7 +373,7 @@ export default function CreateInquiry() {
                                             errors.minBudget ? "border-red-500" : "border-slate-200"
                                         }`}
                                     />
-                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 1,000,000</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 10,00,000</p>
                                     {errors.minBudget && <p className="text-xs text-red-500 mt-1">{errors.minBudget}</p>}
                                 </div>
 
@@ -389,7 +389,7 @@ export default function CreateInquiry() {
                                             errors.maxBudget ? "border-red-500" : "border-slate-200"
                                         }`}
                                     />
-                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 5,000,000</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 50,00,000</p>
                                     {errors.maxBudget && <p className="text-xs text-red-500 mt-1">{errors.maxBudget}</p>}
                                 </div>
                             </div>

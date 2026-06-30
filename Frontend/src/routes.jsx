@@ -9,6 +9,7 @@ import Inquiries from "./pages/user/Inquiries";
 import CreateInquiry from "./pages/user/CreateInquiry";
 import InProcessFranchise from "./pages/user/InProcessFranchise";
 import CreateInProcessFranchise from "./pages/user/CreateInProcessFranchise";
+import InProcessFranchiseDetails from "./pages/user/InProcessFranchiseDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
@@ -18,6 +19,7 @@ import InquirySourceMaster from "./pages/admin/InquirySourceMaster";
 import CompanyBrandMaster from "./pages/admin/CompanyBrandMaster";
 import DocumentMaster from "./pages/admin/DocumentMaster";
 import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
+import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -63,6 +65,10 @@ export default function AppRoutes() {
                     element={<CreateInProcessFranchise />}
                 />
                 <Route
+                    path="/user/in-process-franchises/:id"
+                    element={<InProcessFranchiseDetails />}
+                />
+                <Route
                     path="/profile"
                     element={<Profile />}
                 />
@@ -72,6 +78,10 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/dashboard"
                     element={<AdminDashboard />}
+                />
+                <Route
+                    path="/admin/store-details-approval"
+                    element={<StoreDetailsApproval />}
                 />
             </Route>
 
