@@ -81,7 +81,6 @@ export default function CreateInProcessFranchise() {
         if (!formData.city.trim()) newErrors.city = "City is required";
         if (!formData.district.trim()) newErrors.district = "District is required";
         if (!formData.state.trim()) newErrors.state = "State is required";
-        if (!formData.tentativeOpeningDate) newErrors.tentativeOpeningDate = "Tentative Opening Date is required";
         if (!formData.bdmArea.trim()) newErrors.bdmArea = "BDM Area is required";
         if (!formData.inquiryManagerId) newErrors.inquiryManagerId = "Inquiry Manager is required";
         if (!formData.storeName) newErrors.storeName = "Store Name is required";
@@ -311,7 +310,7 @@ export default function CreateInProcessFranchise() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Tentative Opening Date *</label>
+                                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Tentative Opening Date</label>
                                     <input
                                         type="date"
                                         name="tentativeOpeningDate"

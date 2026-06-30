@@ -127,7 +127,6 @@ export default function InProcessFranchiseDetails() {
   };
 
   const handleSaveChanges = async () => {
-    if (!tentativeOpeningDate) return toast.error("Tentative Opening Date is required");
     if (!bdmArea.trim()) return toast.error("BDM Area is required");
     if (!inquiryManagerId) return toast.error("Inquiry Manager is required");
     if (!storeName) return toast.error("Store Name is required");
@@ -453,7 +452,7 @@ export default function InProcessFranchiseDetails() {
         </div>
 
         {/* Stages Tab Navigation */}
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-md p-2 mb-8 flex flex-wrap gap-2">
+        <div className="bg-white rounded-xl border border-slate-200/80 shadow-md p-2 mb-8 grid grid-cols-1 md:grid-cols-5 gap-2">
           {stages.map((stage) => {
             const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
             const isActive = activeStage === stage.id;
@@ -461,7 +460,7 @@ export default function InProcessFranchiseDetails() {
               <button
                 key={stage.id}
                 onClick={() => handleStageClick(stage.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                   isActive
                     ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
                     : isStageLocked

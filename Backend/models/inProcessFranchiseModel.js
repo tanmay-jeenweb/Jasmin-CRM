@@ -12,7 +12,7 @@ const createInProcessFranchiseTable = async () => {
             district VARCHAR(255) NOT NULL,
             state VARCHAR(255) NOT NULL,
             franchise_category VARCHAR(255) NULL,
-            tentative_opening_date DATE NOT NULL,
+            tentative_opening_date DATE NULL,
             final_opening_date DATE NULL,
             bdm_area VARCHAR(255) NOT NULL,
             inquiry_manager_id INT NOT NULL,
@@ -34,6 +34,11 @@ const createInProcessFranchiseTable = async () => {
     try {
         await db.execute(`ALTER TABLE in_process_franchises ADD COLUMN status VARCHAR(50) DEFAULT 'in_process'`);
     } catch (e) {}
+
+    // Migration to make tentative_opening_date nullable
+    try {
+        await db.execute(`ALTER TABLE in_process_franchises MODIFY COLUMN tentative_opening_date DATE NULL`);
+    } catch (e) {}
 };
 
 const createInProcessFranchise = async (data, addedBy, deviceId) => {
@@ -54,7 +59,7 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
         data.district,
         data.state,
         data.franchiseCategory || null,
-        data.tentativeOpeningDate,
+        data.tentativeOpeningDate || null,
         data.finalOpeningDate || null,
         data.bdmArea,
         data.inquiryManagerId,
@@ -129,7 +134,7 @@ const updateInProcessFranchise = async (id, data) => {
         data.district,
         data.state,
         data.franchiseCategory || null,
-        data.tentativeOpeningDate,
+        data.tentativeOpeningDate || null,
         data.finalOpeningDate || null,
         data.bdmArea,
         data.inquiryManagerId,
