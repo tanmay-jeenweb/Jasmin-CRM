@@ -15,9 +15,13 @@ const MASTERS = [
   { key: "document_master", label: "Document Master" },
   { key: "team_role_master", label: "Team Role Master" },
   { key: "call_outcome_master", label: "Call Outcome Master" },
+  { key: "mobile_brand_master", label: "Mobile Brand Master" },
+  { key: "bank_master", label: "Bank Master" },
+  { key: "store_details_approval", label: "Store Details Approval" },
+  { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
 ];
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
-const PERM_LABELS = { canRead: "Read", canWrite: "Write", canUpdate: "Update", canDelete: "Delete" };
+const PERM_LABELS = { canRead: "Read", canWrite: "Write / Approval", canUpdate: "Update", canDelete: "Delete" };
 const PERM_COLORS = {
   canRead: { bg: "#f3e8ff", border: "#d8b4fe", text: "#6804a1", check: "#6804a1" },
   canWrite: { bg: "#f0fdf4", border: "#bbf7d0", text: "#15803d", check: "#16a34a" },
@@ -32,9 +36,17 @@ const buildPermsFromApi = (apiPerms) => {
   if (!apiPerms || apiPerms.length === 0) return defaultPerms();
   return MASTERS.map((m) => {
     const found = apiPerms.find((p) => p.masterName === m.key);
-    return found
-      ? { masterName: m.key, canRead: !!found.canRead, canWrite: !!found.canWrite, canUpdate: !!found.canUpdate, canDelete: !!found.canDelete }
-      : { masterName: m.key, canRead: false, canWrite: false, canUpdate: false, canDelete: false };
+    const isApprovalRow = m.key.endsWith("_approval");
+    if (found) {
+      return {
+        masterName: m.key,
+        canRead: !!found.canRead,
+        canWrite: !!found.canWrite,
+        canUpdate: isApprovalRow ? false : !!found.canUpdate,
+        canDelete: isApprovalRow ? false : !!found.canDelete
+      };
+    }
+    return { masterName: m.key, canRead: false, canWrite: false, canUpdate: false, canDelete: false };
   });
 };
 
@@ -71,9 +83,11 @@ function PermBadges({ permissions }) {
   const rows = MASTERS.map((m) => {
     const p = permissions.find((x) => x.masterName === m.key);
     if (!p) return null;
-    const granted = PERMS.filter((perm) => p[perm]);
+    const isApprovalRow = m.key.endsWith("_approval");
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const granted = applicablePerms.filter((perm) => p[perm]);
     if (granted.length === 0) return null;
-    return { label: m.label, granted };
+    return { label: m.label, granted, isApprovalRow };
   }).filter(Boolean);
 
   if (rows.length === 0)
@@ -81,7 +95,7 @@ function PermBadges({ permissions }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-      {rows.map(({ label, granted }) => (
+      {rows.map(({ label, granted, isApprovalRow }) => (
         <div key={label} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           {/* Master label */}
           <span style={{
@@ -95,12 +109,13 @@ function PermBadges({ permissions }) {
           {/* Permission badges for this master */}
           {granted.map((perm) => {
             const c = PERM_COLORS[perm];
+            const labelText = isApprovalRow && perm === "canWrite" ? "Approval" : PERM_LABELS[perm];
             return (
               <span key={perm} style={{
                 fontSize: 10, fontWeight: 700, padding: "2px 7px",
                 borderRadius: 5, background: c.bg, color: c.text, border: `1px solid ${c.border}`
               }}>
-                {PERM_LABELS[perm]}
+                {labelText}
               </span>
             );
           })}
@@ -119,31 +134,75 @@ function EditModal({ row, onClose, onSave, saving }) {
     setPermissions((prev) => prev.map((p) => p.masterName === masterKey ? { ...p, [perm]: !p[perm] } : p));
 
   const toggleRow = (masterKey) => {
+    const isApprovalRow = masterKey.endsWith("_approval");
     const r = permissions.find((p) => p.masterName === masterKey);
-    const all = PERMS.every((perm) => r[perm]);
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const all = applicablePerms.every((perm) => r[perm]);
     setPermissions((prev) => prev.map((p) => p.masterName === masterKey
-      ? { ...p, canRead: !all, canWrite: !all, canUpdate: !all, canDelete: !all } : p));
+      ? {
+          ...p,
+          canRead: !all,
+          canWrite: !all,
+          canUpdate: isApprovalRow ? false : !all,
+          canDelete: isApprovalRow ? false : !all
+        } : p));
   };
 
   const toggleColumn = (perm) => {
     const all = permissions.every((p) => p[perm]);
-    setPermissions((prev) => prev.map((p) => ({ ...p, [perm]: !all })));
+    setPermissions((prev) => prev.map((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+        return { ...p, [perm]: false };
+      }
+      return { ...p, [perm]: !all };
+    }));
   };
 
   const toggleAll = () => {
-    const all = permissions.every((p) => PERMS.every((perm) => p[perm]));
-    setPermissions((prev) => prev.map((p) => ({ ...p, canRead: !all, canWrite: !all, canUpdate: !all, canDelete: !all })));
+    const all = permissions.every((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+      return applicablePerms.every((perm) => p[perm]);
+    });
+    setPermissions((prev) => prev.map((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      return {
+        ...p,
+        canRead: !all,
+        canWrite: !all,
+        canUpdate: isApprovalRow ? false : !all,
+        canDelete: isApprovalRow ? false : !all
+      };
+    }));
   };
 
-  const isRowAll = (masterKey) => { const r = permissions.find((p) => p.masterName === masterKey); return PERMS.every((perm) => r[perm]); };
-  const isColAll = (perm) => permissions.every((p) => p[perm]);
-  const isAllAll = () => permissions.every((p) => PERMS.every((perm) => p[perm]));
+  const isRowAll = (masterKey) => {
+    const isApprovalRow = masterKey.endsWith("_approval");
+    const r = permissions.find((p) => p.masterName === masterKey);
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    return applicablePerms.every((perm) => r[perm]);
+  };
+
+  const isColAll = (perm) => permissions.every((p) => {
+    const isApprovalRow = p.masterName.endsWith("_approval");
+    if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+      return true;
+    }
+    return p[perm];
+  });
+
+  const isAllAll = () => permissions.every((p) => {
+    const isApprovalRow = p.masterName.endsWith("_approval");
+    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    return applicablePerms.every((perm) => p[perm]);
+  });
 
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 1000,
       background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+      display: "flex", alignItems: "center", justifycontent: "center", padding: 16
     }}>
       <div style={{
         background: "#fff", borderRadius: 18, width: "100%", maxWidth: 1100, margin: "0 auto",
@@ -151,12 +210,12 @@ function EditModal({ row, onClose, onSave, saving }) {
         boxShadow: "0 25px 60px rgba(0,0,0,0.2)", overflow: "hidden"
       }}>
         {/* Modal Header */}
-        <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
+        <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifycontent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
           <div>
             <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Edit User Type</h2>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>Update the name and module permissions</p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifycontent: "center", color: "#fff" }}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -183,7 +242,7 @@ function EditModal({ row, onClose, onSave, saving }) {
 
           {/* Permissions Grid */}
           <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifycontent: "space-between", marginBottom: 16 }}>
               <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Module Permissions</h3>
               <button
                 type="button"
@@ -208,7 +267,7 @@ function EditModal({ row, onClose, onSave, saving }) {
                             <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: c.text, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 5, padding: "2px 7px" }}>
                               {PERM_LABELS[perm]}
                             </span>
-                            <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${isColAll(perm) ? c.check : "#cbd5e1"}`, background: isColAll(perm) ? c.check : "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.15s" }}>
+                            <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${isColAll(perm) ? c.check : "#cbd5e1"}`, background: isColAll(perm) ? c.check : "#fff", display: "flex", alignItems: "center", justifycontent: "center", transition: "all 0.15s" }}>
                               {isColAll(perm) && <svg viewBox="0 0 12 10" style={{ width: 9, height: 9 }}><polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                             </div>
                           </button>
@@ -222,6 +281,7 @@ function EditModal({ row, onClose, onSave, saving }) {
                   {MASTERS.map((master, idx) => {
                     const rowData = permissions.find((p) => p.masterName === master.key);
                     const rowAll = isRowAll(master.key);
+                    const isApprovalRow = master.key.endsWith("_approval");
                     return (
                       <tr key={master.key} style={{ background: idx % 2 === 0 ? "#fff" : "#f8fafc" }}
                         onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
@@ -232,11 +292,20 @@ function EditModal({ row, onClose, onSave, saving }) {
                             {master.label}
                           </div>
                         </td>
-                        {PERMS.map((perm) => (
-                          <td key={perm} style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9" }}>
-                            <CheckCell checked={rowData[perm]} color={PERM_COLORS[perm]} onChange={() => togglePerm(master.key, perm)} />
-                          </td>
-                        ))}
+                        {PERMS.map((perm) => {
+                          if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+                            return (
+                              <td key={perm} style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
+                                —
+                              </td>
+                            );
+                          }
+                          return (
+                            <td key={perm} style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9" }}>
+                              <CheckCell checked={rowData[perm]} color={PERM_COLORS[perm]} onChange={() => togglePerm(master.key, perm)} />
+                            </td>
+                          );
+                        })}
                         <td style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9" }}>
                           <button type="button" onClick={() => toggleRow(master.key)}
                             style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5, cursor: "pointer", border: `1.5px solid ${rowAll ? "#6804a1" : "#cbd5e1"}`, color: rowAll ? "#fff" : "#64748b", background: rowAll ? "#6804a1" : "#f8fafc", transition: "all 0.15s" }}>

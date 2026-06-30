@@ -197,6 +197,24 @@ export default function Navbar() {
             color: "bg-indigo-50 text-indigo-600 border border-indigo-100/50",
             activeColor: "bg-indigo-100 text-indigo-700",
             desc: "Manage call outcomes"
+        },
+        {
+            name: "Mobile Brand Master",
+            path: "/admin/mobile-brands",
+            masterKey: "mobile_brand_master",
+            icon: "fa-solid fa-mobile-screen-button",
+            color: "bg-teal-50 text-teal-600 border border-teal-100/50",
+            activeColor: "bg-teal-100 text-teal-700",
+            desc: "Manage mobile brands"
+        },
+        {
+            name: "Bank Master",
+            path: "/admin/banks",
+            masterKey: "bank_master",
+            icon: "fa-solid fa-building-columns",
+            color: "bg-rose-50 text-rose-600 border border-rose-100/50",
+            activeColor: "bg-rose-100 text-rose-700",
+            desc: "Manage banks & cards"
         }
     ];
 
@@ -457,7 +475,7 @@ export default function Navbar() {
                         </div>
 
                         {/* Approvals Dropdown */}
-                        {isAdmin && (
+                        {(isAdmin || hasPermission("store_details_approval", "read") || hasPermission("deposit_stock_approval", "read")) && (
                             <div className="relative" id="approvals-dropdown-container">
                                 <button
                                     onClick={() => setIsApprovalsOpen(!isApprovalsOpen)}
@@ -483,55 +501,59 @@ export default function Navbar() {
                                 {isApprovalsOpen && (
                                     <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-3.5 z-50 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="flex flex-col gap-1.5">
-                                            <button
-                                                onClick={() => {
-                                                    navigate("/admin/store-details-approval");
-                                                    setIsApprovalsOpen(false);
-                                                }}
-                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
-                                                    location.pathname === "/admin/store-details-approval"
-                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
-                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
-                                                }`}
-                                            >
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
-                                                    location.pathname === "/admin/store-details-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
-                                                }`}>
-                                                    <i className="fa-solid fa-store text-xs"></i>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
-                                                        location.pathname === "/admin/store-details-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                            {(isAdmin || hasPermission("store_details_approval", "read")) && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate("/admin/store-details-approval");
+                                                        setIsApprovalsOpen(false);
+                                                    }}
+                                                    className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                        location.pathname === "/admin/store-details-approval"
+                                                            ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                    }`}
+                                                >
+                                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                        location.pathname === "/admin/store-details-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
                                                     }`}>
-                                                        Store Details Approval
-                                                    </p>
-                                                </div>
-                                            </button>
+                                                        <i className="fa-solid fa-store text-xs"></i>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
+                                                            location.pathname === "/admin/store-details-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                                        }`}>
+                                                            Store Details Approval
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            )}
 
-                                            <button
-                                                onClick={() => {
-                                                    navigate("/admin/deposit-stock-approval");
-                                                    setIsApprovalsOpen(false);
-                                                }}
-                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
-                                                    location.pathname === "/admin/deposit-stock-approval"
-                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
-                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
-                                                }`}
-                                            >
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
-                                                    location.pathname === "/admin/deposit-stock-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
-                                                }`}>
-                                                    <i className="fa-solid fa-file-invoice text-xs"></i>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
-                                                        location.pathname === "/admin/deposit-stock-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                            {(isAdmin || hasPermission("deposit_stock_approval", "read")) && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate("/admin/deposit-stock-approval");
+                                                        setIsApprovalsOpen(false);
+                                                    }}
+                                                    className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                        location.pathname === "/admin/deposit-stock-approval"
+                                                            ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                    }`}
+                                                >
+                                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                        location.pathname === "/admin/deposit-stock-approval" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500 group-hover:scale-105"
                                                     }`}>
-                                                        Deposit & Stock Approval
-                                                    </p>
-                                                </div>
-                                            </button>
+                                                        <i className="fa-solid fa-file-invoice text-xs"></i>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className={`text-sm font-semibold leading-snug py-0.5 transition-colors whitespace-normal break-words ${
+                                                            location.pathname === "/admin/deposit-stock-approval" ? "text-indigo-900 font-bold" : "text-slate-800 group-hover:text-slate-950"
+                                                        }`}>
+                                                            Deposit & Stock Approval
+                                                        </p>
+                                                    </div>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 )}

@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar";
 import { getAllFindStores, approveFindStoreForm, rejectFindStoreForm } from "../../api/inProcessFranchiseApi";
 import toast from "react-hot-toast";
+import { usePermission } from "../../context/PermissionContext";
 
 export default function StoreDetailsApproval() {
+  const { hasPermission } = usePermission();
+  const canApprove = hasPermission("store_details_approval", "write");
+
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("pending"); // pending, approved, rejected, all
@@ -319,7 +323,7 @@ export default function StoreDetailsApproval() {
                     );
                   })()}
 
-                  {sub.status === "pending" && (
+                  {sub.status === "pending" && canApprove && (
                     <div className="flex md:flex-col gap-2 shrink-0 ml-auto md:ml-0">
                       <button
                         onClick={() => handleApprove(sub.in_process_franchise_id)}

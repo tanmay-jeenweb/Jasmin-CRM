@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { submitFranchiseSwipeMachineForm } from "../../../api/inProcessFranchiseApi";
+import { getMobileBrands } from "../../../api/mobileBrandApi";
 import toast from "react-hot-toast";
-
-const BRANDS = [
-  "APPLE",
-  "MOTOROLA",
-  "ONEPLUS",
-  "OPPO",
-  "POCO",
-  "REALME",
-  "SAMSUNG",
-  "TECNO",
-  "VIVO",
-  "XIAOMI"
-];
 
 const PLATFORMS = [
   { key: "BE_NOW", label: "BE NOW" },
@@ -22,15 +10,38 @@ const PLATFORMS = [
 ];
 
 export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeMachineData, reloadFranchiseData }) {
+  const [brands, setBrands] = useState([]);
   const [receiptDate, setReceiptDate] = useState("");
   const [qrBharatPay, setQrBharatPay] = useState(false);
   const [qrHdfc, setQrHdfc] = useState(false);
   
   // Matrix state: { [brand]: { [platform]: boolean } }
   const [matrix, setMatrix] = useState({});
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Fetch brands from master
   useEffect(() => {
+    const loadBrands = async () => {
+      setLoading(true);
+      try {
+        const res = await getMobileBrands();
+        if (res.data?.success) {
+          setBrands(res.data.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to load brands:", err);
+        toast.error("Failed to load mobile brands.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadBrands();
+  }, []);
+
+  useEffect(() => {
+    if (brands.length === 0) return;
+
     if (franchiseSwipeMachineData) {
       if (franchiseSwipeMachineData.agreement_photo_receipt_date) {
         try {
@@ -50,8 +61,9 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
 
       // Populate matrix
       const initialMatrix = {};
-      BRANDS.forEach(b => {
-        initialMatrix[b] = {
+      brands.forEach(b => {
+        const brandName = b.mobile_brand.toUpperCase();
+        initialMatrix[brandName] = {
           BE_NOW: false,
           PAYTM: false,
           PINE_LAB: false
@@ -60,7 +72,7 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
 
       if (franchiseSwipeMachineData.brands) {
         franchiseSwipeMachineData.brands.forEach(item => {
-          const brand = item.brand_name;
+          const brand = item.brand_name.toUpperCase();
           const platform = item.platform_name;
           if (initialMatrix[brand]) {
             initialMatrix[brand][platform] = true;
@@ -71,8 +83,9 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
     } else {
       // Clear/default matrix
       const defaultMatrix = {};
-      BRANDS.forEach(b => {
-        defaultMatrix[b] = {
+      brands.forEach(b => {
+        const brandName = b.mobile_brand.toUpperCase();
+        defaultMatrix[brandName] = {
           BE_NOW: false,
           PAYTM: false,
           PINE_LAB: false
@@ -80,7 +93,7 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
       });
       setMatrix(defaultMatrix);
     }
-  }, [franchiseSwipeMachineData]);
+  }, [franchiseSwipeMachineData, brands]);
 
   const handleCheckboxChange = (brand, platform, checked) => {
     setMatrix(prev => ({
@@ -131,6 +144,27 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
       setSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-4 border-indigo-200 border-t-[#6804a1] rounded-full animate-spin"></div>
+          <p className="text-slate-500 text-xs font-semibold">Loading Swipe Machine form...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (brands.length === 0) {
+    return (
+      <div className="p-6 text-center bg-slate-50 rounded-xl border border-slate-200">
+        <p className="text-sm text-slate-500 font-medium">
+          Please make sure you have added entries in <span className="font-bold">Mobile Brand Master</span>.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
@@ -194,26 +228,29 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {BRANDS.map(brand => (
-                <tr key={brand} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-3 text-xs font-bold text-slate-700 font-sans">
-                    {brand}
-                  </td>
-                  {PLATFORMS.map(platform => {
-                    const isChecked = matrix[brand]?.[platform.key] || false;
-                    return (
-                      <td key={platform.key} className="px-6 py-3 text-center">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={(e) => handleCheckboxChange(brand, platform.key, e.target.checked)}
-                          className="w-4.5 h-4.5 rounded-md text-[#6804a1] focus:ring-[#6804a1] border-slate-300 accent-[#6804a1] cursor-pointer transition-all hover:scale-105"
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
+              {brands.map(b => {
+                const brandName = b.mobile_brand.toUpperCase();
+                return (
+                  <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-3 text-xs font-bold text-slate-700 font-sans">
+                      {brandName}
+                    </td>
+                    {PLATFORMS.map(platform => {
+                      const isChecked = matrix[brandName]?.[platform.key] || false;
+                      return (
+                        <td key={platform.key} className="px-6 py-3 text-center">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => handleCheckboxChange(brandName, platform.key, e.target.checked)}
+                            className="w-4.5 h-4.5 rounded-md text-[#6804a1] focus:ring-[#6804a1] border-slate-300 accent-[#6804a1] cursor-pointer transition-all hover:scale-105"
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

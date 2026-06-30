@@ -22,6 +22,8 @@ const reminderRoutes = require("./routes/reminderRoutes.js");
 const noteRoutes = require("./routes/noteRoutes.js");
 const inProcessFranchiseRoutes = require("./routes/inProcessFranchiseRoutes.js");
 const callOutcomeRoutes = require("./routes/callOutcomeRoutes.js");
+const mobileBrandRoutes = require("./routes/mobileBrandRoutes.js");
+const bankRoutes = require("./routes/bankRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -50,6 +52,10 @@ const { createFranchiseSwipeMachineTable } = require("./models/franchiseSwipeMac
 const { createFranchiseTrainingTable } = require("./models/franchiseTrainingModel.js");
 const { createFranchiseDepositStockTable } = require("./models/franchiseDepositStockModel.js");
 const { createCallOutcomesTable } = require("./models/callOutcomeModel.js");
+const { createMobileBrandsTable } = require("./models/mobileBrandModel.js");
+const { createBankTable } = require("./models/bankModel.js");
+const { createFranchiseMappingTable } = require("./models/franchiseMappingModel.js");
+const { createFranchiseInsuranceTable } = require("./models/franchiseInsuranceModel.js");
 
 
 const app = express();
@@ -101,6 +107,8 @@ app.use(["/api/reminders", "/reminders"], reminderRoutes);
 app.use(["/api/notes", "/notes"], noteRoutes);
 app.use(["/api/in-process-franchises", "/in-process-franchises"], inProcessFranchiseRoutes);
 app.use(["/api/calloutcomes", "/calloutcomes"], callOutcomeRoutes);
+app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
+app.use(["/api/banks", "/banks"], bankRoutes);
 
 
 // Global 404 handler
@@ -147,6 +155,10 @@ const startServer = async () => {
         await createFranchiseTrainingTable();
         await createFranchiseDepositStockTable();
         await createCallOutcomesTable();
+        await createMobileBrandsTable();
+        await createBankTable();
+        await createFranchiseMappingTable();
+        await createFranchiseInsuranceTable();
 
         console.log("All database tables are initialized and ready.");
 
