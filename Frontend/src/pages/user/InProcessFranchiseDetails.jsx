@@ -8,7 +8,10 @@ import {
   submitFindStoreForm,
   approveFindStoreForm,
   rejectFindStoreForm,
-  submitAgreementGstForm
+  submitAgreementGstForm,
+  submitDocPrepForm,
+  submitStorePlanningForm,
+  submitStoreAmbianceForm
 } from "../../api/inProcessFranchiseApi";
 import { getDocuments } from "../../api/documentApi";
 import toast from "react-hot-toast";
@@ -58,7 +61,48 @@ export default function InProcessFranchiseDetails() {
   const [gstNumber, setGstNumber] = useState("");
   const [agreementGstDocs, setAgreementGstDocs] = useState([]);
   const [submittingAgreementGst, setSubmittingAgreementGst] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState("find-store"); // "find-store" or "agreement-gst" or null
+
+  // Document Preparation states
+  const [dispatchDate, setDispatchDate] = useState("");
+  const [dispatchName, setDispatchName] = useState("");
+  const [dispatchFile, setDispatchFile] = useState(null);
+  const [dispatchFileName, setDispatchFileName] = useState("");
+  const [receiverDate, setReceiverDate] = useState("");
+  const [receiverName, setReceiverName] = useState("");
+  const [receiverFile, setReceiverFile] = useState(null);
+  const [receiverFileName, setReceiverFileName] = useState("");
+  const [submittingDocPrep, setSubmittingDocPrep] = useState(false);
+
+  // Store Planning states
+  const [mainBoardSignSize, setMainBoardSignSize] = useState("");
+  const [interiorFile, setInteriorFile] = useState(null);
+  const [interiorFileName, setInteriorFileName] = useState("");
+  const [inshopBrandingFile, setInshopBrandingFile] = useState(null);
+  const [inshopBrandingFileName, setInshopBrandingFileName] = useState("");
+  const [floorPlanFile, setFloorPlanFile] = useState(null);
+  const [floorPlanFileName, setFloorPlanFileName] = useState("");
+  const [billingFormatFile, setBillingFormatFile] = useState(null);
+  const [billingFormatFileName, setBillingFormatFileName] = useState("");
+  const [submittingStorePlanning, setSubmittingStorePlanning] = useState(false);
+
+  // Store Ambiance states
+  const [furnitureFixingFile, setFurnitureFixingFile] = useState(null);
+  const [furnitureFixingFileName, setFurnitureFixingFileName] = useState("");
+  const [companyFurnitureFittingFile, setCompanyFurnitureFittingFile] = useState(null);
+  const [companyFurnitureFittingFileName, setCompanyFurnitureFittingFileName] = useState("");
+  const [shineBoardFile, setShineBoardFile] = useState(null);
+  const [shineBoardFileName, setShineBoardFileName] = useState("");
+  const [inShopBrandingFile, setInShopBrandingFile] = useState(null);
+  const [inShopBrandingFileName, setInShopBrandingFileName] = useState("");
+  const [templeLocationFile, setTempleLocationFile] = useState(null);
+  const [templeLocationFileName, setTempleLocationFileName] = useState("");
+  const [ambiancePhotoFile, setAmbiancePhotoFile] = useState(null);
+  const [ambiancePhotoFileName, setAmbiancePhotoFileName] = useState("");
+  const [ambianceRemark, setAmbianceRemark] = useState("");
+  const [submittingStoreAmbiance, setSubmittingStoreAmbiance] = useState(false);
+
+  const [openAccordion, setOpenAccordion] = useState("find-store"); // "find-store" or "agreement-gst" or "doc-prep" or "store-planning" or "store-ambiance" or null
+  const [showApprovedBanner, setShowApprovedBanner] = useState(true);
 
   const getLocalDateString = (dateStr) => {
     if (!dateStr) return "";
@@ -159,6 +203,36 @@ export default function InProcessFranchiseDetails() {
             setGstNumber(f.agreementGst.gst_number || "");
           }
 
+          // Initialize Document Preparation states
+          if (f.docPrep) {
+            setDispatchDate(getLocalDateString(f.docPrep.dispatch_date));
+            setDispatchName(f.docPrep.dispatch_name || "");
+            setDispatchFileName(f.docPrep.dispatch_file || "");
+            setReceiverDate(getLocalDateString(f.docPrep.receiver_date));
+            setReceiverName(f.docPrep.receiver_name || "");
+            setReceiverFileName(f.docPrep.receiver_file || "");
+          }
+
+          // Initialize Store Planning states
+          if (f.storePlanning) {
+            setMainBoardSignSize(f.storePlanning.main_board_sign_size || "");
+            setInteriorFileName(f.storePlanning.interior_file || "");
+            setInshopBrandingFileName(f.storePlanning.inshop_branding_file || "");
+            setFloorPlanFileName(f.storePlanning.floor_plan_file || "");
+            setBillingFormatFileName(f.storePlanning.billing_format_file || "");
+          }
+
+          // Initialize Store Ambiance states
+          if (f.storeAmbiance) {
+            setFurnitureFixingFileName(f.storeAmbiance.furniture_fixing_file || "");
+            setCompanyFurnitureFittingFileName(f.storeAmbiance.company_furniture_fitting_file || "");
+            setShineBoardFileName(f.storeAmbiance.shine_board_file || "");
+            setInShopBrandingFileName(f.storeAmbiance.in_shop_branding_file || "");
+            setTempleLocationFileName(f.storeAmbiance.temple_location_file || "");
+            setAmbiancePhotoFileName(f.storeAmbiance.ambiance_photo_file || "");
+            setAmbianceRemark(f.storeAmbiance.remark || "");
+          }
+
           // Merge and set documents
           mergeAndSetDocuments(f, loadedMasterDocs);
         } else {
@@ -257,6 +331,30 @@ export default function InProcessFranchiseDetails() {
           setPartnerDate(getLocalDateString(f.agreementGst.partner_date));
           setGstRegistrationDate(getLocalDateString(f.agreementGst.gst_registration_date));
           setGstNumber(f.agreementGst.gst_number || "");
+        }
+        if (f.docPrep) {
+          setDispatchDate(getLocalDateString(f.docPrep.dispatch_date));
+          setDispatchName(f.docPrep.dispatch_name || "");
+          setDispatchFileName(f.docPrep.dispatch_file || "");
+          setReceiverDate(getLocalDateString(f.docPrep.receiver_date));
+          setReceiverName(f.docPrep.receiver_name || "");
+          setReceiverFileName(f.docPrep.receiver_file || "");
+        }
+        if (f.storePlanning) {
+          setMainBoardSignSize(f.storePlanning.main_board_sign_size || "");
+          setInteriorFileName(f.storePlanning.interior_file || "");
+          setInshopBrandingFileName(f.storePlanning.inshop_branding_file || "");
+          setFloorPlanFileName(f.storePlanning.floor_plan_file || "");
+          setBillingFormatFileName(f.storePlanning.billing_format_file || "");
+        }
+        if (f.storeAmbiance) {
+          setFurnitureFixingFileName(f.storeAmbiance.furniture_fixing_file || "");
+          setCompanyFurnitureFittingFileName(f.storeAmbiance.company_furniture_fitting_file || "");
+          setShineBoardFileName(f.storeAmbiance.shine_board_file || "");
+          setInShopBrandingFileName(f.storeAmbiance.in_shop_branding_file || "");
+          setTempleLocationFileName(f.storeAmbiance.temple_location_file || "");
+          setAmbiancePhotoFileName(f.storeAmbiance.ambiance_photo_file || "");
+          setAmbianceRemark(f.storeAmbiance.remark || "");
         }
         mergeAndSetDocuments(f, masterDocs);
       }
@@ -377,6 +475,105 @@ export default function InProcessFranchiseDetails() {
       toast.error(err?.response?.data?.message || "Failed to save Agreement & GST details.");
     } finally {
       setSubmittingAgreementGst(false);
+    }
+  };
+
+  const handleDocPrepSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmittingDocPrep(true);
+    try {
+      const fd = new FormData();
+      fd.append("dispatchDate", dispatchDate);
+      fd.append("dispatchName", dispatchName.trim());
+      fd.append("receiverDate", receiverDate);
+      fd.append("receiverName", receiverName.trim());
+
+      if (dispatchFile) {
+        fd.append("dispatchFile", dispatchFile);
+      }
+      if (receiverFile) {
+        fd.append("receiverFile", receiverFile);
+      }
+
+      const res = await submitDocPrepForm(id, fd);
+      if (res.data?.success) {
+        toast.success("Document Preparation details saved successfully!");
+        await reloadFranchiseData();
+      } else {
+        toast.error(res.data?.message || "Failed to save details");
+      }
+    } catch (err) {
+      console.error("Error saving Document Preparation details:", err);
+      toast.error(err?.response?.data?.message || "Failed to save Document Preparation details.");
+    } finally {
+      setSubmittingDocPrep(false);
+    }
+  };
+
+  const handleStorePlanningSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmittingStorePlanning(true);
+    try {
+      const fd = new FormData();
+      fd.append("mainBoardSignSize", mainBoardSignSize.trim());
+
+      if (interiorFile) {
+        fd.append("interiorFile", interiorFile);
+      }
+      if (inshopBrandingFile) {
+        fd.append("inshopBrandingFile", inshopBrandingFile);
+      }
+      if (floorPlanFile) {
+        fd.append("floorPlanFile", floorPlanFile);
+      }
+      if (billingFormatFile) {
+        fd.append("billingFormatFile", billingFormatFile);
+      }
+
+      const res = await submitStorePlanningForm(id, fd);
+      if (res.data?.success) {
+        toast.success("Store Planning details saved successfully!");
+        await reloadFranchiseData();
+      } else {
+        toast.error(res.data?.message || "Failed to save details");
+      }
+    } catch (err) {
+      console.error("Error saving Store Planning details:", err);
+      toast.error(err?.response?.data?.message || "Failed to save Store Planning details.");
+    } finally {
+      setSubmittingStorePlanning(false);
+    }
+  };
+
+  const handleStoreAmbianceSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmittingStoreAmbiance(true);
+    try {
+      const fd = new FormData();
+      fd.append("remark", ambianceRemark.trim());
+
+      if (furnitureFixingFile) fd.append("furnitureFixingFile", furnitureFixingFile);
+      if (companyFurnitureFittingFile) fd.append("companyFurnitureFittingFile", companyFurnitureFittingFile);
+      if (shineBoardFile) fd.append("shineBoardFile", shineBoardFile);
+      if (inShopBrandingFile) fd.append("inShopBrandingFile", inShopBrandingFile);
+      if (templeLocationFile) fd.append("templeLocationFile", templeLocationFile);
+      if (ambiancePhotoFile) fd.append("ambiancePhotoFile", ambiancePhotoFile);
+
+      const res = await submitStoreAmbianceForm(id, fd);
+      if (res.data?.success) {
+        toast.success("Store Ambiance details saved successfully!");
+        await reloadFranchiseData();
+      } else {
+        toast.error(res.data?.message || "Failed to save details");
+      }
+    } catch (err) {
+      console.error("Error saving Store Ambiance details:", err);
+      toast.error(err?.response?.data?.message || "Failed to save Store Ambiance details.");
+    } finally {
+      setSubmittingStoreAmbiance(false);
     }
   };
 
@@ -685,14 +882,14 @@ export default function InProcessFranchiseDetails() {
               </div>
             )}
 
-            {findStoreStatus === "approved" && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+            {findStoreStatus === "approved" && showApprovedBanner && (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm relative">
                 <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                   </svg>
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="text-sm font-bold text-emerald-800">Submission Approved</h4>
                   <p className="text-xs text-emerald-600 mt-0.5">
                     Store location data has been verified and approved. All other setup stages are now unlocked!
@@ -703,6 +900,15 @@ export default function InProcessFranchiseDetails() {
                     </p>
                   )}
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowApprovedBanner(false)}
+                  className="text-emerald-500 hover:text-emerald-700 hover:bg-emerald-100/50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             )}
 
@@ -1092,6 +1298,527 @@ export default function InProcessFranchiseDetails() {
                         className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
                       >
                         {submittingAgreementGst ? "Saving..." : "Save Agreement & GST"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 3: Document Preparation */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Document Preparation
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.docPrep && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-prep" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "doc-prep" && (
+                <div className="p-6">
+                  <form onSubmit={handleDocPrepSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                      {/* Dispatch Fields */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch Date</label>
+                        <input
+                          type="date"
+                          value={dispatchDate}
+                          onChange={(e) => setDispatchDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch Name</label>
+                        <input
+                          type="text"
+                          value={dispatchName}
+                          onChange={(e) => setDispatchName(e.target.value)}
+                          placeholder="Enter Dispatch Name"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Dispatch File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setDispatchFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {dispatchFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(dispatchFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={dispatchFileName}
+                            >
+                              View Dispatch File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Receiver Fields */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver Date</label>
+                        <input
+                          type="date"
+                          value={receiverDate}
+                          onChange={(e) => setReceiverDate(e.target.value)}
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver Name</label>
+                        <input
+                          type="text"
+                          value={receiverName}
+                          onChange={(e) => setReceiverName(e.target.value)}
+                          placeholder="Enter Receiver Name"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Receiver File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setReceiverFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {receiverFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(receiverFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={receiverFileName}
+                            >
+                              View Receiver File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={submittingDocPrep}
+                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {submittingDocPrep ? "Saving..." : "Save Document Preparation"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 4: Store Planning */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Store Planning
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.storePlanning && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-planning" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "store-planning" && (
+                <div className="p-6">
+                  <form onSubmit={handleStorePlanningSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                      {/* Main Board Sign Size */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Main Board Sign Size</label>
+                        <input
+                          type="text"
+                          value={mainBoardSignSize}
+                          onChange={(e) => setMainBoardSignSize(e.target.value)}
+                          placeholder="Enter main board sign size"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+
+                      {/* Interior File */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Interior File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setInteriorFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {interiorFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(interiorFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={interiorFileName}
+                            >
+                              View Interior File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Inshop Branding File */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Inshop Branding File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setInshopBrandingFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {inshopBrandingFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(inshopBrandingFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={inshopBrandingFileName}
+                            >
+                              View Inshop Branding File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Floor Plan File */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Floor Plan File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setFloorPlanFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {floorPlanFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(floorPlanFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={floorPlanFileName}
+                            >
+                              View Floor Plan File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Billing Format File */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Billing Format File</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setBillingFormatFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {billingFormatFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(billingFormatFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={billingFormatFileName}
+                            >
+                              View Billing Format File
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={submittingStorePlanning}
+                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {submittingStorePlanning ? "Saving..." : "Save Store Planning"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 5: Store ambiance */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Store ambiance
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.storeAmbiance && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-ambiance" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "store-ambiance" && (
+                <div className="p-6">
+                  <form onSubmit={handleStoreAmbianceSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                      {/* Furniture fixing */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Furniture fixing</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setFurnitureFixingFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {furnitureFixingFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(furnitureFixingFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={furnitureFixingFileName}
+                            >
+                              View Furniture fixing
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Company furniture fitting */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Company furniture fitting</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setCompanyFurnitureFittingFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {companyFurnitureFittingFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(companyFurnitureFittingFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={companyFurnitureFittingFileName}
+                            >
+                              View Furniture fitting
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Shine board */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Shine board</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setShineBoardFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {shineBoardFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(shineBoardFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={shineBoardFileName}
+                            >
+                              View Shine board
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* In-shop branding */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">In-shop branding</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setInShopBrandingFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {inShopBrandingFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(inShopBrandingFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={inShopBrandingFileName}
+                            >
+                              View In-shop branding
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Temple location */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Temple location</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setTempleLocationFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {templeLocationFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(templeLocationFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={templeLocationFileName}
+                            >
+                              View Temple location
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Ambiance Photo */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Ambiance Photo</label>
+                        <input
+                          type="file"
+                          onChange={(e) => setAmbiancePhotoFile(e.target.files[0])}
+                          className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
+                        />
+                        {ambiancePhotoFileName && (
+                          <div className="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100 w-fit">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <a
+                              href={getFileUrl(ambiancePhotoFileName)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                              title={ambiancePhotoFileName}
+                            >
+                              View Ambiance Photo
+                            </a>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Remark */}
+                      <div className="md:col-span-3">
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">Remark</label>
+                        <textarea
+                          rows={3}
+                          value={ambianceRemark}
+                          onChange={(e) => setAmbianceRemark(e.target.value)}
+                          placeholder="Enter store ambiance remarks"
+                          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={submittingStoreAmbiance}
+                        className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        {submittingStoreAmbiance ? "Saving..." : "Save Store Ambiance"}
                       </button>
                     </div>
                   </form>
