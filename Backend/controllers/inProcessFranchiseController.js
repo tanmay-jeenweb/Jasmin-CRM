@@ -17,6 +17,18 @@ const {
     getAgreementGstByFranchiseId,
     upsertAgreementGst
 } = require('../models/agreementGstModel.js');
+const {
+    getDocPrepByFranchiseId,
+    upsertDocPrep
+} = require('../models/docPrepModel.js');
+const {
+    getStorePlanningByFranchiseId,
+    upsertStorePlanning
+} = require('../models/storePlanningModel.js');
+const {
+    getStoreAmbianceByFranchiseId,
+    upsertStoreAmbiance
+} = require('../models/storeAmbianceModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -216,13 +228,19 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         }
         const findStore = await getFindStoreByFranchiseId(id);
         const agreementGst = await getAgreementGstByFranchiseId(id);
+        const docPrep = await getDocPrepByFranchiseId(id);
+        const storePlanning = await getStorePlanningByFranchiseId(id);
+        const storeAmbiance = await getStoreAmbianceByFranchiseId(id);
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',
             data: {
                 ...franchise,
                 findStore,
-                agreementGst
+                agreementGst,
+                docPrep,
+                storePlanning,
+                storeAmbiance
             }
         });
     } catch (error) {
@@ -499,6 +517,228 @@ const saveAgreementGstController = async (req, res) => {
     }
 };
 
+const saveDocPrepController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { dispatchDate, dispatchName, receiverDate, receiverName } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Get files
+        const dispatchFile = req.files && req.files.find(f => f.fieldname === 'dispatchFile');
+        const receiverFile = req.files && req.files.find(f => f.fieldname === 'receiverFile');
+
+        const existing = await getDocPrepByFranchiseId(id);
+
+        let dispatchFilePath = undefined;
+        let receiverFilePath = undefined;
+
+        if (dispatchFile) {
+            dispatchFilePath = dispatchFile.filename;
+        }
+        if (receiverFile) {
+            receiverFilePath = receiverFile.filename;
+        }
+
+        const data = {
+            dispatchDate: dispatchDate || null,
+            dispatchName: dispatchName || null,
+            dispatchFile: dispatchFilePath,
+            receiverDate: receiverDate || null,
+            receiverName: receiverName || null,
+            receiverFile: receiverFilePath,
+            submittedBy
+        };
+
+        await upsertDocPrep(id, data);
+
+        const updated = await getDocPrepByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Document Preparation',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Document Preparation details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Document Preparation details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveStorePlanningController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { mainBoardSignSize } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Get files
+        const interiorFile = req.files && req.files.find(f => f.fieldname === 'interiorFile');
+        const inshopBrandingFile = req.files && req.files.find(f => f.fieldname === 'inshopBrandingFile');
+        const floorPlanFile = req.files && req.files.find(f => f.fieldname === 'floorPlanFile');
+        const billingFormatFile = req.files && req.files.find(f => f.fieldname === 'billingFormatFile');
+
+        const existing = await getStorePlanningByFranchiseId(id);
+
+        let interiorFilePath = undefined;
+        let inshopBrandingFilePath = undefined;
+        let floorPlanFilePath = undefined;
+        let billingFormatFilePath = undefined;
+
+        if (interiorFile) {
+            interiorFilePath = interiorFile.filename;
+        }
+        if (inshopBrandingFile) {
+            inshopBrandingFilePath = inshopBrandingFile.filename;
+        }
+        if (floorPlanFile) {
+            floorPlanFilePath = floorPlanFile.filename;
+        }
+        if (billingFormatFile) {
+            billingFormatFilePath = billingFormatFile.filename;
+        }
+
+        const data = {
+            mainBoardSignSize: mainBoardSignSize || null,
+            interiorFile: interiorFilePath,
+            inshopBrandingFile: inshopBrandingFilePath,
+            floorPlanFile: floorPlanFilePath,
+            billingFormatFile: billingFormatFilePath,
+            submittedBy
+        };
+
+        await upsertStorePlanning(id, data);
+
+        const updated = await getStorePlanningByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Store Planning',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Store Planning details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Store Planning details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveStoreAmbianceController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { remark } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Get files
+        const furnitureFixingFile = req.files && req.files.find(f => f.fieldname === 'furnitureFixingFile');
+        const companyFurnitureFittingFile = req.files && req.files.find(f => f.fieldname === 'companyFurnitureFittingFile');
+        const shineBoardFile = req.files && req.files.find(f => f.fieldname === 'shineBoardFile');
+        const inShopBrandingFile = req.files && req.files.find(f => f.fieldname === 'inShopBrandingFile');
+        const templeLocationFile = req.files && req.files.find(f => f.fieldname === 'templeLocationFile');
+        const ambiancePhotoFile = req.files && req.files.find(f => f.fieldname === 'ambiancePhotoFile');
+
+        const existing = await getStoreAmbianceByFranchiseId(id);
+
+        let furnitureFixingFilePath = undefined;
+        let companyFurnitureFittingFilePath = undefined;
+        let shineBoardFilePath = undefined;
+        let inShopBrandingFilePath = undefined;
+        let templeLocationFilePath = undefined;
+        let ambiancePhotoFilePath = undefined;
+
+        if (furnitureFixingFile) furnitureFixingFilePath = furnitureFixingFile.filename;
+        if (companyFurnitureFittingFile) companyFurnitureFittingFilePath = companyFurnitureFittingFile.filename;
+        if (shineBoardFile) shineBoardFilePath = shineBoardFile.filename;
+        if (inShopBrandingFile) inShopBrandingFilePath = inShopBrandingFile.filename;
+        if (templeLocationFile) templeLocationFilePath = templeLocationFile.filename;
+        if (ambiancePhotoFile) ambiancePhotoFilePath = ambiancePhotoFile.filename;
+
+        const data = {
+            furnitureFixingFile: furnitureFixingFilePath,
+            companyFurnitureFittingFile: companyFurnitureFittingFilePath,
+            shineBoardFile: shineBoardFilePath,
+            inShopBrandingFile: inShopBrandingFilePath,
+            templeLocationFile: templeLocationFilePath,
+            ambiancePhotoFile: ambiancePhotoFilePath,
+            remark: remark ? remark.trim() : null,
+            submittedBy
+        };
+
+        await upsertStoreAmbiance(id, data);
+
+        const updated = await getStoreAmbianceByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Store Ambiance',
+            existing ? 'updated' : 'created',
+            existing,
+            data
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Store Ambiance details saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Store Ambiance details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -509,5 +749,8 @@ module.exports = {
     approveFindStoreController,
     rejectFindStoreController,
     getAllFindStoresController,
-    saveAgreementGstController
+    saveAgreementGstController,
+    saveDocPrepController,
+    saveStorePlanningController,
+    saveStoreAmbianceController
 };

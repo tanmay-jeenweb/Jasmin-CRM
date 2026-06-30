@@ -9,7 +9,10 @@ const {
     approveFindStoreController,
     rejectFindStoreController,
     getAllFindStoresController,
-    saveAgreementGstController
+    saveAgreementGstController,
+    saveDocPrepController,
+    saveStorePlanningController,
+    saveStoreAmbianceController
 } = require('../controllers/inProcessFranchiseController.js');
 const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
@@ -34,6 +37,15 @@ router.post('/:id/find-store/reject', verifyToken, verifyAdmin, rejectFindStoreC
 
 // Agreement & GST route
 router.post('/:id/agreement-gst', verifyToken, upload.any(), saveAgreementGstController);
+
+// Document Preparation route
+router.post('/:id/doc-prep', verifyToken, upload.any(), saveDocPrepController);
+
+// Store Planning route
+router.post('/:id/store-planning', verifyToken, upload.any(), saveStorePlanningController);
+
+// Store Ambiance route
+router.post('/:id/store-ambiance', verifyToken, upload.any(), saveStoreAmbianceController);
 
 module.exports = router;
 

@@ -52,3 +52,27 @@ export const submitAgreementGstForm = async (id, formData) => {
     });
 };
 
+export const submitDocPrepForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/doc-prep`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const submitStorePlanningForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/store-planning`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const submitStoreAmbianceForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/store-ambiance`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
