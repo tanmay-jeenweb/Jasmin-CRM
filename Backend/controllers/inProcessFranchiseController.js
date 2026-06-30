@@ -13,6 +13,10 @@ const {
     rejectFindStore,
     getAllFindStores
 } = require('../models/findStoreModel.js');
+const {
+    getAgreementGstByFranchiseId,
+    upsertAgreementGst
+} = require('../models/agreementGstModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -211,12 +215,14 @@ const getInProcessFranchiseByIdController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
         const findStore = await getFindStoreByFranchiseId(id);
+        const agreementGst = await getAgreementGstByFranchiseId(id);
         res.status(200).json({
             success: true,
             message: 'In Process Franchise retrieved successfully',
             data: {
                 ...franchise,
-                findStore
+                findStore,
+                agreementGst
             }
         });
     } catch (error) {
@@ -403,6 +409,96 @@ const getAllFindStoresController = async (req, res) => {
     }
 };
 
+const saveAgreementGstController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { partnerDate, gstRegistrationDate, gstNumber } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Parse documents array from body
+        let parsedDocs = [];
+        if (req.body.documents) {
+            try {
+                parsedDocs = JSON.parse(req.body.documents);
+            } catch (e) {
+                console.error("Error parsing documents JSON:", e);
+                return res.status(400).json({ success: false, message: 'Invalid documents data format' });
+            }
+        }
+
+        // Loop over the parsed documents and populate file paths
+        const finalDocs = [];
+        for (let i = 0; i < parsedDocs.length; i++) {
+            const doc = parsedDocs[i];
+            
+            if (!doc.doc_type || !doc.doc_type.trim()) {
+                return res.status(400).json({ success: false, message: 'Document type is required for all items' });
+            }
+
+            let documentPath = doc.document_path;
+
+            // Check if there is a new uploaded file for this index
+            const fileKey = `file_${i}`;
+            const uploadedFile = req.files && req.files.find(f => f.fieldname === fileKey);
+            if (uploadedFile) {
+                documentPath = uploadedFile.filename;
+            }
+
+            // A document file is required. If we don't have documentPath, error out!
+            if (!documentPath) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `File is required for document type: ${doc.doc_type}` 
+                });
+            }
+
+            finalDocs.push({
+                doc_type: doc.doc_type.trim(),
+                document_path: documentPath,
+                expiry_date: doc.expiry_date || null
+            });
+        }
+
+        const existing = await getAgreementGstByFranchiseId(id);
+
+        await upsertAgreementGst(id, partnerDate, gstRegistrationDate, gstNumber, submittedBy, finalDocs);
+
+        // Fetch updated details
+        const updated = await getAgreementGstByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Agreement & GST',
+            existing ? 'updated' : 'created',
+            existing,
+            { partnerDate, gstRegistrationDate, gstNumber, documentsCount: finalDocs.length }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Agreement & GST details saved successfully.',
+            data: updated
+        });
+
+    } catch (error) {
+        console.error('Error saving Agreement & GST details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -412,5 +508,6 @@ module.exports = {
     upsertFindStoreController,
     approveFindStoreController,
     rejectFindStoreController,
-    getAllFindStoresController
+    getAllFindStoresController,
+    saveAgreementGstController
 };

@@ -44,3 +44,11 @@ export const getAllFindStores = async () => {
     return apiClient.get("/in-process-franchises/find-stores/all");
 };
 
+export const submitAgreementGstForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/agreement-gst`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+

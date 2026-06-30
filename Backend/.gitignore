@@ -152,8 +152,6 @@ Backend.zip
 # Apache config
 .htaccess
 
-# End of https://www.toptal.com/developers/gitignore/api/node
-
-
-#upload in backend
 /uploads
+
+# End of https://www.toptal.com/developers/gitignore/api/node
