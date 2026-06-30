@@ -42,7 +42,7 @@ router.delete('/delete/:id', verifyToken, deleteInProcessFranchiseController);
 
 // Find Store stage routes
 router.post('/:id/find-store', verifyToken, upload.fields([
-    { name: 'storePhoto', maxCount: 1 },
+    { name: 'storePhoto', maxCount: 20 },
     { name: 'authorityCertificate', maxCount: 1 }
 ]), upsertFindStoreController);
 
