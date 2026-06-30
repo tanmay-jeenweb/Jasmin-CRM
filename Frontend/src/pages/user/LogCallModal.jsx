@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getCallOutcomes } from "../../api/callOutcomeApi";
 
 export default function LogCallModal({ isOpen, inquiry, onClose, onSave, saving }) {
   const [formData, setFormData] = useState({
@@ -12,6 +13,7 @@ export default function LogCallModal({ isOpen, inquiry, onClose, onSave, saving 
     reminderTime: "",
   });
   const [errors, setErrors] = useState({});
+  const [outcomeOptions, setOutcomeOptions] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -36,6 +38,26 @@ export default function LogCallModal({ isOpen, inquiry, onClose, onSave, saving 
         reminderTime: localTime,
       });
       setErrors({});
+
+      // Fetch dynamic call outcomes
+      const loadOutcomes = async () => {
+        try {
+          const response = await getCallOutcomes();
+          const names = (response.data.data || []).map(o => o.outcome_name);
+          setOutcomeOptions(names);
+        } catch (error) {
+          console.error("Failed to load call outcomes, using defaults", error);
+          setOutcomeOptions([
+            "Busy",
+            "Connected",
+            "Left Live Message",
+            "Left voicemail",
+            "No Answer",
+            "Wrong number"
+          ]);
+        }
+      };
+      loadOutcomes();
     }
   }, [isOpen]);
 
@@ -76,14 +98,7 @@ export default function LogCallModal({ isOpen, inquiry, onClose, onSave, saving 
     });
   };
 
-  const outcomeOptions = [
-    "Busy",
-    "Connected",
-    "Left Live Message",
-    "Left voicemail",
-    "No Answer",
-    "Wrong number"
-  ];
+
 
   return (
     <div style={{
