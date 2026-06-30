@@ -127,7 +127,6 @@ export default function InProcessFranchiseDetails() {
   };
 
   const handleSaveChanges = async () => {
-    if (!tentativeOpeningDate) return toast.error("Tentative Opening Date is required");
     if (!bdmArea.trim()) return toast.error("BDM Area is required");
     if (!inquiryManagerId) return toast.error("Inquiry Manager is required");
     if (!storeName) return toast.error("Store Name is required");

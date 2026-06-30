@@ -111,7 +111,6 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
     if (!city.trim()) return toast.error("City is required");
     if (!district.trim()) return toast.error("District is required");
     if (!state.trim()) return toast.error("State is required");
-    if (!tentativeOpeningDate) return toast.error("Tentative Opening Date is required");
     if (!bdmArea.trim()) return toast.error("BDM Area is required");
     if (!inquiryManagerId) return toast.error("Inquiry Manager is required");
     if (!storeName) return toast.error("Store Name is required");
@@ -271,7 +270,7 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
 
               {/* Tentative Opening Date */}
               <div>
-                <label style={labelStyle}>Tentative Opening Date *</label>
+                <label style={labelStyle}>Tentative Opening Date</label>
                 <input
                   type="date"
                   value={tentativeOpeningDate}

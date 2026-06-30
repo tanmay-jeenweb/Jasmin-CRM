@@ -91,9 +91,6 @@ const addInProcessFranchiseController = async (req, res) => {
         if (!data.state || !data.state.trim()) {
             return res.status(400).json({ success: false, message: 'State is required' });
         }
-        if (!data.tentativeOpeningDate) {
-            return res.status(400).json({ success: false, message: 'Tentative Opening Date is required' });
-        }
         if (!data.bdmArea || !data.bdmArea.trim()) {
             return res.status(400).json({ success: false, message: 'BDM Area is required' });
         }
@@ -176,9 +173,6 @@ const updateInProcessFranchiseController = async (req, res) => {
         }
         if (!data.state || !data.state.trim()) {
             return res.status(400).json({ success: false, message: 'State is required' });
-        }
-        if (!data.tentativeOpeningDate) {
-            return res.status(400).json({ success: false, message: 'Tentative Opening Date is required' });
         }
         if (!data.bdmArea || !data.bdmArea.trim()) {
             return res.status(400).json({ success: false, message: 'BDM Area is required' });
