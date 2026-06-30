@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { getInquiries, updateInquiry, updateInquiryLabel } from "../../api/inquiryApi";
+import { getInquiries, updateInquiry, updateInquiryLabel, updateInquiryStatus } from "../../api/inquiryApi";
 import { getInquirySources } from "../../api/inquirySourceApi";
 import { getCallLogs as getCallLogsApi, createCallLog as createCallLogApi } from "../../api/callLogApi";
 import { getReminders as getRemindersApi, createReminder as createReminderApi } from "../../api/reminderApi";
@@ -11,6 +11,7 @@ import SetReminderModal from "./SetReminderModal";
 import NoteModal from "./NoteModal";
 import LabelModal from "./LabelModal";
 import InProcessFranchiseModal from "./InProcessFranchiseModal";
+import WhatsAppModal from "./WhatsAppModal";
 import { createInProcessFranchise } from "../../api/inProcessFranchiseApi";
 import toast from "react-hot-toast";
 
@@ -443,6 +444,7 @@ export default function Inquiries() {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const [isInProcessModalOpen, setIsInProcessModalOpen] = useState(false);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   const [callLogs, setCallLogs] = useState([]);
   const [loadingCallLogs, setLoadingCallLogs] = useState(false);
@@ -607,6 +609,27 @@ export default function Inquiries() {
     }
   };
 
+  const handleCloseInquiry = async () => {
+    if (!selectedInquiry) return;
+    if (!window.confirm("Are you sure you want to close this inquiry?")) return;
+    setSaving(true);
+    try {
+      const response = await updateInquiryStatus(selectedInquiry.id, "closed");
+      if (response.data.success) {
+        toast.success("Inquiry closed successfully!");
+        setSelectedInquiry(null);
+        await loadInquiries();
+      } else {
+        toast.error(response.data.message || "Failed to close inquiry");
+      }
+    } catch (err) {
+      console.error("Error closing inquiry:", err);
+      toast.error(err?.response?.data?.message || "Failed to close inquiry.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Fetch inquiries from database
   const loadInquiries = async () => {
     setLoading(true);
@@ -631,7 +654,8 @@ export default function Inquiries() {
         minBudget: Number(inq.min_budget),
         maxBudget: Number(inq.max_budget),
         label_id: inq.label_id,
-        label_name: inq.label_name
+        label_name: inq.label_name,
+        status: inq.status
       }));
 
       setInquiries(mapped);
@@ -793,6 +817,12 @@ export default function Inquiries() {
         saving={saving}
       />
 
+      <WhatsAppModal
+        isOpen={isWhatsAppModalOpen}
+        inquiry={selectedInquiry}
+        onClose={() => setIsWhatsAppModalOpen(false)}
+      />
+
       {/* Main CRM Workspace (2-Column Setup) */}
       <div className="flex-1 flex overflow-hidden mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 gap-6">
 
@@ -917,10 +947,28 @@ export default function Inquiries() {
                 </div>
                 <div className="flex items-center gap-3">
                   <button
+                    onClick={() => setIsWhatsAppModalOpen(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16" className="mr-0.5">
+                      <path d="M13.601 2.326A7.85 7.85 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.9 7.9 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.9 7.9 0 0 0 13.6 2.326zM7.994 14.521a6.6 6.6 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.56 6.56 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592m3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.73.73 0 0 0-.529.247c-.182.198-.691.677-.691 1.654s.71 1.916.81 2.049c.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232"/>
+                    </svg>
+                    WhatsApp
+                  </button>
+                  <button
                     onClick={() => setIsInProcessModalOpen(true)}
                     className="flex items-center gap-1.5 px-3.5 py-2 bg-[#6804a1] hover:bg-[#52037e] text-white font-bold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
                   >
                     In Process
+                  </button>
+                  <button
+                    onClick={handleCloseInquiry}
+                    className="flex items-center gap-1.5 px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs transition-all cursor-pointer shadow-xs"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.2} stroke="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Close Inquiry
                   </button>
                   <button
                     onClick={() => setSelectedInquiry(null)}
@@ -949,7 +997,7 @@ export default function Inquiries() {
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50/60 hover:bg-indigo-100/60 text-[#6804a1] font-bold rounded-lg text-xs border border-indigo-100/50 transition-all cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                   Set Reminders
                 </button>
@@ -1058,7 +1106,7 @@ export default function Inquiries() {
                               {log.reminder_id && (
                                 <div className="mt-1 flex items-center gap-1.5 px-2.5 py-1.5 bg-amber-50/60 border border-amber-100 rounded-lg text-[10px] font-semibold text-amber-700">
                                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-amber-600">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                   </svg>
                                   Linked Reminder: {log.reminder_text} ({new Date(log.reminder_date).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} at {log.reminder_time.substring(0, 5)})
                                 </div>
@@ -1079,7 +1127,7 @@ export default function Inquiries() {
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.686-3.79c-.116-.579-.204-1.164-.259-1.748M5.143 17.082a9.04 9.04 0 0 0 1.686-3.79c.116-.579.204-1.164.259-1.748m0 0A7.491 7.491 0 0 1 12 5.25a7.491 7.491 0 0 1 4.912 1.897m0 0A7.491 7.491 0 0 1 18.75 12.75M12 5.25c1.213 0 2.385.287 3.43.8m-6.86 0A8.963 8.963 0 0 0 5.25 12.75m13.5 0v1.875c0 1.035-.84 1.875-1.875 1.875H7.125A1.875 1.875 0 0 1 5.25 14.625V12.75m13.5 0a8.966 8.966 0 0 1-1.875 5.625M5.25 12.75a8.966 8.966 0 0 0 1.875 5.625m10.5 0a9.009 9.009 0 0 1-1.875 1.875M7.125 18.375c-.63 0-1.213-.25-1.643-.656m0 0a9.039 9.039 0 0 1-1.686-3.79M12 18.75a6.002 6.002 0 0 1-4.875-2.497m4.875 2.497c1.213 0 2.385-.287 3.43-.8" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         Your Reminders
                       </h3>

@@ -3,6 +3,7 @@ const {
     getAllInquiries,
     updateInquiry,
     updateInquiryLabel,
+    updateInquiryStatus,
     getInquiryById
 } = require('../models/inquiryModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
@@ -169,9 +170,46 @@ const updateInquiryLabelController = async (req, res) => {
     }
 };
 
+const updateInquiryStatusController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const beforeData = await getInquiryById(id);
+        if (!beforeData) {
+            return res.status(404).json({ success: false, message: 'Inquiry not found' });
+        }
+
+        await updateInquiryStatus(id, status);
+
+        await createAuditLog(
+            req.user?.id,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'Inquiry',
+            'status_updated',
+            beforeData,
+            { id, status }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Inquiry status updated successfully'
+        });
+    } catch (error) {
+        console.error('Error updating inquiry status:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInquiryController,
     getAllInquiriesController,
     updateInquiryController,
-    updateInquiryLabelController
+    updateInquiryLabelController,
+    updateInquiryStatusController
 };
