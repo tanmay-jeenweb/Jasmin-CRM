@@ -277,19 +277,43 @@ const upsertFindStoreController = async (req, res) => {
         }
 
         // Get files
-        const storePhotoFile = req.files && req.files['storePhoto'] ? req.files['storePhoto'][0] : null;
+        const storePhotoFiles = req.files && req.files['storePhoto'] ? req.files['storePhoto'] : [];
         const authorityCertificateFile = req.files && req.files['authorityCertificate'] ? req.files['authorityCertificate'][0] : null;
 
         const existing = await getFindStoreByFranchiseId(id);
 
-        let storePhotoPath = undefined;
-        let authorityCertificatePath = undefined;
-
-        if (storePhotoFile) {
-            storePhotoPath = storePhotoFile.filename;
-        } else if (!existing) {
-            return res.status(400).json({ success: false, message: 'Store Photo is required' });
+        // Retrieve existing photos that were kept by the user, if provided
+        let existingPhotos = [];
+        if (req.body.existingPhotos) {
+            try {
+                existingPhotos = JSON.parse(req.body.existingPhotos);
+                if (!Array.isArray(existingPhotos)) {
+                    existingPhotos = [];
+                }
+            } catch (e) {
+                existingPhotos = [];
+            }
+        } else if (existing && storePhotoFiles.length === 0) {
+            // Fallback for older/other APIs not sending existingPhotos: keep what's in DB
+            try {
+                const parsed = JSON.parse(existing.store_photo);
+                existingPhotos = Array.isArray(parsed) ? parsed : [existing.store_photo];
+            } catch (e) {
+                if (existing.store_photo) {
+                    existingPhotos = [existing.store_photo];
+                }
+            }
         }
+
+        const newPhotoNames = storePhotoFiles.map(file => file.filename);
+        const allPhotos = [...existingPhotos, ...newPhotoNames];
+
+        if (allPhotos.length === 0) {
+            return res.status(400).json({ success: false, message: 'At least one Store Photo is required' });
+        }
+
+        const storePhotoPath = JSON.stringify(allPhotos);
+        let authorityCertificatePath = undefined;
 
         if (authorityCertificateFile) {
             authorityCertificatePath = authorityCertificateFile.filename;

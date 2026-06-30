@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 export default function FindStoreForm({ franchiseId, findStoreData, findStoreStatus, reloadFranchiseData, getFileUrl }) {
   const [storeLocation, setStoreLocation] = useState("");
   const [storeMapLink, setStoreMapLink] = useState("");
-  const [storePhotoFile, setStorePhotoFile] = useState(null);
-  const [storePhotoName, setStorePhotoName] = useState("");
+  const [storePhotoFiles, setStorePhotoFiles] = useState([]);
+  const [existingPhotos, setExistingPhotos] = useState([]);
   const [businessArea, setBusinessArea] = useState("");
   const [clusterValue, setClusterValue] = useState("");
   const [processActiveValue, setProcessActiveValue] = useState("");
@@ -18,13 +18,39 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
     if (findStoreData) {
       setStoreLocation(findStoreData.store_location || "");
       setStoreMapLink(findStoreData.store_map_link || "");
-      setStorePhotoName(findStoreData.store_photo || "");
       setBusinessArea(findStoreData.business_area || "");
       setClusterValue(findStoreData.cluster_value || "");
       setProcessActiveValue(findStoreData.process_active_value || "");
       setAuthorityCertificateName(findStoreData.authority_certificate || "");
+
+      if (findStoreData.store_photo) {
+        try {
+          const parsed = JSON.parse(findStoreData.store_photo);
+          setExistingPhotos(Array.isArray(parsed) ? parsed : [findStoreData.store_photo]);
+        } catch (e) {
+          setExistingPhotos([findStoreData.store_photo]);
+        }
+      } else {
+        setExistingPhotos([]);
+      }
+      setStorePhotoFiles([]);
     }
   }, [findStoreData]);
+
+  const handlePhotoFilesChange = (e) => {
+    if (e.target.files) {
+      const filesArray = Array.from(e.target.files);
+      setStorePhotoFiles((prev) => [...prev, ...filesArray]);
+    }
+  };
+
+  const removeNewPhotoFile = (indexToRemove) => {
+    setStorePhotoFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  const removeExistingPhoto = (photoToRemove) => {
+    setExistingPhotos((prev) => prev.filter((p) => p !== photoToRemove));
+  };
 
   const handleFindStoreSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +58,9 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
     if (!storeLocation.trim()) return toast.error("Store Location is required");
     if (!storeMapLink.trim()) return toast.error("Store Map Link is required");
     if (!businessArea.trim()) return toast.error("Business Area is required");
-    if (!storePhotoFile && !storePhotoName) return toast.error("Store Photo is required");
+    if (storePhotoFiles.length === 0 && existingPhotos.length === 0) {
+      return toast.error("At least one Store Photo is required");
+    }
 
     setSubmittingFindStore(true);
     try {
@@ -42,10 +70,12 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
       fd.append("businessArea", businessArea.trim());
       fd.append("clusterValue", clusterValue.trim());
       fd.append("processActiveValue", processActiveValue.trim());
+      fd.append("existingPhotos", JSON.stringify(existingPhotos));
 
-      if (storePhotoFile) {
-        fd.append("storePhoto", storePhotoFile);
-      }
+      storePhotoFiles.forEach((file) => {
+        fd.append("storePhoto", file);
+      });
+
       if (authorityCertificateFile) {
         fd.append("authorityCertificate", authorityCertificateFile);
       }
@@ -138,33 +168,89 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-bold text-slate-600 mb-1.5">
-            Store Photo * <span className="text-[10px] text-slate-400 font-semibold">(Attachment)</span>
-          </label>
-          {findStoreStatus !== "approved" && (
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setStorePhotoFile(e.target.files[0])}
-              className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
-            />
-          )}
-          {storePhotoName && (
-            <div className="mt-2.5 flex items-center gap-3">
-              <img
-                src={getFileUrl(storePhotoName)}
-                alt="Store Photo"
-                className="w-14 h-14 object-cover rounded-lg border border-slate-200 shadow-sm"
+        <div className="col-span-1 md:col-span-2 border border-slate-100 p-4 rounded-xl bg-slate-50/50 space-y-4">
+          <div>
+            <label className="block text-xs font-bold text-slate-600 mb-1.5">
+              Store Photos * <span className="text-[10px] text-slate-400 font-semibold">(Select one or more images)</span>
+            </label>
+            {findStoreStatus !== "approved" && (
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handlePhotoFilesChange}
+                className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-[#6804a1] hover:file:bg-violet-100 cursor-pointer"
               />
-              <a
-                href={getFileUrl(storePhotoName)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#6804a1] hover:underline text-xs font-bold"
-              >
-                View Full Image
-              </a>
+            )}
+          </div>
+
+          {/* Existing saved photos */}
+          {existingPhotos.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Saved Photos:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {existingPhotos.map((photo, idx) => (
+                  <div key={photo} className="relative group rounded-lg overflow-hidden border border-slate-200 bg-white p-1 flex flex-col items-center">
+                    <img
+                      src={getFileUrl(photo)}
+                      alt={`Store Photo ${idx + 1}`}
+                      className="w-full h-16 object-cover rounded-md"
+                    />
+                    <div className="flex items-center justify-between w-full mt-1.5 px-1 gap-1">
+                      <a
+                        href={getFileUrl(photo)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] text-[#6804a1] hover:underline font-bold"
+                      >
+                        View Full
+                      </a>
+                      {findStoreStatus !== "approved" && (
+                        <button
+                          type="button"
+                          onClick={() => removeExistingPhoto(photo)}
+                          className="text-rose-600 hover:text-rose-800 text-[9px] font-bold cursor-pointer transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Newly selected photos (to be uploaded) */}
+          {storePhotoFiles.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] font-bold text-[#6804a1] uppercase tracking-wider">New Photos to Upload:</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                {storePhotoFiles.map((file, idx) => {
+                  const previewUrl = URL.createObjectURL(file);
+                  return (
+                    <div key={idx} className="relative group rounded-lg overflow-hidden border border-violet-200 bg-violet-50/30 p-1 flex flex-col items-center">
+                      <img
+                        src={previewUrl}
+                        alt={`New Photo ${idx + 1}`}
+                        className="w-full h-16 object-cover rounded-md"
+                      />
+                      <div className="flex items-center justify-between w-full mt-1.5 px-1 gap-1">
+                        <span className="text-[8px] text-slate-500 font-semibold truncate max-w-[60%]" title={file.name}>
+                          {file.name}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeNewPhotoFile(idx)}
+                          className="text-rose-600 hover:text-rose-800 text-[9px] font-bold cursor-pointer transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
