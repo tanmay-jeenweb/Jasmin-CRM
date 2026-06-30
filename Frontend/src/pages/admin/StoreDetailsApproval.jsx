@@ -287,23 +287,37 @@ export default function StoreDetailsApproval() {
 
                 {/* Photo thumbnail and approval buttons */}
                 <div className="flex flex-row md:flex-col items-center md:items-end gap-4 shrink-0 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0 border-slate-100">
-                  {sub.store_photo && (
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <img
-                        src={getFileUrl(sub.store_photo)}
-                        alt="Store location"
-                        className="w-20 h-20 object-cover rounded-xl border border-slate-200 shadow-sm"
-                      />
-                      <a
-                        href={getFileUrl(sub.store_photo)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[10px] text-[#6804a1] hover:underline font-bold"
-                      >
-                        Open Photo
-                      </a>
-                    </div>
-                  )}
+                  {(() => {
+                    if (!sub.store_photo) return null;
+                    let photos = [];
+                    try {
+                      const parsed = JSON.parse(sub.store_photo);
+                      photos = Array.isArray(parsed) ? parsed : [sub.store_photo];
+                    } catch (e) {
+                      photos = [sub.store_photo];
+                    }
+                    return (
+                      <div className="flex flex-wrap gap-2.5 justify-end max-w-xs">
+                        {photos.map((photo, idx) => (
+                          <div key={photo} className="flex flex-col items-center gap-1 shrink-0">
+                            <img
+                              src={getFileUrl(photo)}
+                              alt={`Store location ${idx + 1}`}
+                              className="w-14 h-14 object-cover rounded-xl border border-slate-200 shadow-sm"
+                            />
+                            <a
+                              href={getFileUrl(photo)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[9px] text-[#6804a1] hover:underline font-bold"
+                            >
+                              Open Photo {photos.length > 1 ? idx + 1 : ""}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
 
                   {sub.status === "pending" && (
                     <div className="flex md:flex-col gap-2 shrink-0 ml-auto md:ml-0">

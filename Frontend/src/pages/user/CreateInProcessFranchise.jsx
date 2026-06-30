@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { createInProcessFranchise, getActiveUsers } from "../../api/inProcessFranchiseApi";
+import { getCompanyBrands } from "../../api/companyBrandApi";
 import { toast } from "react-hot-toast";
 
 export default function CreateInProcessFranchise() {
@@ -9,6 +10,7 @@ export default function CreateInProcessFranchise() {
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [companyBrands, setCompanyBrands] = useState([]);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -29,7 +31,7 @@ export default function CreateInProcessFranchise() {
     // Error states for validation
     const [errors, setErrors] = useState({});
 
-    // Fetch active users for inquiry manager dropdown
+    // Fetch active users and company brands
     useEffect(() => {
         const fetchUsers = async () => {
             setLoadingUsers(true);
@@ -43,7 +45,17 @@ export default function CreateInProcessFranchise() {
                 setLoadingUsers(false);
             }
         };
+        const fetchBrands = async () => {
+            try {
+                const response = await getCompanyBrands();
+                setCompanyBrands(response.data.data || []);
+            } catch (err) {
+                console.error("Failed to load company brands:", err);
+                toast.error("Failed to load company brands.");
+            }
+        };
         fetchUsers();
+        fetchBrands();
     }, []);
 
     const handleChange = (e) => {
@@ -333,19 +345,23 @@ export default function CreateInProcessFranchise() {
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 mb-2.5">Store Name *</label>
                                 <div className="flex flex-wrap gap-6 mt-1">
-                                    {["8 to 9", "BIG PHONE", "JASMIN", "PHONE 2 PHONE"].map((store) => (
-                                        <label key={store} className="flex items-center gap-2 cursor-pointer font-semibold text-sm text-slate-700">
-                                            <input
-                                                type="radio"
-                                                name="storeName"
-                                                value={store}
-                                                checked={formData.storeName === store}
-                                                onChange={handleChange}
-                                                className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1]"
-                                            />
-                                            {store}
-                                        </label>
-                                    ))}
+                                    {companyBrands.length > 0 ? (
+                                        companyBrands.map((brand) => (
+                                            <label key={brand.id} className="flex items-center gap-2 cursor-pointer font-semibold text-sm text-slate-700">
+                                                <input
+                                                    type="radio"
+                                                    name="storeName"
+                                                    value={brand.brand_name}
+                                                    checked={formData.storeName === brand.brand_name}
+                                                    onChange={handleChange}
+                                                    className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1]"
+                                                />
+                                                {brand.brand_name}
+                                            </label>
+                                        ))
+                                    ) : (
+                                        <span className="text-xs text-slate-400 italic">No brands available in Company Brand Master</span>
+                                    )}
                                 </div>
                             </div>
                         </div>

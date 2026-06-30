@@ -7,7 +7,7 @@ const createFindStoreTable = async () => {
             in_process_franchise_id INT NOT NULL UNIQUE,
             store_location VARCHAR(255) NOT NULL,
             store_map_link VARCHAR(512) NOT NULL,
-            store_photo VARCHAR(255) NOT NULL,
+            store_photo TEXT NOT NULL,
             business_area VARCHAR(255) NOT NULL,
             cluster_value VARCHAR(255) NULL,
             process_active_value VARCHAR(255) NULL,
@@ -26,6 +26,16 @@ const createFindStoreTable = async () => {
     `;
     await db.execute(query);
     console.log("In Process Franchise Find Store table ready");
+
+    try {
+        await db.execute(`
+            ALTER TABLE in_process_franchise_find_stores 
+            MODIFY COLUMN store_photo TEXT NOT NULL
+        `);
+        console.log("Altered store_photo column to TEXT in in_process_franchise_find_stores");
+    } catch (err) {
+        console.log("Note on altering store_photo column:", err.message);
+    }
 };
 
 const upsertFindStore = async (data) => {
