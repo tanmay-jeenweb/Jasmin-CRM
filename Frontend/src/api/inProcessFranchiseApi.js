@@ -76,3 +76,15 @@ export const submitStoreAmbianceForm = async (id, formData) => {
     });
 };
 
+export const submitFranchiseTeamForm = async (id, roles) => {
+    return apiClient.post(`/in-process-franchises/${id}/team`, { roles });
+};
+
+export const submitFranchiseMarketingForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/marketing`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+

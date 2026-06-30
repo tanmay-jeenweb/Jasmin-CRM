@@ -12,7 +12,9 @@ const {
     saveAgreementGstController,
     saveDocPrepController,
     saveStorePlanningController,
-    saveStoreAmbianceController
+    saveStoreAmbianceController,
+    saveFranchiseTeamController,
+    saveFranchiseMarketingController
 } = require('../controllers/inProcessFranchiseController.js');
 const { verifyToken, verifyAdmin } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
@@ -46,6 +48,12 @@ router.post('/:id/store-planning', verifyToken, upload.any(), saveStorePlanningC
 
 // Store Ambiance route
 router.post('/:id/store-ambiance', verifyToken, upload.any(), saveStoreAmbianceController);
+
+// Team route
+router.post('/:id/team', verifyToken, saveFranchiseTeamController);
+
+// Marketing route
+router.post('/:id/marketing', verifyToken, upload.any(), saveFranchiseMarketingController);
 
 module.exports = router;
 
