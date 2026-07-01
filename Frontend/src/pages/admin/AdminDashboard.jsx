@@ -11,9 +11,15 @@ import {
 import Navbar from "../../components/Navbar";
 import DataTable from "../../components/DataTable";
 import { useNavigate } from "react-router-dom";
+import { usePermission } from "../../context/PermissionContext";
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
+    const { hasPermission, loading: permissionLoading } = usePermission();
+    const canReadUsers = hasPermission("user_master", "read");
+    const canReadDevices = hasPermission("device_approval", "read");
+    const user = useMemo(() => JSON.parse(localStorage.getItem("user") || "{}"), []);
+
     const [activeTab, setActiveTab] = useState("users");
     const [users, setUsers] = useState([]);
     const [pendingDevices, setPendingDevices] = useState([]);
@@ -22,20 +28,40 @@ export default function AdminDashboard() {
     // Filter/Search states
     const [auditUserFilter, setAuditUserFilter] = useState("all");
 
-
     const [showInactive, setShowInactive] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const fetchData = async () => {
+        if (permissionLoading) return;
         try {
-            const [usersRes, pendingRes, auditRes] = await Promise.all([
-                getAllUsers(showInactive),
-                getPendingDevices(),
-                fetchAuditLogs()
-            ]);
-            setUsers(usersRes.data.users);
-            setPendingDevices(pendingRes.data.devices);
-            setAuditLogs(auditRes.data.logs);
+            const promises = [];
+            if (canReadUsers) {
+                promises.push(
+                    getAllUsers(showInactive)
+                        .then(res => ({ type: "users", data: res.data.users }))
+                        .catch(err => { console.error("Error fetching users:", err); return null; })
+                );
+            }
+            if (canReadDevices) {
+                promises.push(
+                    getPendingDevices()
+                        .then(res => ({ type: "pending", data: res.data.devices }))
+                        .catch(err => { console.error("Error fetching pending devices:", err); return null; })
+                );
+                promises.push(
+                    fetchAuditLogs()
+                        .then(res => ({ type: "audit", data: res.data.logs }))
+                        .catch(err => { console.error("Error fetching audit logs:", err); return null; })
+                );
+            }
+
+            const results = await Promise.all(promises);
+            results.forEach(res => {
+                if (!res) return;
+                if (res.type === "users") setUsers(res.data);
+                if (res.type === "pending") setPendingDevices(res.data);
+                if (res.type === "audit") setAuditLogs(res.data);
+            });
         } catch (error) {
             console.error("Error fetching data:", error);
             toast.error("Failed to load dashboard data");
@@ -43,8 +69,18 @@ export default function AdminDashboard() {
     };
 
     useEffect(() => {
+        if (!permissionLoading) {
+            if (canReadUsers) {
+                setActiveTab("users");
+            } else if (canReadDevices) {
+                setActiveTab("pending");
+            }
+        }
+    }, [permissionLoading, canReadUsers, canReadDevices]);
+
+    useEffect(() => {
         fetchData();
-    }, [showInactive]);
+    }, [showInactive, permissionLoading, canReadUsers, canReadDevices]);
 
     // Handlers
     const handleRevokeDevice = async (userId) => {
@@ -161,41 +197,49 @@ export default function AdminDashboard() {
             key: 'actions',
             label: 'Actions',
             sortable: false,
-            render: (row) => (
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => handleRevokeDevice(row.id)}
-                        disabled={!row.device_status}
-                        className="text-red-600 hover:text-red-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium"
-                    >
-                        Revoke Device
-                    </button>
-                    <button
-                        onClick={() => handleToggleUserActive(row.id, !!row.active)}
-                        disabled={saving}
-                        className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${row.active
-                            ? "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                            }`}
-                        title={row.active ? "Deactivate" : "Activate"}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth={1.8}
-                            stroke="currentColor"
-                            className="h-4 w-4"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"
-                            />
-                        </svg>
-                    </button>
-                </div>
-            )
+            render: (row) => {
+                const canRevoke = hasPermission("device_approval", "write") || user.role === "admin";
+                const canToggle = hasPermission("user_master", "update") || user.role === "admin";
+                return (
+                    <div className="flex items-center gap-3">
+                        {canRevoke && (
+                            <button
+                                onClick={() => handleRevokeDevice(row.id)}
+                                disabled={!row.device_status}
+                                className="text-red-600 hover:text-red-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium"
+                            >
+                                Revoke Device
+                            </button>
+                        )}
+                        {canToggle && (
+                            <button
+                                onClick={() => handleToggleUserActive(row.id, !!row.active)}
+                                disabled={saving}
+                                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${row.active
+                                    ? "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
+                                    : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                                    }`}
+                                title={row.active ? "Deactivate" : "Activate"}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.8}
+                                    stroke="currentColor"
+                                    className="h-4 w-4"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"
+                                    />
+                                </svg>
+                            </button>
+                        )}
+                    </div>
+                );
+            }
         },
         {
             key: 'device_verification_required',
@@ -207,7 +251,7 @@ export default function AdminDashboard() {
                 </span>
             )
         }
-    ], [users, saving]);
+    ], [users, saving, user, hasPermission]);
 
     const pendingColumns = useMemo(() => [
         {
@@ -305,35 +349,43 @@ export default function AdminDashboard() {
                 {/* Tabs */}
                 <div className="border-b border-slate-200 mb-6">
                     <nav className="-mb-px flex space-x-8">
-                        {['users', 'pending', 'history'].map((tab) => (
-                            <button
-                                key={tab}
-                                onClick={() => setActiveTab(tab)}
-                                className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
-                                    ${activeTab === tab
-                                        ? 'border-[#6804a1] text-[#6804a1]'
-                                        : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
-                                    }`}
-                            >
-                                {tab === 'users' && 'Users'}
-                                {tab === 'pending' && (
-                                    <span className="flex items-center gap-2">
-                                        Pending Device Approvals
-                                        {pendingDevices.length > 0 && (
-                                            <span className="bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">
-                                                {pendingDevices.length}
-                                            </span>
-                                        )}
-                                    </span>
-                                )}
-                                {tab === 'history' && 'Device History'}
-                            </button>
-                        ))}
+                        {(() => {
+                            const tabs = [];
+                            if (canReadUsers) tabs.push("users");
+                            if (canReadDevices) {
+                                tabs.push("pending");
+                                tabs.push("history");
+                            }
+                            return tabs.map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors
+                                        ${activeTab === tab
+                                            ? 'border-[#6804a1] text-[#6804a1]'
+                                            : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                                        }`}
+                                >
+                                    {tab === 'users' && 'Users'}
+                                    {tab === 'pending' && (
+                                        <span className="flex items-center gap-2">
+                                            Pending Device Approvals
+                                            {pendingDevices.length > 0 && (
+                                                <span className="bg-orange-100 text-orange-600 py-0.5 px-2 rounded-full text-xs">
+                                                    {pendingDevices.length}
+                                                </span>
+                                            )}
+                                        </span>
+                                    )}
+                                    {tab === 'history' && 'Device History'}
+                                </button>
+                            ));
+                        })()}
                     </nav>
                 </div>
 
                 {/* Tab Content: Users */}
-                {activeTab === 'users' && (
+                {activeTab === 'users' && canReadUsers && (
                     <div className="flex-1 flex flex-col mb-8">
                         <DataTable
                             tableId="admin_user_master"
@@ -357,22 +409,24 @@ export default function AdminDashboard() {
                                 </label>
                             }
                             actionButton={
-                                <button
-                                    onClick={() => navigate('/admin/users/create')}
-                                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#6804a1] text-white hover:bg-[#52037e] transition-colors cursor-pointer shadow-sm hover:shadow"
-                                    title="Create User"
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
-                                </button>
+                                (hasPermission("user_master", "write") || user.role === "admin") && (
+                                    <button
+                                        onClick={() => navigate('/admin/users/create')}
+                                        className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#6804a1] text-white hover:bg-[#52037e] transition-colors cursor-pointer shadow-sm hover:shadow"
+                                        title="Create User"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                    </button>
+                                )
                             }
                         />
                     </div>
                 )}
 
                 {/* Tab Content: Pending Approvals */}
-                {activeTab === 'pending' && (
+                {activeTab === 'pending' && canReadDevices && (
                     <div className="flex-1 flex flex-col mb-8">
                         <DataTable
                             tableId="admin_pending_approvals"
@@ -385,7 +439,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Tab Content: Device History */}
-                {activeTab === 'history' && (
+                {activeTab === 'history' && canReadDevices && (
                     <div className="flex-1 flex flex-col mb-8">
                         {/* <div className="mb-4 p-4 border border-slate-200 bg-white shadow-sm rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <span className="text-sm font-medium text-slate-700">Filter History by User:</span>

@@ -17,6 +17,8 @@ const MASTERS = [
   { key: "finance_machine_master", label: "Finance Machine Master" },
   { key: "store_details_approval", label: "Store Details Approval" },
   { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
+  { key: "user_master",             label: "User Master" },
+  { key: "device_approval",         label: "Device Approval" },
 ];
 
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
