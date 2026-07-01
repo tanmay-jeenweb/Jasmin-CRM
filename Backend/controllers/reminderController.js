@@ -2,7 +2,8 @@ const {
     createReminder,
     getRemindersByInquiry,
     getUnreadReminders,
-    markReminderAsRead
+    markReminderAsRead,
+    markDocumentExpiryAsRead
 } = require('../models/reminderModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
 
@@ -85,8 +86,9 @@ const getRemindersController = async (req, res) => {
 const getUnreadRemindersController = async (req, res) => {
     try {
         const userId = req.user.id;
+        const userRole = req.user.role;
 
-        const reminders = await getUnreadReminders(userId);
+        const reminders = await getUnreadReminders(userId, userRole);
 
         res.status(200).json({
             success: true,
@@ -111,7 +113,17 @@ const markAsReadController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Reminder ID is required' });
         }
 
-        const result = await markReminderAsRead(id, userId);
+        let result;
+        if (id.startsWith('doc-expiry-')) {
+            const documentIdStr = id.replace('doc-expiry-', '');
+            const documentId = parseInt(documentIdStr, 10);
+            if (isNaN(documentId)) {
+                return res.status(400).json({ success: false, message: 'Invalid document ID' });
+            }
+            result = await markDocumentExpiryAsRead(documentId, userId);
+        } else {
+            result = await markReminderAsRead(id, userId);
+        }
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, message: 'Reminder not found or unauthorized' });

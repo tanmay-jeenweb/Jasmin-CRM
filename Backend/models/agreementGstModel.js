@@ -34,6 +34,21 @@ const createAgreementGstTables = async () => {
     `;
     await db.execute(query2);
     console.log("In Process Franchise Documents table ready");
+
+    // 3. Document expiry notifications read tracking table
+    const query3 = `
+        CREATE TABLE IF NOT EXISTS document_expiry_notifications_read (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            document_id INT NOT NULL,
+            user_id INT NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_user_doc (user_id, document_id),
+            FOREIGN KEY (document_id) REFERENCES in_process_franchise_documents(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `;
+    await db.execute(query3);
+    console.log("Document expiry notifications read table ready");
 };
 
 const getAgreementGstByFranchiseId = async (franchiseId) => {
