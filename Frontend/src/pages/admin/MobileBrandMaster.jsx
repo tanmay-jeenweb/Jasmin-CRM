@@ -5,15 +5,18 @@ import DataTable from "../../components/DataTable";
 import toast from "react-hot-toast";
 import { usePermission } from "../../context/PermissionContext";
 
-// ─── Mobile Brand Modal (Handles both Create and Edit) ───────────────────────────────────
-function MobileBrandModal({ isOpen, row, onClose, onSave, saving }) {
+// ─── Brand Modal (Handles both Create and Edit) ───────────────────────────────────
+function BrandModal({ isOpen, row, onClose, onSave, saving }) {
   const [mobileBrand, setMobileBrand] = useState("");
+  const [forCode, setForCode] = useState("No");
 
   useEffect(() => {
     if (row) {
       setMobileBrand(row.mobile_brand || "");
+      setForCode(row.for_code || "No");
     } else {
       setMobileBrand("");
+      setForCode("No");
     }
   }, [row, isOpen]);
 
@@ -24,7 +27,7 @@ function MobileBrandModal({ isOpen, row, onClose, onSave, saving }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!mobileBrand.trim()) return;
-    onSave(isEdit ? row.id : null, mobileBrand.trim());
+    onSave(isEdit ? row.id : null, mobileBrand.trim(), forCode);
   };
 
   return (
@@ -40,8 +43,8 @@ function MobileBrandModal({ isOpen, row, onClose, onSave, saving }) {
         {/* Modal Header */}
         <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>{isEdit ? "Edit Mobile Brand" : "Create Mobile Brand"}</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>{isEdit ? "Update mobile brand name" : "Add a new mobile brand to the system"}</p>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>{isEdit ? "Edit Brand" : "Create Brand"}</h2>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>{isEdit ? "Update brand details" : "Add a new brand to the system"}</p>
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
@@ -53,9 +56,9 @@ function MobileBrandModal({ isOpen, row, onClose, onSave, saving }) {
         {/* Modal Body */}
         <form onSubmit={handleSubmit}>
           <div style={{ padding: "24px 28px" }}>
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 20 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                Mobile Brand <span style={{ color: "#e11d48" }}>*</span>
+                Brand Name <span style={{ color: "#e11d48" }}>*</span>
               </label>
               <input
                 type="text"
@@ -67,6 +70,34 @@ function MobileBrandModal({ isOpen, row, onClose, onSave, saving }) {
                 onFocus={e => e.target.style.borderColor = "#6804a1"}
                 onBlur={e => e.target.style.borderColor = "#cbd5e1"}
               />
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+                For Code <span style={{ color: "#e11d48" }}>*</span>
+              </label>
+              <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#1e293b", cursor: "pointer", fontWeight: 500 }}>
+                  <input
+                    type="radio"
+                    name="forCode"
+                    checked={forCode === "Yes"}
+                    onChange={() => setForCode("Yes")}
+                    style={{ width: 18, height: 18, accentColor: "#6804a1" }}
+                  />
+                  Yes
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#1e293b", cursor: "pointer", fontWeight: 500 }}>
+                  <input
+                    type="radio"
+                    name="forCode"
+                    checked={forCode === "No"}
+                    onChange={() => setForCode("No")}
+                    style={{ width: 18, height: 18, accentColor: "#6804a1" }}
+                  />
+                  No
+                </label>
+              </div>
             </div>
           </div>
 
@@ -107,8 +138,8 @@ export default function MobileBrandMaster() {
       const response = await getMobileBrands();
       setBrands(response.data.data || []);
     } catch (err) {
-      console.error("Failed to load mobile brands", err);
-      setError("Unable to load mobile brands. Please try again.");
+      console.error("Failed to load brands", err);
+      setError("Unable to load brands. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -118,39 +149,39 @@ export default function MobileBrandMaster() {
     loadBrands();
   }, []);
 
-  const handleSave = async (id, mobileBrand) => {
+  const handleSave = async (id, mobileBrand, forCode) => {
     setSaving(true);
     try {
       if (id) {
         // Edit Mode
-        await updateMobileBrand(id, { mobileBrand });
-        toast.success("Mobile brand updated successfully");
+        await updateMobileBrand(id, { mobileBrand, forCode });
+        toast.success("Brand updated successfully");
       } else {
         // Create Mode
-        await createMobileBrand({ mobileBrand });
-        toast.success("Mobile brand created successfully");
+        await createMobileBrand({ mobileBrand, forCode });
+        toast.success("Brand created successfully");
       }
       setIsModalOpen(false);
       setSelectedRow(null);
       await loadBrands();
     } catch (err) {
-      console.error("Failed to save mobile brand", err);
-      toast.error(err?.response?.data?.message || "Unable to save mobile brand. Please try again.");
+      console.error("Failed to save brand", err);
+      toast.error(err?.response?.data?.message || "Unable to save brand. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this mobile brand?")) return;
+    if (!window.confirm("Are you sure you want to delete this brand?")) return;
     setSaving(true);
     try {
       await deleteMobileBrand(id);
-      toast.success("Mobile brand deleted successfully");
+      toast.success("Brand deleted successfully");
       await loadBrands();
     } catch (err) {
-      console.error("Failed to delete mobile brand", err);
-      toast.error(err?.response?.data?.message || "Unable to delete mobile brand.");
+      console.error("Failed to delete brand", err);
+      toast.error(err?.response?.data?.message || "Unable to delete brand.");
     } finally {
       setSaving(false);
     }
@@ -160,8 +191,25 @@ export default function MobileBrandMaster() {
     const cols = [
       { key: "id", label: "ID", minWidth: "80px" },
       {
-        key: "mobile_brand", label: "Mobile Brand",
+        key: "mobile_brand", label: "Brand Name",
         render: (row) => <span style={{ fontWeight: 700, color: "#0f172a" }}>{row.mobile_brand}</span>
+      },
+      {
+        key: "for_code", label: "For Code",
+        render: (row) => (
+          <span style={{
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "4px 10px",
+            borderRadius: "9999px",
+            fontSize: "12px",
+            fontWeight: "700",
+            background: row.for_code === "Yes" ? "#ecfdf5" : "#f1f5f9",
+            color: row.for_code === "Yes" ? "#047857" : "#475569"
+          }}>
+            {row.for_code || "No"}
+          </span>
+        )
       }
     ];
 
@@ -210,7 +258,7 @@ export default function MobileBrandMaster() {
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
       <Navbar title="ERP Admin" />
 
-      <MobileBrandModal
+      <BrandModal
         isOpen={isModalOpen}
         row={selectedRow}
         onClose={() => {
@@ -229,11 +277,11 @@ export default function MobileBrandMaster() {
         )}
         <DataTable
           tableId="mobile_brand_master"
-          title="Mobile Brand Master"
+          title="Brand Master"
           data={brands}
           columns={columns}
           loading={loading}
-          searchPlaceholder="Search mobile brands..."
+          searchPlaceholder="Search brands..."
           actionButton={
             hasPermission("mobile_brand_master", "write") ? (
               <button
@@ -242,7 +290,7 @@ export default function MobileBrandMaster() {
                   setIsModalOpen(true);
                 }}
                 style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
-                title="Create Mobile Brand"
+                title="Create Brand"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

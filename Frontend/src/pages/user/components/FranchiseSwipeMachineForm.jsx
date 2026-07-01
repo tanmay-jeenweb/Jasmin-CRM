@@ -31,7 +31,7 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
         }
       } catch (err) {
         console.error("Failed to load brands:", err);
-        toast.error("Failed to load mobile brands.");
+        toast.error("Failed to load brands.");
       } finally {
         setLoading(false);
       }
@@ -160,7 +160,7 @@ export default function FranchiseSwipeMachineForm({ franchiseId, franchiseSwipeM
     return (
       <div className="p-6 text-center bg-slate-50 rounded-xl border border-slate-200">
         <p className="text-sm text-slate-500 font-medium">
-          Please make sure you have added entries in <span className="font-bold">Mobile Brand Master</span>.
+          Please make sure you have added entries in <span className="font-bold">Brand Master</span>.
         </p>
       </div>
     );

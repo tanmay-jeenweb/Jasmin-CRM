@@ -199,22 +199,31 @@ export default function Navbar() {
             desc: "Manage call outcomes"
         },
         {
-            name: "Mobile Brand Master",
+            name: "Brand Master",
             path: "/admin/mobile-brands",
             masterKey: "mobile_brand_master",
             icon: "fa-solid fa-mobile-screen-button",
             color: "bg-teal-50 text-teal-600 border border-teal-100/50",
             activeColor: "bg-teal-100 text-teal-700",
-            desc: "Manage mobile brands"
+            desc: "Manage brands"
         },
         {
-            name: "Bank Master",
+            name: "Finance Company Master",
             path: "/admin/banks",
             masterKey: "bank_master",
             icon: "fa-solid fa-building-columns",
             color: "bg-rose-50 text-rose-600 border border-rose-100/50",
             activeColor: "bg-rose-100 text-rose-700",
-            desc: "Manage banks & cards"
+            desc: "Manage finance companies"
+        },
+        {
+            name: "Finance Machine Master",
+            path: "/admin/finance-machines",
+            masterKey: "finance_machine_master",
+            icon: "fa-solid fa-calculator",
+            color: "bg-violet-50 text-violet-600 border border-violet-100/50",
+            activeColor: "bg-violet-100 text-violet-700",
+            desc: "Manage finance machines"
         }
     ];
 

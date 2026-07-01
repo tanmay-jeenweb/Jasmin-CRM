@@ -130,7 +130,7 @@ export default function FranchiseMappingForm({ franchiseId, franchiseMappingData
     return (
       <div className="p-6 text-center bg-slate-50 rounded-xl border border-slate-200">
         <p className="text-sm text-slate-500 font-medium">
-          Please make sure you have added entries in both <span className="font-bold">Mobile Brand Master</span> and <span className="font-bold">Bank Master</span>.
+          Please make sure you have added entries in both <span className="font-bold">Brand Master</span> and <span className="font-bold">Finance Company Master</span>.
         </p>
       </div>
     );
@@ -144,7 +144,7 @@ export default function FranchiseMappingForm({ franchiseId, franchiseMappingData
             {/* Top Span Header */}
             <tr className="bg-slate-50/80 border-b border-slate-200">
               <th className="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-wider border-r border-slate-200/60 min-w-[180px]">
-                BANK / CARD NAME
+                FINANCE COMPANY
               </th>
               <th colSpan={brands.length} className="px-4 py-2 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
                 BRAND

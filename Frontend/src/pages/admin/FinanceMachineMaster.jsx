@@ -1,21 +1,21 @@
 import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar";
-import { getBanks, createBank, updateBank, deleteBank } from "../../api/bankApi";
+import { getFinanceMachines, createFinanceMachine, updateFinanceMachine, deleteFinanceMachine } from "../../api/financeMachineApi";
 import DataTable from "../../components/DataTable";
 import toast from "react-hot-toast";
 import { usePermission } from "../../context/PermissionContext";
 
-// ─── Finance Company Modal (Handles both Create and Edit) ───────────────────────────────────
-function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
-  const [bankCardName, setBankCardName] = useState("");
+// ─── Finance Machine Modal (Handles both Create and Edit) ───────────────────────────────────
+function FinanceMachineModal({ isOpen, row, onClose, onSave, saving }) {
+  const [machineName, setMachineName] = useState("");
   const [forCode, setForCode] = useState("No");
 
   useEffect(() => {
     if (row) {
-      setBankCardName(row.bank_card_name || "");
+      setMachineName(row.machine_name || "");
       setForCode(row.for_code || "No");
     } else {
-      setBankCardName("");
+      setMachineName("");
       setForCode("No");
     }
   }, [row, isOpen]);
@@ -26,8 +26,8 @@ function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!bankCardName.trim()) return;
-    onSave(isEdit ? row.id : null, bankCardName.trim(), forCode);
+    if (!machineName.trim()) return;
+    onSave(isEdit ? row.id : null, machineName.trim(), forCode);
   };
 
   return (
@@ -43,8 +43,8 @@ function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
         {/* Modal Header */}
         <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>{isEdit ? "Edit Finance Company" : "Create Finance Company"}</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>{isEdit ? "Update finance company name" : "Add a new finance company to the system"}</p>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>{isEdit ? "Edit Finance Machine" : "Create Finance Machine"}</h2>
+            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>{isEdit ? "Update finance machine name" : "Add a new finance machine to the system"}</p>
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
@@ -58,14 +58,14 @@ function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
           <div style={{ padding: "24px 28px" }}>
             <div style={{ marginBottom: 20 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                Finance Company Name <span style={{ color: "#e11d48" }}>*</span>
+                Finance Machine Name <span style={{ color: "#e11d48" }}>*</span>
               </label>
               <input
                 type="text"
-                value={bankCardName}
-                onChange={(e) => setBankCardName(e.target.value)}
+                value={machineName}
+                onChange={(e) => setMachineName(e.target.value)}
                 required
-                placeholder="e.g. HDFC Bank, Bajaj Finance"
+                placeholder="e.g. Pine Labs Machine, Paytm POS"
                 style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9, padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b" }}
                 onFocus={e => e.target.style.borderColor = "#6804a1"}
                 onBlur={e => e.target.style.borderColor = "#cbd5e1"}
@@ -109,9 +109,9 @@ function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
             </button>
             <button
               type="submit"
-              disabled={saving || !bankCardName.trim()}
+              disabled={saving || !machineName.trim()}
               style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer", boxShadow: saving ? "none" : "0 2px 8px rgba(104,4,161,0.35)" }}>
-              {saving ? "Saving…" : isEdit ? "Save Changes" : "Create Finance Company"}
+              {saving ? "Saving…" : isEdit ? "Save Changes" : "Create Finance Machine"}
             </button>
           </div>
         </form>
@@ -121,8 +121,8 @@ function FinanceCompanyModal({ isOpen, row, onClose, onSave, saving }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function BankMaster() {
-  const [banks, setBanks] = useState([]);
+export default function FinanceMachineMaster() {
+  const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -131,57 +131,57 @@ export default function BankMaster() {
 
   const { hasPermission } = usePermission();
 
-  const loadBanks = async () => {
+  const loadMachines = async () => {
     setLoading(true);
     setError("");
     try {
-      const response = await getBanks();
-      setBanks(response.data.data || []);
+      const response = await getFinanceMachines();
+      setMachines(response.data.data || []);
     } catch (err) {
-      console.error("Failed to load finance companies", err);
-      setError("Unable to load finance companies. Please try again.");
+      console.error("Failed to load finance machines", err);
+      setError("Unable to load finance machines. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadBanks();
+    loadMachines();
   }, []);
 
-  const handleSave = async (id, bankCardName, forCode) => {
+  const handleSave = async (id, machineName, forCode) => {
     setSaving(true);
     try {
       if (id) {
         // Edit Mode
-        await updateBank(id, { bankCardName, forCode });
-        toast.success("Finance company updated successfully");
+        await updateFinanceMachine(id, { machineName, forCode });
+        toast.success("Finance machine updated successfully");
       } else {
         // Create Mode
-        await createBank({ bankCardName, forCode });
-        toast.success("Finance company created successfully");
+        await createFinanceMachine({ machineName, forCode });
+        toast.success("Finance machine created successfully");
       }
       setIsModalOpen(false);
       setSelectedRow(null);
-      await loadBanks();
+      await loadMachines();
     } catch (err) {
-      console.error("Failed to save finance company", err);
-      toast.error(err?.response?.data?.message || "Unable to save finance company. Please try again.");
+      console.error("Failed to save finance machine", err);
+      toast.error(err?.response?.data?.message || "Unable to save finance machine. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this finance company?")) return;
+    if (!window.confirm("Are you sure you want to delete this finance machine?")) return;
     setSaving(true);
     try {
-      await deleteBank(id);
-      toast.success("Finance company deleted successfully");
-      await loadBanks();
+      await deleteFinanceMachine(id);
+      toast.success("Finance machine deleted successfully");
+      await loadMachines();
     } catch (err) {
-      console.error("Failed to delete finance company", err);
-      toast.error(err?.response?.data?.message || "Unable to delete finance company.");
+      console.error("Failed to delete finance machine", err);
+      toast.error(err?.response?.data?.message || "Unable to delete finance machine.");
     } finally {
       setSaving(false);
     }
@@ -191,8 +191,8 @@ export default function BankMaster() {
     const cols = [
       { key: "id", label: "ID", minWidth: "80px" },
       {
-        key: "bank_card_name", label: "Finance Company Name",
-        render: (row) => <span style={{ fontWeight: 700, color: "#0f172a" }}>{row.bank_card_name}</span>
+        key: "machine_name", label: "Finance Machine Name",
+        render: (row) => <span style={{ fontWeight: 700, color: "#0f172a" }}>{row.machine_name}</span>
       },
       {
         key: "for_code", label: "For Code",
@@ -213,8 +213,8 @@ export default function BankMaster() {
       }
     ];
 
-    const canUpdate = hasPermission("bank_master", "update");
-    const canDelete = hasPermission("bank_master", "delete");
+    const canUpdate = hasPermission("finance_machine_master", "update");
+    const canDelete = hasPermission("finance_machine_master", "delete");
 
     if (canUpdate || canDelete) {
       cols.push({
@@ -258,7 +258,7 @@ export default function BankMaster() {
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
       <Navbar title="ERP Admin" />
 
-      <FinanceCompanyModal
+      <FinanceMachineModal
         isOpen={isModalOpen}
         row={selectedRow}
         onClose={() => {
@@ -276,21 +276,21 @@ export default function BankMaster() {
           </div>
         )}
         <DataTable
-          tableId="bank_master"
-          title="Finance Company Master"
-          data={banks}
+          tableId="finance_machine_master"
+          title="Finance Machine Master"
+          data={machines}
           columns={columns}
           loading={loading}
-          searchPlaceholder="Search finance companies..."
+          searchPlaceholder="Search finance machines..."
           actionButton={
-            hasPermission("bank_master", "write") ? (
+            hasPermission("finance_machine_master", "write") ? (
               <button
                 onClick={() => {
                   setSelectedRow(null);
                   setIsModalOpen(true);
                 }}
                 style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
-                title="Create Finance Company"
+                title="Create Finance Machine"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

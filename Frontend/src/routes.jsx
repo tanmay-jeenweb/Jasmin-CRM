@@ -23,6 +23,7 @@ import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
 import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
 import BankMaster from "./pages/admin/BankMaster";
+import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
 import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
 import DepositStockApproval from "./pages/admin/DepositStockApproval";
 import Profile from "./pages/Profile";
@@ -178,6 +179,13 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/banks"
                     element={<BankMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="finance_machine_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/finance-machines"
+                    element={<FinanceMachineMaster />}
                 />
             </Route>
 
