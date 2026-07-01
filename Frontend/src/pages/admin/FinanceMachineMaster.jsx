@@ -8,15 +8,12 @@ import { usePermission } from "../../context/PermissionContext";
 // ─── Finance Machine Modal (Handles both Create and Edit) ───────────────────────────────────
 function FinanceMachineModal({ isOpen, row, onClose, onSave, saving }) {
   const [machineName, setMachineName] = useState("");
-  const [forCode, setForCode] = useState("No");
 
   useEffect(() => {
     if (row) {
       setMachineName(row.machine_name || "");
-      setForCode(row.for_code || "No");
     } else {
       setMachineName("");
-      setForCode("No");
     }
   }, [row, isOpen]);
 
@@ -27,7 +24,7 @@ function FinanceMachineModal({ isOpen, row, onClose, onSave, saving }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!machineName.trim()) return;
-    onSave(isEdit ? row.id : null, machineName.trim(), forCode);
+    onSave(isEdit ? row.id : null, machineName.trim());
   };
 
   return (
@@ -56,7 +53,7 @@ function FinanceMachineModal({ isOpen, row, onClose, onSave, saving }) {
         {/* Modal Body */}
         <form onSubmit={handleSubmit}>
           <div style={{ padding: "24px 28px" }}>
-            <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 8 }}>
               <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
                 Finance Machine Name <span style={{ color: "#e11d48" }}>*</span>
               </label>
@@ -70,34 +67,6 @@ function FinanceMachineModal({ isOpen, row, onClose, onSave, saving }) {
                 onFocus={e => e.target.style.borderColor = "#6804a1"}
                 onBlur={e => e.target.style.borderColor = "#cbd5e1"}
               />
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                For Code <span style={{ color: "#e11d48" }}>*</span>
-              </label>
-              <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#1e293b", cursor: "pointer", fontWeight: 500 }}>
-                  <input
-                    type="radio"
-                    name="forCode"
-                    checked={forCode === "Yes"}
-                    onChange={() => setForCode("Yes")}
-                    style={{ width: 18, height: 18, accentColor: "#6804a1" }}
-                  />
-                  Yes
-                </label>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, color: "#1e293b", cursor: "pointer", fontWeight: 500 }}>
-                  <input
-                    type="radio"
-                    name="forCode"
-                    checked={forCode === "No"}
-                    onChange={() => setForCode("No")}
-                    style={{ width: 18, height: 18, accentColor: "#6804a1" }}
-                  />
-                  No
-                </label>
-              </div>
             </div>
           </div>
 
@@ -149,16 +118,16 @@ export default function FinanceMachineMaster() {
     loadMachines();
   }, []);
 
-  const handleSave = async (id, machineName, forCode) => {
+  const handleSave = async (id, machineName) => {
     setSaving(true);
     try {
       if (id) {
         // Edit Mode
-        await updateFinanceMachine(id, { machineName, forCode });
+        await updateFinanceMachine(id, { machineName });
         toast.success("Finance machine updated successfully");
       } else {
         // Create Mode
-        await createFinanceMachine({ machineName, forCode });
+        await createFinanceMachine({ machineName });
         toast.success("Finance machine created successfully");
       }
       setIsModalOpen(false);
@@ -193,23 +162,6 @@ export default function FinanceMachineMaster() {
       {
         key: "machine_name", label: "Finance Machine Name",
         render: (row) => <span style={{ fontWeight: 700, color: "#0f172a" }}>{row.machine_name}</span>
-      },
-      {
-        key: "for_code", label: "For Code",
-        render: (row) => (
-          <span style={{
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "4px 10px",
-            borderRadius: "9999px",
-            fontSize: "12px",
-            fontWeight: "700",
-            background: row.for_code === "Yes" ? "#ecfdf5" : "#f1f5f9",
-            color: row.for_code === "Yes" ? "#047857" : "#475569"
-          }}>
-            {row.for_code || "No"}
-          </span>
-        )
       }
     ];
 

@@ -9,7 +9,7 @@ const { createAuditLog } = require('../models/auditLogModel.js');
 
 const addFinanceMachineController = async (req, res) => {
     try {
-        const { machineName, forCode } = req.body;
+        const { machineName } = req.body;
         const addedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -17,7 +17,7 @@ const addFinanceMachineController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Finance machine name is required' });
         }
 
-        const result = await createFinanceMachine(machineName.trim(), addedBy, deviceId, forCode);
+        const result = await createFinanceMachine(machineName.trim(), addedBy, deviceId);
         
         await createAuditLog(
             addedBy,
@@ -29,7 +29,6 @@ const addFinanceMachineController = async (req, res) => {
             {
                 id: result.insertId,
                 machine_name: machineName.trim(),
-                for_code: forCode || 'No',
                 added_by: addedBy,
                 device_id: deviceId
             }
@@ -38,7 +37,7 @@ const addFinanceMachineController = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Finance machine added successfully',
-            data: { id: result.insertId, machine_name: machineName.trim(), for_code: forCode || 'No' }
+            data: { id: result.insertId, machine_name: machineName.trim() }
         });
     } catch (error) {
         console.error('Error adding finance machine:', error);
@@ -72,7 +71,7 @@ const getAllFinanceMachinesController = async (req, res) => {
 const updateFinanceMachineController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { machineName, forCode } = req.body;
+        const { machineName } = req.body;
 
         if (!machineName || !machineName.trim()) {
             return res.status(400).json({ success: false, message: 'Finance machine name is required' });
@@ -84,7 +83,7 @@ const updateFinanceMachineController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Finance machine not found' });
         }
 
-        await updateFinanceMachine(id, machineName.trim(), forCode);
+        await updateFinanceMachine(id, machineName.trim());
         
         await createAuditLog(
             req.user?.id,
@@ -95,8 +94,7 @@ const updateFinanceMachineController = async (req, res) => {
             beforeData,
             {
                 ...beforeData,
-                machine_name: machineName.trim(),
-                for_code: forCode || 'No'
+                machine_name: machineName.trim()
             }
         );
 

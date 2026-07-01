@@ -325,7 +325,7 @@ export default function InProcessFranchise() {
           data={franchises}
           columns={columns}
           loading={loading}
-          searchPlaceholder="Search franchises..."
+          searchPlaceholder="Search in process franchises..."
           actionButton={
             <button
               onClick={() => navigate("/user/in-process-franchises/create")}
