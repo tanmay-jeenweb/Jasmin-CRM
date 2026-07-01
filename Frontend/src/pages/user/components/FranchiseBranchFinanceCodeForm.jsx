@@ -116,7 +116,7 @@ export default function FranchiseBranchFinanceCodeForm({ franchiseId, franchiseB
       <div className="space-y-3">
         <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider border-b border-slate-100 pb-1.5 flex items-center gap-2">
           <span className="w-1.5 h-3 bg-[#6804a1] rounded-sm"></span>
-          1. Brand Finance Codes
+          1. Brand Codes
         </h3>
         {brands.length === 0 ? (
           <p className="text-xs italic text-slate-400">No brands defined in Brand Master.</p>
