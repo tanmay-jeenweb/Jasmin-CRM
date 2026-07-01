@@ -18,6 +18,7 @@ const { getFranchiseTrainingByFranchiseId } = require('../models/franchiseTraini
 const { getFranchiseDepositStockByFranchiseId } = require('../models/franchiseDepositStockModel.js');
 const { getFranchiseMappingsByFranchiseId } = require('../models/franchiseMappingModel.js');
 const { getFranchiseInsuranceByFranchiseId } = require('../models/franchiseInsuranceModel.js');
+const { getFranchiseBranchFinanceCodesByFranchiseId } = require('../models/franchiseBranchFinanceCodeModel.js');
 
 const getAllFranchisesController = async (req, res) => {
     try {
@@ -58,6 +59,7 @@ const getFranchiseByIdController = async (req, res) => {
         const franchiseDepositStock = isApproved ? await getFranchiseDepositStockByFranchiseId(id) : null;
         const franchiseMapping = isApproved ? await getFranchiseMappingsByFranchiseId(id) : [];
         const franchiseInsurance = isApproved ? await getFranchiseInsuranceByFranchiseId(id) : null;
+        const franchiseBranchFinanceCode = isApproved ? await getFranchiseBranchFinanceCodesByFranchiseId(id) : null;
 
         res.status(200).json({
             success: true,
@@ -76,7 +78,8 @@ const getFranchiseByIdController = async (req, res) => {
                 franchiseTraining,
                 franchiseDepositStock,
                 franchiseMapping,
-                franchiseInsurance
+                franchiseInsurance,
+                franchiseBranchFinanceCode
             }
         });
     } catch (error) {

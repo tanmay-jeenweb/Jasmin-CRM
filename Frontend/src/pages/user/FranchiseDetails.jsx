@@ -27,6 +27,7 @@ import FranchiseTrainingForm from "./components/FranchiseTrainingForm";
 import FranchiseDepositStockForm from "./components/FranchiseDepositStockForm";
 import FranchiseMappingForm from "./components/FranchiseMappingForm";
 import FranchiseInsuranceForm from "./components/FranchiseInsuranceForm";
+import FranchiseBranchFinanceCodeForm from "./components/FranchiseBranchFinanceCodeForm";
 
 export default function FranchiseDetails() {
   const { id } = useParams();
@@ -395,10 +396,10 @@ export default function FranchiseDetails() {
                 key={stage.id}
                 onClick={() => handleStageClick(stage.id)}
                 className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                    ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
-                    : isStageLocked
-                      ? "text-slate-400 cursor-not-allowed opacity-50"
-                      : "text-slate-600 hover:text-[#6804a1] hover:bg-purple-100/80"
+                  ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
+                  : isStageLocked
+                    ? "text-slate-400 cursor-not-allowed opacity-50"
+                    : "text-slate-600 hover:text-[#6804a1] hover:bg-purple-100/80"
                   }`}
               >
                 {stage.name}
@@ -767,7 +768,7 @@ export default function FranchiseDetails() {
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 8.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
                   </svg>
-                  Mapping
+                  Branch Finance Mapping
                 </span>
                 <span className="flex items-center gap-3">
                   {franchise?.franchiseMapping && franchise.franchiseMapping.length > 0 && (
@@ -791,6 +792,47 @@ export default function FranchiseDetails() {
                   <FranchiseMappingForm
                     franchiseId={id}
                     franchiseMappingData={franchise.franchiseMapping}
+                    reloadFranchiseData={reloadFranchiseData}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 4: Branch Finance Code */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setOpenAccordion(openAccordion === "branch-finance-code" ? null : "branch-finance-code")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 10.18 12 9 12 9c0-.29.414-.636.879-.97 1.171-.879 3.07-.879 4.242 0M12 6c-.465-.33-.879-.675-.879-.97m0 0a2.44 2.44 0 0 1 0-3.472M12 6a2.44 2.44 0 0 0 0-3.472M6 8.25h12M6 15.75h12" />
+                  </svg>
+                  Branch Finance Code
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseBranchFinanceCode && (franchise.franchiseBranchFinanceCode.brands?.some(b => b.brand_code) || franchise.franchiseBranchFinanceCode.machines?.some(m => m.tid || m.pos_id || m.serial_no) || franchise.franchiseBranchFinanceCode.companies?.some(c => c.company_code)) && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "branch-finance-code" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </button>
+
+              {openAccordion === "branch-finance-code" && (
+                <div className="p-6">
+                  <FranchiseBranchFinanceCodeForm
+                    franchiseId={id}
+                    franchiseBranchFinanceCodeData={franchise.franchiseBranchFinanceCode}
                     reloadFranchiseData={reloadFranchiseData}
                   />
                 </div>
@@ -1122,8 +1164,8 @@ export default function FranchiseDetails() {
                       <label
                         key={brand.id}
                         className={`flex items-center gap-3 cursor-pointer font-bold text-xs uppercase border rounded-xl p-3 transition-all ${storeName === brand.brand_name
-                            ? "border-[#6804a1] bg-[#f5f3ff] text-[#6804a1]"
-                            : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                          ? "border-[#6804a1] bg-[#f5f3ff] text-[#6804a1]"
+                          : "border-slate-200 text-slate-500 hover:bg-slate-50"
                           }`}
                       >
                         <input

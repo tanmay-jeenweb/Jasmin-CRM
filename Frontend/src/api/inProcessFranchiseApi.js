@@ -116,6 +116,10 @@ export const submitFranchiseInsuranceForm = async (id, formData) => {
     });
 };
 
+export const submitFranchiseBranchFinanceCodeForm = async (id, data) => {
+    return apiClient.post(`/in-process-franchises/${id}/branch-finance-code`, data);
+};
+
 export const getAllCompletedFranchises = async () => {
     return apiClient.get("/in-process-franchises/completed/all");
 };

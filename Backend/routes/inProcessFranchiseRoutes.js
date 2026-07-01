@@ -21,6 +21,7 @@ const {
     saveFranchiseDepositStockController,
     saveFranchiseMappingController,
     saveFranchiseInsuranceController,
+    saveFranchiseBranchFinanceCodeController,
     getAllCompletedFranchisesController,
     getAllDepositStocksController,
     approveFranchiseDepositStockController,
@@ -82,6 +83,9 @@ router.post('/:id/mapping', verifyToken, verifyFindStoreApproved, saveFranchiseM
 
 // Insurance route
 router.post('/:id/insurance', verifyToken, verifyFindStoreApproved, upload.any(), saveFranchiseInsuranceController);
+
+// Branch Finance Code route
+router.post('/:id/branch-finance-code', verifyToken, verifyFindStoreApproved, saveFranchiseBranchFinanceCodeController);
 
 // Deposit & Stock route
 router.post('/:id/deposit-stock', verifyToken, verifyFindStoreApproved, saveFranchiseDepositStockController);
