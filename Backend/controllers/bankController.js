@@ -9,7 +9,7 @@ const { createAuditLog } = require('../models/auditLogModel.js');
 
 const addBankController = async (req, res) => {
     try {
-        const { bankCardName, forCode } = req.body;
+        const { bankCardName } = req.body;
         const addedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -17,7 +17,7 @@ const addBankController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Finance company/Card name is required' });
         }
 
-        const result = await createBank(bankCardName.trim(), addedBy, deviceId, forCode);
+        const result = await createBank(bankCardName.trim(), addedBy, deviceId);
         
         await createAuditLog(
             addedBy,
@@ -29,7 +29,6 @@ const addBankController = async (req, res) => {
             {
                 id: result.insertId,
                 bank_card_name: bankCardName.trim(),
-                for_code: forCode || 'No',
                 added_by: addedBy,
                 device_id: deviceId
             }
@@ -38,7 +37,7 @@ const addBankController = async (req, res) => {
         res.status(201).json({
             success: true,
             message: 'Finance company added successfully',
-            data: { id: result.insertId, bank_card_name: bankCardName.trim(), for_code: forCode || 'No' }
+            data: { id: result.insertId, bank_card_name: bankCardName.trim() }
         });
     } catch (error) {
         console.error('Error adding finance company:', error);
@@ -72,7 +71,7 @@ const getAllBanksController = async (req, res) => {
 const updateBankController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { bankCardName, forCode } = req.body;
+        const { bankCardName } = req.body;
 
         if (!bankCardName || !bankCardName.trim()) {
             return res.status(400).json({ success: false, message: 'Finance company name is required' });
@@ -84,7 +83,7 @@ const updateBankController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Finance company not found' });
         }
 
-        await updateBank(id, bankCardName.trim(), forCode);
+        await updateBank(id, bankCardName.trim());
         
         await createAuditLog(
             req.user?.id,
@@ -95,8 +94,7 @@ const updateBankController = async (req, res) => {
             beforeData,
             {
                 ...beforeData,
-                bank_card_name: bankCardName.trim(),
-                for_code: forCode || 'No'
+                bank_card_name: bankCardName.trim()
             }
         );
 
