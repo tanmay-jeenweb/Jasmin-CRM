@@ -8,7 +8,7 @@ export default function UserHome() {
             <Navbar title="ERP System" />
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <main className=" mx-auto py-8 px-4 sm:px-6 lg:px-8">
                 <div className="mb-8">
                     <h1 className="text-2xl font-bold text-slate-900">User Home</h1>
                     <p className="text-slate-500 mt-1">Welcome back, {user.name}. Here's what's happening today.</p>
