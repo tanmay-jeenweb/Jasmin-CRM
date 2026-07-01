@@ -11,17 +11,17 @@ const {
     fetchPendingDevices,
     toggleUserActiveController
 } = require("../controllers/adminController.js");
-const { verifyToken, verifyAdmin } = require("../middleware/authMiddleware.js");
+const { verifyToken, verifyAdmin, verifyPermission } = require("../middleware/authMiddleware.js");
 
 const router = express.Router();
 
-router.get("/users", verifyToken, verifyAdmin, fetchUsers);
-router.post("/create-user", verifyToken, verifyAdmin, createUserByAdmin);
-router.patch("/user/:id/toggle-active", verifyToken, verifyAdmin, toggleUserActiveController);
+router.get("/users", verifyToken, verifyPermission("user_master", "read"), fetchUsers);
+router.post("/create-user", verifyToken, verifyPermission("user_master", "write"), createUserByAdmin);
+router.patch("/user/:id/toggle-active", verifyToken, verifyPermission("user_master", "update"), toggleUserActiveController);
 
-router.get("/pending-devices", verifyToken, verifyAdmin, fetchPendingDevices);
-router.put("/approve-device/:deviceRowId", verifyToken, verifyAdmin, approveDeviceController);
-router.put("/revoke-device/:userId", verifyToken, verifyAdmin, revokeDeviceController);
+router.get("/pending-devices", verifyToken, verifyPermission("device_approval", "read"), fetchPendingDevices);
+router.put("/approve-device/:deviceRowId", verifyToken, verifyPermission("device_approval", "write"), approveDeviceController);
+router.put("/revoke-device/:userId", verifyToken, verifyPermission("device_approval", "write"), revokeDeviceController);
 
 router.get("/audit-logs", verifyToken, verifyAdmin, fetchAuditLogs);
 router.get("/audit-logs/:userId", verifyToken, verifyAdmin, fetchUserAuditLogs);

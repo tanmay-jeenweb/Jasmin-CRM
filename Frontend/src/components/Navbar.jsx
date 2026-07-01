@@ -129,7 +129,7 @@ export default function Navbar() {
         {
             name: "User Master",
             path: "/admin/dashboard",
-            adminOnly: true,
+            masterKeys: ["user_master", "device_approval"],
             icon: "fa-solid fa-users-gear",
             color: "bg-emerald-50 text-emerald-600 border border-emerald-100/50",
             activeColor: "bg-emerald-100 text-emerald-700",
@@ -230,6 +230,7 @@ export default function Navbar() {
     const availableMasters = allMasters.filter(m => {
         if (m.adminOnly) return isAdmin;
         if (m.masterKey) return hasPermission(m.masterKey, "read");
+        if (m.masterKeys) return m.masterKeys.some(key => hasPermission(key, "read"));
         if (m.module) return isAdmin || userModules.includes(m.module);
         return true;
     });
