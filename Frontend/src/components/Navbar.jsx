@@ -317,9 +317,26 @@ export default function Navbar() {
                                                                 Inquiry: {notif.inquiry_name}
                                                             </button>
                                                         )}
-                                                        <span className="text-[10px] text-slate-400 mt-1 block">
-                                                            {dateString} at {timeString}
-                                                        </span>
+                                                        {notif.in_process_franchise_id && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setIsNotificationsOpen(false);
+                                                                    navigate(`/user/in-process-franchises/${notif.in_process_franchise_id}`);
+                                                                }}
+                                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left cursor-pointer"
+                                                            >
+                                                                {notif.franchise_status === 'completed' ? 'Franchise' : 'In Process Franchise'}: {notif.partner_name}
+                                                            </button>
+                                                        )}
+                                                        {notif.is_document_expiry ? (
+                                                            <span className="text-[10px] text-slate-400 mt-1 block">
+                                                                Expires on {dateString}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-400 mt-1 block">
+                                                                {dateString} at {timeString}
+                                                            </span>
+                                                        )}
                                                     </div>
 
                                                     {/* Dismiss button */}
