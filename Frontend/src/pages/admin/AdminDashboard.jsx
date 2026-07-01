@@ -299,7 +299,7 @@ export default function AdminDashboard() {
         <div className="flex-1 flex flex-col bg-slate-50 font-sans text-slate-900">
             <Navbar title="ERP Admin" />
 
-            <main className="flex-1 flex flex-col w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <main className="flex-1 flex flex-col w-full mx-auto py-8 px-4 sm:px-6 lg:px-8">
 
 
                 {/* Tabs */}

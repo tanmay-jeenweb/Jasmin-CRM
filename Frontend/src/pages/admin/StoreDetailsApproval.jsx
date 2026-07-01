@@ -107,7 +107,7 @@ export default function StoreDetailsApproval() {
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 w-full">
+      <main className=" mx-auto mt-8 px-4 sm:px-6 lg:px-8 w-full">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-slate-800">Store Details Approval</h1>
