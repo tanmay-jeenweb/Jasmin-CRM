@@ -24,6 +24,8 @@ const inProcessFranchiseRoutes = require("./routes/inProcessFranchiseRoutes.js")
 const callOutcomeRoutes = require("./routes/callOutcomeRoutes.js");
 const mobileBrandRoutes = require("./routes/mobileBrandRoutes.js");
 const bankRoutes = require("./routes/bankRoutes.js");
+const financeMachineRoutes = require("./routes/financeMachineRoutes.js");
+const franchiseRoutes = require("./routes/franchiseRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -56,6 +58,7 @@ const { createMobileBrandsTable } = require("./models/mobileBrandModel.js");
 const { createBankTable } = require("./models/bankModel.js");
 const { createFranchiseMappingTable } = require("./models/franchiseMappingModel.js");
 const { createFranchiseInsuranceTable } = require("./models/franchiseInsuranceModel.js");
+const { createFinanceMachineTable } = require("./models/financeMachineModel.js");
 
 
 const app = express();
@@ -106,9 +109,11 @@ app.use(["/api/call-logs", "/call-logs"], callLogRoutes);
 app.use(["/api/reminders", "/reminders"], reminderRoutes);
 app.use(["/api/notes", "/notes"], noteRoutes);
 app.use(["/api/in-process-franchises", "/in-process-franchises"], inProcessFranchiseRoutes);
+app.use(["/api/franchises", "/franchises"], franchiseRoutes);
 app.use(["/api/calloutcomes", "/calloutcomes"], callOutcomeRoutes);
 app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
 app.use(["/api/banks", "/banks"], bankRoutes);
+app.use(["/api/financemachines", "/financemachines"], financeMachineRoutes);
 
 
 // Global 404 handler
@@ -157,6 +162,7 @@ const startServer = async () => {
         await createCallOutcomesTable();
         await createMobileBrandsTable();
         await createBankTable();
+        await createFinanceMachineTable();
         await createFranchiseMappingTable();
         await createFranchiseInsuranceTable();
 

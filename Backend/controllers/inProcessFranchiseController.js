@@ -4,7 +4,8 @@ const {
     getAllCompletedFranchises,
     updateInProcessFranchise,
     deleteInProcessFranchise,
-    getInProcessFranchiseById
+    getInProcessFranchiseById,
+    convertToFranchise
 } = require('../models/inProcessFranchiseModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
 const {
@@ -1372,6 +1373,43 @@ const saveFranchiseInsuranceController = async (req, res) => {
     }
 };
 
+const convertToFranchiseController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tentativeOpeningDate, finalOpeningDate } = req.body;
+        const convertedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        await convertToFranchise(id, tentativeOpeningDate, finalOpeningDate);
+
+        await createAuditLog(
+            convertedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Conversion',
+            'converted',
+            franchise,
+            { ...franchise, status: 'completed', tentative_opening_date: tentativeOpeningDate, final_opening_date: finalOpeningDate }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'In Process Franchise converted to Franchise successfully'
+        });
+    } catch (error) {
+        console.error('Error converting in process franchise to completed:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 module.exports = {
     addInProcessFranchiseController,
     getAllInProcessFranchisesController,
@@ -1397,5 +1435,6 @@ module.exports = {
     getAllCompletedFranchisesController,
     getAllDepositStocksController,
     approveFranchiseDepositStockController,
-    rejectFranchiseDepositStockController
+    rejectFranchiseDepositStockController,
+    convertToFranchiseController
 };

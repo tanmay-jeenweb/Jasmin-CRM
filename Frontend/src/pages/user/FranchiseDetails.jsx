@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import {
-  getInProcessFranchiseById,
   getActiveUsers,
-  updateInProcessFranchise,
   approveFindStoreForm,
-  rejectFindStoreForm,
-  convertToFranchise
+  rejectFindStoreForm
 } from "../../api/inProcessFranchiseApi";
+import {
+  getFranchiseById,
+  updateFranchise
+} from "../../api/franchiseApi";
 import { getDocuments } from "../../api/documentApi";
 import { getCompanyBrands } from "../../api/companyBrandApi";
 import toast from "react-hot-toast";
@@ -27,7 +28,7 @@ import FranchiseDepositStockForm from "./components/FranchiseDepositStockForm";
 import FranchiseMappingForm from "./components/FranchiseMappingForm";
 import FranchiseInsuranceForm from "./components/FranchiseInsuranceForm";
 
-export default function InProcessFranchiseDetails() {
+export default function FranchiseDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [franchise, setFranchise] = useState(null);
@@ -90,7 +91,7 @@ export default function InProcessFranchiseDetails() {
       setLoading(true);
       try {
         const [franchiseRes, usersRes, docsRes, brandsRes] = await Promise.all([
-          getInProcessFranchiseById(id),
+          getFranchiseById(id),
           getActiveUsers(),
           getDocuments().catch(() => ({ data: { success: false, data: [] } })),
           getCompanyBrands().catch(() => ({ data: { success: false, data: [] } }))
@@ -148,7 +149,7 @@ export default function InProcessFranchiseDetails() {
 
     setSaving(true);
     try {
-      const response = await updateInProcessFranchise(id, {
+      const response = await updateFranchise(id, {
         partnerName: franchise.partner_name,
         partnerMobile: franchise.partner_mobile,
         partnerEmail: franchise.partner_email || "",
@@ -166,7 +167,7 @@ export default function InProcessFranchiseDetails() {
       if (response.data.success) {
         toast.success("Franchise updated successfully!");
         // Refresh the franchise details to keep them in sync
-        const res = await getInProcessFranchiseById(id);
+        const res = await getFranchiseById(id);
         if (res.data?.success) {
           setFranchise(res.data.data);
         }
@@ -193,7 +194,7 @@ export default function InProcessFranchiseDetails() {
 
   const reloadFranchiseData = async () => {
     try {
-      const res = await getInProcessFranchiseById(id);
+      const res = await getFranchiseById(id);
       if (res.data?.success) {
         setFranchise(res.data.data);
       }
@@ -239,41 +240,6 @@ export default function InProcessFranchiseDetails() {
       toast.error(err?.response?.data?.message || "Failed to reject store details.");
     } finally {
       setProcessingAdminAction(false);
-    }
-  };
-
-  const [converting, setConverting] = useState(false);
-  const [showConvertModal, setShowConvertModal] = useState(false);
-  const [convertTentativeDate, setConvertTentativeDate] = useState("");
-  const [convertFinalDate, setConvertFinalDate] = useState("");
-
-  const openConvertToFranchiseModal = () => {
-    if (franchise) {
-      setConvertTentativeDate(getLocalDateString(franchise.tentative_opening_date));
-      setConvertFinalDate(getLocalDateString(franchise.final_opening_date));
-    }
-    setShowConvertModal(true);
-  };
-
-  const handleConvertToFranchise = async () => {
-    setConverting(true);
-    try {
-      const response = await convertToFranchise(id, {
-        tentativeOpeningDate: convertTentativeDate,
-        finalOpeningDate: convertFinalDate
-      });
-      if (response.data.success) {
-        toast.success("Converted to active Franchise successfully!");
-        setShowConvertModal(false);
-        navigate("/user/franchises");
-      } else {
-        toast.error(response.data.message || "Failed to convert to Franchise");
-      }
-    } catch (err) {
-      console.error("Error converting to Franchise:", err);
-      toast.error(err?.response?.data?.message || "Failed to convert to Franchise.");
-    } finally {
-      setConverting(false);
     }
   };
 
@@ -334,7 +300,7 @@ export default function InProcessFranchiseDetails() {
               The franchise record you are looking for does not exist or has been deleted.
             </p>
             <button
-              onClick={() => navigate("/user/in-process-franchises")}
+              onClick={() => navigate("/user/franchises")}
               className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
@@ -363,8 +329,8 @@ export default function InProcessFranchiseDetails() {
                   {franchise.partner_mobile}
                 </span>
               )}
-              <span className="text-xs bg-[#f5f3ff] text-[#6804a1] border border-indigo-100 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                {franchise.store_name}
+              <span className="text-xs bg-[#ecfdf5] text-[#047857] border border-emerald-100 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                {franchise.store_name} (Active)
               </span>
             </h1>
             <p className="text-slate-500 text-xs mt-1">
@@ -372,26 +338,14 @@ export default function InProcessFranchiseDetails() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {franchise?.franchiseDepositStock?.status === 'approved' && franchise?.status === 'in_process' && (
-              <button
-                onClick={openConvertToFranchiseModal}
-                disabled={converting}
-                className="flex items-center gap-2 text-white bg-[#6804a1] hover:bg-[#52037e] font-semibold text-xs py-1.5 px-3 rounded-lg border border-[#6804a1] transition-all cursor-pointer shadow-sm hover:shadow disabled:opacity-50"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                {converting ? "Converting..." : "Convert to Franchise"}
-              </button>
-            )}
             <button
-              onClick={() => navigate("/user/in-process-franchises")}
+              onClick={() => navigate("/user/franchises")}
               className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-semibold text-xs py-1.5 px-3 bg-white rounded-lg border border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
               </svg>
-              Back to In-Process List
+              Back to Franchise List
             </button>
           </div>
         </div>
@@ -462,25 +416,6 @@ export default function InProcessFranchiseDetails() {
         {activeStage === "store-operations" && (
           <div className="space-y-6">
             {/* Status Banner */}
-            {findStoreStatus === "pending" && (
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 shrink-0">
-                  <span className="w-2 h-2 bg-amber-600 rounded-full animate-ping"></span>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-amber-800">Pending Approval</h4>
-                  <p className="text-xs text-amber-600 mt-0.5">
-                    Store details have been submitted and are currently awaiting administrative review. Other stages will unlock automatically once approved.
-                  </p>
-                  {franchise.findStore?.submitted_by_name && (
-                    <p className="text-[10px] text-amber-500 mt-1.5 font-semibold">
-                      Submitted by {franchise.findStore.submitted_by_name} on {formatDate(franchise.findStore.timestamp)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-
             {findStoreStatus === "approved" && showApprovedBanner && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 shadow-sm relative">
                 <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 shrink-0">
@@ -511,41 +446,6 @@ export default function InProcessFranchiseDetails() {
               </div>
             )}
 
-            {findStoreStatus === "rejected" && (
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-rose-800">Submission Rejected</h4>
-                  <p className="text-xs text-rose-600 mt-0.5">
-                    Reason: <span className="font-bold text-rose-800">{franchise.findStore?.rejection_reason || "No details provided."}</span>
-                  </p>
-                  <p className="text-[10px] text-rose-500 mt-1 font-semibold">
-                    Please modify the incorrect fields below and submit again for verification.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {findStoreStatus === "not-submitted" && (
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
-                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 shrink-0">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12v-.008z" />
-                  </svg>
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-slate-700">Find Store Submission Pending</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Please submit the location mapping fields. Once approved, the subsequent stages will open automatically.
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* Accordion 1: Find Store Details */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
               <button
@@ -563,15 +463,6 @@ export default function InProcessFranchiseDetails() {
                 <span className="flex items-center gap-3">
                   {findStoreStatus === "approved" && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Approved</span>
-                  )}
-                  {findStoreStatus === "pending" && (
-                    <span className="text-[10px] bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-full font-bold uppercase">Pending</span>
-                  )}
-                  {findStoreStatus === "rejected" && (
-                    <span className="text-[10px] bg-rose-50 text-rose-600 border border-rose-100 px-2 py-0.5 rounded-full font-bold uppercase">Rejected</span>
-                  )}
-                  {findStoreStatus === "not-submitted" && (
-                    <span className="text-[10px] bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Not Submitted</span>
                   )}
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -1269,78 +1160,6 @@ export default function InProcessFranchiseDetails() {
                 className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2 px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow cursor-pointer disabled:opacity-50"
               >
                 {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Convert to Franchise Modal */}
-      {showConvertModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity cursor-pointer"
-            onClick={() => setShowConvertModal(false)}
-          ></div>
-
-          {/* Modal Container */}
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all z-10 flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <h3 className="text-base font-bold text-slate-800">Convert to Franchise</h3>
-              <button
-                type="button"
-                onClick={() => setShowConvertModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-left">
-              <p className="text-xs text-slate-500 font-semibold mb-2">
-                Please enter or confirm the tentative and final opening dates before converting the in-process franchise.
-              </p>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Tentative Opening Date</label>
-                <input
-                  type="date"
-                  value={convertTentativeDate}
-                  onChange={(e) => setConvertTentativeDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Final Opening Date</label>
-                <input
-                  type="date"
-                  value={convertFinalDate}
-                  onChange={(e) => setConvertFinalDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
-              <button
-                type="button"
-                onClick={() => setShowConvertModal(false)}
-                className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConvertToFranchise}
-                disabled={converting}
-                className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2 px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow cursor-pointer disabled:opacity-50"
-              >
-                {converting ? "Converting..." : "Convert"}
               </button>
             </div>
           </div>

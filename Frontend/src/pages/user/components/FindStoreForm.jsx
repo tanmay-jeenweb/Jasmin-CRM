@@ -171,7 +171,7 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
         <div className="col-span-1 md:col-span-2 border border-slate-100 p-4 rounded-xl bg-slate-50/50 space-y-4">
           <div>
             <label className="block text-xs font-bold text-slate-600 mb-1.5">
-              Store Photos * <span className="text-[10px] text-slate-400 font-semibold">(Select one or more images)</span>
+              Store Photos * <span className="text-[10px] text-slate-400 font-semibold">(Select one or more Images , Maximum 20 Image)</span>
             </label>
             {findStoreStatus !== "approved" && (
               <input

@@ -11,6 +11,7 @@ import InProcessFranchise from "./pages/user/InProcessFranchise";
 import CreateInProcessFranchise from "./pages/user/CreateInProcessFranchise";
 import InProcessFranchiseDetails from "./pages/user/InProcessFranchiseDetails";
 import Franchise from "./pages/user/Franchise";
+import FranchiseDetails from "./pages/user/FranchiseDetails";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserGroupMaster from "./pages/admin/user/UserGroupMaster";
 import CreateUser from "./pages/admin/user/CreateUser";
@@ -23,6 +24,7 @@ import TeamRoleMaster from "./pages/admin/TeamRoleMaster";
 import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
 import BankMaster from "./pages/admin/BankMaster";
+import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
 import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
 import DepositStockApproval from "./pages/admin/DepositStockApproval";
 import Profile from "./pages/Profile";
@@ -76,6 +78,10 @@ export default function AppRoutes() {
                 <Route
                     path="/user/in-process-franchises/:id"
                     element={<InProcessFranchiseDetails />}
+                />
+                <Route
+                    path="/user/franchises/:id"
+                    element={<FranchiseDetails />}
                 />
                 <Route
                     path="/profile"
@@ -178,6 +184,13 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/banks"
                     element={<BankMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="finance_machine_master" requiredAction="read" />}>
+                <Route
+                    path="/admin/finance-machines"
+                    element={<FinanceMachineMaster />}
                 />
             </Route>
 

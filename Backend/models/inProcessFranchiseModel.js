@@ -165,6 +165,22 @@ const getInProcessFranchiseById = async (id) => {
     return rows[0] || null;
 };
 
+const convertToFranchise = async (id, tentativeOpeningDate, finalOpeningDate) => {
+    const query = `
+        UPDATE in_process_franchises SET 
+            status = 'completed',
+            tentative_opening_date = ?,
+            final_opening_date = ?
+        WHERE id = ?
+    `;
+    const [result] = await db.execute(query, [
+        tentativeOpeningDate || null,
+        finalOpeningDate || null,
+        id
+    ]);
+    return result;
+};
+
 module.exports = {
     createInProcessFranchiseTable,
     createInProcessFranchise,
@@ -172,5 +188,6 @@ module.exports = {
     getAllCompletedFranchises,
     updateInProcessFranchise,
     deleteInProcessFranchise,
-    getInProcessFranchiseById
+    getInProcessFranchiseById,
+    convertToFranchise
 };

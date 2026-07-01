@@ -158,13 +158,6 @@ const approveFranchiseDepositStock = async (franchiseId, approvedBy) => {
         WHERE in_process_franchise_id = ?
     `;
     await db.execute(query, [approvedBy, franchiseId]);
-
-    const franchiseQuery = `
-        UPDATE in_process_franchises SET
-            status = 'completed'
-        WHERE id = ?
-    `;
-    await db.execute(franchiseQuery, [franchiseId]);
 };
 
 const rejectFranchiseDepositStock = async (franchiseId, rejectedReason, rejectedBy) => {

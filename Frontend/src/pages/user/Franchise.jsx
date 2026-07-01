@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
-import { getAllCompletedFranchises } from "../../api/inProcessFranchiseApi";
+import { getFranchises } from "../../api/franchiseApi";
 import DataTable from "../../components/DataTable";
 import toast from "react-hot-toast";
 
@@ -132,7 +132,7 @@ export default function Franchise() {
   const loadFranchises = async () => {
     setLoading(true);
     try {
-      const res = await getAllCompletedFranchises();
+      const res = await getFranchises();
       setFranchises(res.data.data || []);
     } catch (err) {
       console.error("Failed to load franchises:", err);
@@ -202,7 +202,7 @@ export default function Franchise() {
         <div className="flex items-center gap-2">
           {/* Timeline / Stage Button */}
           <button
-            onClick={() => navigate(`/user/in-process-franchises/${row.id}`)}
+            onClick={() => navigate(`/user/franchises/${row.id}`)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/50 text-emerald-700 cursor-pointer transition-all hover:scale-[1.03] active:scale-95"
             title="View Onboarding Timeline"
           >
