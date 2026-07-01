@@ -31,7 +31,7 @@ export default function InProcessFranchiseDetails() {
   const navigate = useNavigate();
   const [franchise, setFranchise] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // Stages and user checks
   const [activeStage, setActiveStage] = useState("store-operations");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
@@ -53,10 +53,24 @@ export default function InProcessFranchiseDetails() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [processingAdminAction, setProcessingAdminAction] = useState(false);
 
+  // Modal and edit states
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleCloseModal = () => {
+    if (franchise) {
+      setTentativeOpeningDate(getLocalDateString(franchise.tentative_opening_date));
+      setFinalOpeningDate(getLocalDateString(franchise.final_opening_date));
+      setBdmArea(franchise.bdm_area || "");
+      setInquiryManagerId(franchise.inquiry_manager_id || "");
+      setStoreName(franchise.store_name || "JASMIN");
+    }
+    setShowEditModal(false);
+  };
+
   // Master docs list for Agreement & GST
   const [masterDocs, setMasterDocs] = useState([]);
 
-  const [openAccordion, setOpenAccordion] = useState("find-store");
+  const [openAccordion, setOpenAccordion] = useState(null);
   const [showApprovedBanner, setShowApprovedBanner] = useState(true);
 
   const getLocalDateString = (dateStr) => {
@@ -80,7 +94,7 @@ export default function InProcessFranchiseDetails() {
           getDocuments().catch(() => ({ data: { success: false, data: [] } })),
           getCompanyBrands().catch(() => ({ data: { success: false, data: [] } }))
         ]);
-        
+
         if (docsRes.data?.success) {
           const allDocs = docsRes.data.data || [];
           const loadedMasterDocs = allDocs.filter(d => d.is_required === 1 || d.is_required === true);
@@ -99,7 +113,7 @@ export default function InProcessFranchiseDetails() {
         } else {
           toast.error("Failed to fetch franchise details.");
         }
-        
+
         if (usersRes.data?.success) {
           setUsers(usersRes.data.data || []);
         }
@@ -155,6 +169,7 @@ export default function InProcessFranchiseDetails() {
         if (res.data?.success) {
           setFranchise(res.data.data);
         }
+        setShowEditModal(false);
       } else {
         toast.error(response.data.message || "Failed to update franchise");
       }
@@ -240,7 +255,7 @@ export default function InProcessFranchiseDetails() {
   const handleStageClick = (stageId) => {
     if (stageId === "store-operations") {
       setActiveStage(stageId);
-      setOpenAccordion("find-store");
+      setOpenAccordion(null);
       return;
     }
 
@@ -250,17 +265,7 @@ export default function InProcessFranchiseDetails() {
     }
 
     setActiveStage(stageId);
-    if (stageId === "teams-marketing") {
-      setOpenAccordion("team");
-    } else if (stageId === "installation-training") {
-      setOpenAccordion("installation");
-    } else if (stageId === "finance-pricing") {
-      setOpenAccordion("deposit-stock");
-    } else if (stageId === "insurance") {
-      setOpenAccordion("insurance");
-    } else {
-      setOpenAccordion(null);
-    }
+    setOpenAccordion(null);
   };
 
   if (loading) {
@@ -315,8 +320,13 @@ export default function InProcessFranchiseDetails() {
         {/* Breadcrumbs and Actions */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-3 flex-wrap">
               {franchise.partner_name}
+              {franchise.partner_mobile && (
+                <span className="text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-lg border border-slate-200">
+                  {franchise.partner_mobile}
+                </span>
+              )}
               <span className="text-xs bg-[#f5f3ff] text-[#6804a1] border border-indigo-100 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                 {franchise.store_name}
               </span>
@@ -343,34 +353,25 @@ export default function InProcessFranchiseDetails() {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-base font-bold text-slate-800">Contact details</h2>
             <button
-              onClick={handleSaveChanges}
-              disabled={saving}
-              className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-1.5 px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              onClick={() => setShowEditModal(true)}
+              className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-1.5 px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow cursor-pointer flex items-center gap-1.5"
             >
-              {saving ? "Saving..." : "Save Changes"}
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+              Additional Details
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6">
-            {/* Row 1 */}
-            <div>
-              <span className="block text-xs font-bold text-slate-600 mb-1">Partner Name</span>
-              <span className="text-sm font-semibold text-slate-800">{franchise.partner_name}</span>
-            </div>
-            <div>
-              <span className="block text-xs font-bold text-slate-600 mb-1">Partner Mobile</span>
-              <span className="text-sm font-semibold text-slate-800">{franchise.partner_mobile}</span>
-            </div>
             <div>
               <span className="block text-xs font-bold text-slate-600 mb-1">City</span>
-              <span className="text-sm font-semibold text-slate-800">{franchise.city}</span>
+              <span className="text-sm font-semibold text-slate-800">{franchise.city || "\u00A0"}</span>
             </div>
             <div>
               <span className="block text-xs font-bold text-slate-600 mb-1">District</span>
-              <span className="text-sm font-semibold text-slate-800">{franchise.district}</span>
+              <span className="text-sm font-semibold text-slate-800">{franchise.district || "\u00A0"}</span>
             </div>
-
-            {/* Row 2 */}
             <div>
               <span className="block text-xs font-bold text-slate-600 mb-1">State</span>
               <span className="text-sm font-semibold text-slate-800">{franchise.state || "\u00A0"}</span>
@@ -379,80 +380,11 @@ export default function InProcessFranchiseDetails() {
               <span className="block text-xs font-bold text-slate-600 mb-1">Franchise category</span>
               <span className="text-sm font-semibold text-slate-800">{franchise.franchise_category || "\u00A0"}</span>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Tentative Opening Date</label>
-              <input
-                type="date"
-                value={tentativeOpeningDate}
-                onChange={(e) => setTentativeOpeningDate(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Final Opening Date :</label>
-              <input
-                type="date"
-                value={finalOpeningDate}
-                onChange={(e) => setFinalOpeningDate(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-              />
-            </div>
-
-            {/* Row 3 */}
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">BDM Area :</label>
-              <input
-                type="text"
-                value={bdmArea}
-                onChange={(e) => setBdmArea(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-600 mb-1">Inquiry Manager :</label>
-              <select
-                value={inquiryManagerId}
-                onChange={(e) => setInquiryManagerId(e.target.value)}
-                className="w-full px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] bg-white"
-              >
-                <option value="">Select Inquiry Manager</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="md:col-span-2"></div>
-
-            {/* Row 4 - Store Name */}
-            <div className="md:col-span-4">
-              <label className="block text-xs font-bold text-slate-600 mb-2">Store Name :</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {companyBrands.length > 0 ? (
-                  companyBrands.map((brand) => (
-                    <label key={brand.id} className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-500 uppercase">
-                      <input
-                        type="radio"
-                        name="storeName"
-                        value={brand.brand_name}
-                        checked={storeName === brand.brand_name}
-                        onChange={(e) => setStoreName(e.target.value)}
-                        className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1] accent-[#6804a1]"
-                      />
-                      {brand.brand_name}
-                    </label>
-                  ))
-                ) : (
-                  <span className="text-xs text-slate-400 italic">No brands available in Company Brand Master</span>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Stages Tab Navigation */}
-        <div className="bg-white rounded-xl border border-slate-200/80 shadow-md p-2 mb-8 grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-5 gap-1.5 shadow-sm">
           {stages.map((stage) => {
             const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
             const isActive = activeStage === stage.id;
@@ -460,13 +392,12 @@ export default function InProcessFranchiseDetails() {
               <button
                 key={stage.id}
                 onClick={() => handleStageClick(stage.id)}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  isActive
+                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
                     ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
                     : isStageLocked
-                    ? "bg-slate-50 text-slate-400 border border-slate-100 cursor-not-allowed"
-                    : "bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
-                }`}
+                      ? "text-slate-400 cursor-not-allowed opacity-50"
+                      : "text-slate-600 hover:text-[#6804a1] hover:bg-purple-100/80"
+                  }`}
               >
                 {stage.name}
                 {isStageLocked && (
@@ -1165,6 +1096,136 @@ export default function InProcessFranchiseDetails() {
           </div>
         )}
       </main>
+
+      {/* Edit Franchise Details Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity cursor-pointer"
+            onClick={handleCloseModal}
+          ></div>
+
+          {/* Modal Container */}
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden transform transition-all z-10 flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+              <h3 className="text-base font-bold text-slate-800">Edit Additional Details</h3>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4 overflow-y-auto flex-1 text-left">
+              {/* Tentative Opening Date & Final Opening Date in a grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Tentative Opening Date</label>
+                  <input
+                    type="date"
+                    value={tentativeOpeningDate}
+                    onChange={(e) => setTentativeOpeningDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Final Opening Date</label>
+                  <input
+                    type="date"
+                    value={finalOpeningDate}
+                    onChange={(e) => setFinalOpeningDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                  />
+                </div>
+              </div>
+
+              {/* BDM Area */}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">BDM Area</label>
+                <input
+                  type="text"
+                  value={bdmArea}
+                  onChange={(e) => setBdmArea(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                />
+              </div>
+
+              {/* Inquiry Manager */}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Inquiry Manager</label>
+                <select
+                  value={inquiryManagerId}
+                  onChange={(e) => setInquiryManagerId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1] bg-white"
+                >
+                  <option value="">Select Inquiry Manager</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Store Name */}
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-2">Store Name</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {companyBrands.length > 0 ? (
+                    companyBrands.map((brand) => (
+                      <label
+                        key={brand.id}
+                        className={`flex items-center gap-3 cursor-pointer font-bold text-xs uppercase border rounded-xl p-3 transition-all ${storeName === brand.brand_name
+                            ? "border-[#6804a1] bg-[#f5f3ff] text-[#6804a1]"
+                            : "border-slate-200 text-slate-500 hover:bg-slate-50"
+                          }`}
+                      >
+                        <input
+                          type="radio"
+                          name="modalStoreName"
+                          value={brand.brand_name}
+                          checked={storeName === brand.brand_name}
+                          onChange={(e) => setStoreName(e.target.value)}
+                          className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1] accent-[#6804a1]"
+                        />
+                        {brand.brand_name}
+                      </label>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">No brands available</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-4 py-2 border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveChanges}
+                disabled={saving}
+                className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2 px-4 rounded-lg text-xs transition-all shadow-sm hover:shadow cursor-pointer disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
