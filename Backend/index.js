@@ -59,6 +59,7 @@ const { createBankTable } = require("./models/bankModel.js");
 const { createFranchiseMappingTable } = require("./models/franchiseMappingModel.js");
 const { createFranchiseInsuranceTable } = require("./models/franchiseInsuranceModel.js");
 const { createFinanceMachineTable } = require("./models/financeMachineModel.js");
+const { createFranchiseBranchFinanceCodeTables } = require("./models/franchiseBranchFinanceCodeModel.js");
 
 
 const app = express();
@@ -165,6 +166,7 @@ const startServer = async () => {
         await createFinanceMachineTable();
         await createFranchiseMappingTable();
         await createFranchiseInsuranceTable();
+        await createFranchiseBranchFinanceCodeTables();
 
         console.log("All database tables are initialized and ready.");
 

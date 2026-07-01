@@ -66,6 +66,10 @@ const {
     getFranchiseInsuranceByFranchiseId,
     upsertFranchiseInsurance
 } = require('../models/franchiseInsuranceModel.js');
+const {
+    getFranchiseBranchFinanceCodesByFranchiseId,
+    saveFranchiseBranchFinanceCodes
+} = require('../models/franchiseBranchFinanceCodeModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -272,6 +276,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const franchiseDepositStock = isApproved ? await getFranchiseDepositStockByFranchiseId(id) : null;
         const franchiseMapping = isApproved ? await getFranchiseMappingsByFranchiseId(id) : [];
         const franchiseInsurance = isApproved ? await getFranchiseInsuranceByFranchiseId(id) : null;
+        const franchiseBranchFinanceCode = isApproved ? await getFranchiseBranchFinanceCodesByFranchiseId(id) : null;
 
         res.status(200).json({
             success: true,
@@ -290,7 +295,8 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 franchiseTraining,
                 franchiseDepositStock,
                 franchiseMapping,
-                franchiseInsurance
+                franchiseInsurance,
+                franchiseBranchFinanceCode
             }
         });
     } catch (error) {
@@ -1373,6 +1379,50 @@ const saveFranchiseInsuranceController = async (req, res) => {
     }
 };
 
+const saveFranchiseBranchFinanceCodeController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { brands, machines, companies } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        const existing = await getFranchiseBranchFinanceCodesByFranchiseId(id);
+
+        await saveFranchiseBranchFinanceCodes(id, { brands, machines, companies }, submittedBy);
+
+        const updated = await getFranchiseBranchFinanceCodesByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Branch Finance Code',
+            'updated',
+            existing,
+            { brands, machines, companies }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Branch Finance Codes saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Branch Finance Code details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
 const convertToFranchiseController = async (req, res) => {
     try {
         const { id } = req.params;
@@ -1432,6 +1482,7 @@ module.exports = {
     saveFranchiseDepositStockController,
     saveFranchiseMappingController,
     saveFranchiseInsuranceController,
+    saveFranchiseBranchFinanceCodeController,
     getAllCompletedFranchisesController,
     getAllDepositStocksController,
     approveFranchiseDepositStockController,
