@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import Login from "./pages/Login";
 import DeviceRegistration from "./pages/DeviceRegistration";
@@ -25,8 +25,7 @@ import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
 import BankMaster from "./pages/admin/BankMaster";
 import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
-import StoreDetailsApproval from "./pages/admin/StoreDetailsApproval";
-import DepositStockApproval from "./pages/admin/DepositStockApproval";
+import Approval from "./pages/admin/Approval";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -96,17 +95,31 @@ export default function AppRoutes() {
                 />
             </Route>
 
+            <Route element={<ProtectedRoute requiredMasters={["store_details_approval", "deposit_stock_approval"]} requiredAction="read" />}>
+                <Route
+                    path="/admin/approval"
+                    element={<Approval />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMasters={["store_details_approval", "deposit_stock_approval"]} requiredAction="read" />}>
+                <Route
+                    path="/admin/approvals"
+                    element={<Navigate to="/admin/approval" replace />}
+                />
+            </Route>
+
             <Route element={<ProtectedRoute requiredMaster="store_details_approval" requiredAction="read" />}>
                 <Route
                     path="/admin/store-details-approval"
-                    element={<StoreDetailsApproval />}
+                    element={<Navigate to="/admin/approval?tab=store" replace />}
                 />
             </Route>
 
             <Route element={<ProtectedRoute requiredMaster="deposit_stock_approval" requiredAction="read" />}>
                 <Route
                     path="/admin/deposit-stock-approval"
-                    element={<DepositStockApproval />}
+                    element={<Navigate to="/admin/approval?tab=deposit" replace />}
                 />
             </Route>
 
