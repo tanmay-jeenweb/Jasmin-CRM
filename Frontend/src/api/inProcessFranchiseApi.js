@@ -132,3 +132,8 @@ export const rejectDepositStockForm = async (id, reason) => {
     return apiClient.post(`/in-process-franchises/${id}/deposit-stock/reject`, { reason });
 };
 
+export const convertToFranchise = async (id, data) => {
+    return apiClient.post(`/in-process-franchises/${id}/convert`, data);
+};
+
+

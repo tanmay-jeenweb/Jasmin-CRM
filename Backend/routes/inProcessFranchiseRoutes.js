@@ -24,7 +24,8 @@ const {
     getAllCompletedFranchisesController,
     getAllDepositStocksController,
     approveFranchiseDepositStockController,
-    rejectFranchiseDepositStockController
+    rejectFranchiseDepositStockController,
+    convertToFranchiseController
 } = require('../controllers/inProcessFranchiseController.js');
 const { verifyToken, verifyAdmin, verifyPermission, verifyFindStoreApproved } = require('../middleware/authMiddleware.js');
 const upload = require('../middleware/uploadMiddleware.js');
@@ -86,6 +87,9 @@ router.post('/:id/insurance', verifyToken, verifyFindStoreApproved, upload.any()
 router.post('/:id/deposit-stock', verifyToken, verifyFindStoreApproved, saveFranchiseDepositStockController);
 router.post('/:id/deposit-stock/approve', verifyToken, verifyPermission('deposit_stock_approval', 'write'), verifyFindStoreApproved, approveFranchiseDepositStockController);
 router.post('/:id/deposit-stock/reject', verifyToken, verifyPermission('deposit_stock_approval', 'write'), verifyFindStoreApproved, rejectFranchiseDepositStockController);
+
+// Convert to active Franchise route
+router.post('/:id/convert', verifyToken, convertToFranchiseController);
 
 module.exports = router;
 

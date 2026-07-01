@@ -25,6 +25,7 @@ const callOutcomeRoutes = require("./routes/callOutcomeRoutes.js");
 const mobileBrandRoutes = require("./routes/mobileBrandRoutes.js");
 const bankRoutes = require("./routes/bankRoutes.js");
 const financeMachineRoutes = require("./routes/financeMachineRoutes.js");
+const franchiseRoutes = require("./routes/franchiseRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -108,6 +109,7 @@ app.use(["/api/call-logs", "/call-logs"], callLogRoutes);
 app.use(["/api/reminders", "/reminders"], reminderRoutes);
 app.use(["/api/notes", "/notes"], noteRoutes);
 app.use(["/api/in-process-franchises", "/in-process-franchises"], inProcessFranchiseRoutes);
+app.use(["/api/franchises", "/franchises"], franchiseRoutes);
 app.use(["/api/calloutcomes", "/calloutcomes"], callOutcomeRoutes);
 app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
 app.use(["/api/banks", "/banks"], bankRoutes);
