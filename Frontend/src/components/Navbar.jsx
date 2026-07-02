@@ -121,7 +121,7 @@ export default function Navbar() {
     };
 
     const userModules = user.modules || [];
-    const isAdmin = user.role === "admin";
+    const isAdmin = user.role === "admin" || user.role === "super admin";
 
     const allMasters = [
         {

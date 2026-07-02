@@ -23,7 +23,7 @@ const fetchUsers = async (req, res) => {
         // Fetch users along with their active device status
         const query = `
             SELECT 
-                u.id, u.name, u.username, u.email, u.mob_no,
+                u.id, u.name, u.username, u.email, u.mob_no, u.role,
                 d.status AS device_status, ut.type_name,
                 d.device_id, device_verification_required, u.active
             FROM users u
@@ -54,7 +54,8 @@ const createUserByAdmin = async (req, res) => {
             userTypeId,
             mobNo,
             dateOfJoin,
-            deviceVerificationRequired
+            deviceVerificationRequired,
+            role
         } = req.body;
 
         if (!name || !username || !email || !password) {
@@ -70,7 +71,9 @@ const createUserByAdmin = async (req, res) => {
             userTypeId || null,
             mobNo || null,
             dateOfJoin || null,
-            typeof deviceVerificationRequired === 'boolean' ? deviceVerificationRequired : true
+            typeof deviceVerificationRequired === 'boolean' ? deviceVerificationRequired : true,
+            true,
+            role || 'user'
         );
 
         const adminDeviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
@@ -89,7 +92,8 @@ const createUserByAdmin = async (req, res) => {
                 user_type_id: userTypeId || null,
                 mob_no: mobNo || null,
                 date_of_join: dateOfJoin || null,
-                device_verification_required: deviceVerificationRequired
+                device_verification_required: deviceVerificationRequired,
+                role: role || 'user'
             }
         );
 

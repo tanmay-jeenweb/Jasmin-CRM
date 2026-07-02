@@ -66,7 +66,7 @@ const addInquiryController = async (req, res) => {
 
 const getAllInquiriesController = async (req, res) => {
     try {
-        const inquiries = await getAllInquiries();
+        const inquiries = await getAllInquiries(req.user.id, req.user.role);
         res.status(200).json({
             success: true,
             message: 'Inquiries retrieved successfully',
@@ -108,6 +108,9 @@ const updateInquiryController = async (req, res) => {
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Inquiry not found' });
         }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this inquiry.' });
+        }
 
         await updateInquiry(id, data);
 
@@ -144,6 +147,9 @@ const updateInquiryLabelController = async (req, res) => {
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Inquiry not found' });
         }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this inquiry.' });
+        }
 
         await updateInquiryLabel(id, labelId);
 
@@ -179,6 +185,9 @@ const updateInquiryStatusController = async (req, res) => {
         const beforeData = await getInquiryById(id);
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Inquiry not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this inquiry.' });
         }
 
         await updateInquiryStatus(id, status);

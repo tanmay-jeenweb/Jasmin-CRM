@@ -139,7 +139,7 @@ const addInProcessFranchiseController = async (req, res) => {
 
 const getAllInProcessFranchisesController = async (req, res) => {
     try {
-        const franchises = await getAllInProcessFranchises();
+        const franchises = await getAllInProcessFranchises(req.user.id, req.user.role);
         res.status(200).json({
             success: true,
             message: 'In Process Franchises retrieved successfully',
@@ -193,6 +193,9 @@ const updateInProcessFranchiseController = async (req, res) => {
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        }
 
         await updateInProcessFranchise(id, data);
 
@@ -228,6 +231,9 @@ const deleteInProcessFranchiseController = async (req, res) => {
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        }
 
         await deleteInProcessFranchise(id);
 
@@ -260,6 +266,9 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const franchise = await getInProcessFranchiseById(id);
         if (!franchise) {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && franchise.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
         }
         const findStore = await getFindStoreByFranchiseId(id);
         const isApproved = findStore && findStore.status === 'approved';
@@ -1176,7 +1185,7 @@ const saveFranchiseDepositStockController = async (req, res) => {
 
 const getAllCompletedFranchisesController = async (req, res) => {
     try {
-        const franchises = await getAllCompletedFranchises();
+        const franchises = await getAllCompletedFranchises(req.user.id, req.user.role);
         res.status(200).json({
             success: true,
             message: 'Completed Franchises retrieved successfully',

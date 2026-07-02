@@ -22,7 +22,7 @@ const { getFranchiseBranchFinanceCodesByFranchiseId } = require('../models/franc
 
 const getAllFranchisesController = async (req, res) => {
     try {
-        const franchises = await getAllFranchises();
+        const franchises = await getAllFranchises(req.user.id, req.user.role);
         res.status(200).json({
             success: true,
             message: 'Franchises retrieved successfully',
@@ -43,6 +43,9 @@ const getFranchiseByIdController = async (req, res) => {
         const franchise = await getFranchiseById(id);
         if (!franchise) {
             return res.status(404).json({ success: false, message: 'Franchise not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && franchise.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
         }
         const findStore = await getFindStoreByFranchiseId(id);
         const isApproved = findStore && findStore.status === 'approved';
@@ -127,6 +130,9 @@ const updateFranchiseController = async (req, res) => {
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Franchise not found' });
         }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        }
 
         await updateFranchise(id, data);
 
@@ -161,6 +167,9 @@ const deleteFranchiseController = async (req, res) => {
         const beforeData = await getFranchiseById(id);
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Franchise not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
         }
 
         await deleteFranchise(id);
