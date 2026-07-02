@@ -66,10 +66,10 @@ const app = express();
 
 const allowedOrigins = [
     "http://localhost:5173",
-    "https://erp.elcen.com",
-    "http://erp.elcen.com",
-    "https://www.erp.elcen.com",
-    "http://www.erp.elcen.com",
+    "https://crm.jasminmobile.com",
+    "http://crm.jasminmobile.com",
+    "https://www.crm.jasminmobile.com",
+    "http://www.crm.jasminmobile.com",
     process.env.FRONTEND_URL
 ].filter(Boolean);
 
