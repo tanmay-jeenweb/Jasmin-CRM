@@ -77,7 +77,13 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
     return result;
 };
 
-const getAllInProcessFranchises = async () => {
+const getAllInProcessFranchises = async (userId = null, userRole = null) => {
+    let whereClause = "WHERE ipf.status = 'in_process'";
+    const params = [];
+    if (userRole !== 'admin' && userRole !== 'super admin') {
+        whereClause += " AND ipf.added_by = ?";
+        params.push(userId);
+    }
     const query = `
         SELECT 
             ipf.*,
@@ -86,14 +92,20 @@ const getAllInProcessFranchises = async () => {
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
-        WHERE ipf.status = 'in_process'
+        ${whereClause}
         ORDER BY ipf.timestamp DESC
     `;
-    const [results] = await db.execute(query);
+    const [results] = await db.execute(query, params);
     return results;
 };
 
-const getAllCompletedFranchises = async () => {
+const getAllCompletedFranchises = async (userId = null, userRole = null) => {
+    let whereClause = "WHERE ipf.status = 'completed'";
+    const params = [];
+    if (userRole !== 'admin' && userRole !== 'super admin') {
+        whereClause += " AND ipf.added_by = ?";
+        params.push(userId);
+    }
     const query = `
         SELECT 
             ipf.*,
@@ -102,10 +114,10 @@ const getAllCompletedFranchises = async () => {
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
-        WHERE ipf.status = 'completed'
+        ${whereClause}
         ORDER BY ipf.timestamp DESC
     `;
-    const [results] = await db.execute(query);
+    const [results] = await db.execute(query, params);
     return results;
 };
 

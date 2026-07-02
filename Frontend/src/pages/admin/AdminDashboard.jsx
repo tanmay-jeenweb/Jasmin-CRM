@@ -160,6 +160,13 @@ export default function AdminDashboard() {
             )
         },
         {
+            key: 'role', label: 'User Group', render: (row) => (
+                <span className="text-sm font-semibold text-slate-700 capitalize">
+                    {row.role || '—'}
+                </span>
+            )
+        },
+        {
             key: 'mob_no',
             label: 'Mobile',
             render: (row) => <span className="text-sm text-slate-600">{row.mob_no || '—'}</span>

@@ -89,7 +89,15 @@ const createInquiry = async (data, addedBy, deviceId) => {
     return result;
 };
 
-const getAllInquiries = async () => {
+const getAllInquiries = async (userId = null, userRole = null) => {
+    let whereClause = "WHERE i.status = 'inquiry'";
+    const params = [];
+    
+    if (userRole !== 'admin' && userRole !== 'super admin') {
+        whereClause += " AND i.added_by = ?";
+        params.push(userId);
+    }
+
     const query = `
         SELECT 
             i.*,
@@ -98,10 +106,10 @@ const getAllInquiries = async () => {
         FROM inquiries i
         LEFT JOIN users u ON i.added_by = u.id
         LEFT JOIN label_master lm ON i.label_id = lm.id
-        WHERE i.status = 'inquiry'
+        ${whereClause}
         ORDER BY i.timestamp DESC
     `;
-    const [results] = await db.execute(query);
+    const [results] = await db.execute(query, params);
     return results;
 };
 

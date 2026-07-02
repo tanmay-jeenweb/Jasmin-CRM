@@ -90,13 +90,14 @@ const createUser = async (
     mobNo = null,
     dateOfJoin = null,
     deviceVerificationRequired = true,
-    active = true
+    active = true,
+    role = 'user'
 ) => {
 
     const query = `
         INSERT INTO users
-        (name, username, email, password, user_type_id, mob_no, date_of_join, device_verification_required, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (name, username, email, password, user_type_id, mob_no, date_of_join, device_verification_required, active, role)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
@@ -108,7 +109,8 @@ const createUser = async (
         mobNo,
         dateOfJoin,
         deviceVerificationRequired ? 1 : 0,
-        active ? 1 : 0
+        active ? 1 : 0,
+        role
     ]);
 
     return result;
