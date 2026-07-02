@@ -26,6 +26,7 @@ import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
 import BankMaster from "./pages/admin/BankMaster";
 import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
 import Approval from "./pages/admin/Approval";
+import ActivityReport from "./pages/admin/ActivityReport";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -92,6 +93,13 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/dashboard"
                     element={<AdminDashboard />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" />}>
+                <Route
+                    path="/admin/report"
+                    element={<ActivityReport />}
                 />
             </Route>
 
