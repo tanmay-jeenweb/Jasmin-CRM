@@ -107,7 +107,7 @@ export default function Login() {
                             Welcome Back
                         </h2>
                         <p className="text-slate-400 text-xs mt-1 text-center">
-                            Sign in to your ERP dashboard
+                            Sign in to your CRM dashboard
                         </p>
                     </div>
 
