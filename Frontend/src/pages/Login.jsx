@@ -53,40 +53,43 @@ export default function Login() {
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col md:flex-row bg-slate-50 font-sans antialiased text-slate-800 overflow-hidden relative">
+        <div className="h-screen w-screen flex flex-col md:flex-row bg-slate-950 font-sans antialiased text-slate-200 overflow-hidden relative">
             
             {/* Left Column: Jasmin Mobile Showroom (50% width on md and above) */}
-            <div className="hidden md:flex md:w-1/2 h-full relative overflow-hidden select-none bg-gradient-to-br from-slate-50 via-white to-indigo-50/70 border-r border-slate-200/50 flex-col justify-center items-center p-8">
+            <div className="hidden md:flex md:w-1/2 h-full relative overflow-hidden select-none bg-gradient-to-br from-slate-950 via-[#0d091e] to-slate-950 border-r border-slate-900/40 flex-col justify-center items-center p-8">
                 
+                {/* Ambient glow behind image */}
+                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-purple-600/15 rounded-full blur-[130px] pointer-events-none z-0" />
+
                 {/* Showroom Image container with subtle drop shadow and hover effect - Shifted higher */}
-                <div className="w-full flex justify-center items-center max-h-[55%] z-10 relative -top-12">
+                <div className="w-full flex justify-center items-center max-h-[70%] z-10 relative -top-8">
                     <img
-                        src="/jasmin .png"
+                        src="/jasmin_-removebg-preview.png"
                         alt="Jasmin Mobile Store front"
-                        className="w-[85%] h-auto object-contain transition-transform duration-[6000ms] hover:scale-103 ease-out drop-shadow-[0_15px_35px_rgba(104,4,161,0.08)]"
+                        className="w-[95%] h-auto object-contain transition-transform duration-[6000ms] hover:scale-103 ease-out drop-shadow-[0_20px_50px_rgba(122,5,189,0.25)]"
                     />
                 </div>
                 
                 {/* Floating Brand Text */}
                 <div className="absolute bottom-12 left-12 z-20 max-w-md">
-                    <h1 className="text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
+                    <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight">
                         Empowering Connection,<br />
-                        <span className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                        <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                             Redefining CRM.
                         </span>
                     </h1>
-                    <p className="mt-3 text-slate-500 text-xs leading-relaxed max-w-sm">
+                    <p className="mt-3 text-slate-400 text-xs leading-relaxed max-w-sm">
                         Manage your Jasmin Mobile distribution, sales network, agreements, and client relationships in one advanced management platform.
                     </p>
                 </div>
             </div>
 
             {/* Right Column: Login Form (50% width on md and above) - Added overflow-y-auto */}
-            <div className="w-full md:w-1/2 h-full flex flex-col justify-between p-5 sm:p-8 relative bg-gradient-to-br from-white via-slate-50 to-indigo-50/40 overflow-y-auto">
+            <div className="w-full md:w-1/2 h-full flex flex-col justify-between p-5 sm:p-8 relative bg-gradient-to-br from-[#0c081b] via-slate-950 to-slate-950 overflow-y-auto">
                 
-                {/* Ambient Glows (Very subtle for light mode) */}
-                <div className="absolute top-1/4 right-1/4 w-80 h-80 bg-purple-200/20 rounded-full blur-[100px] pointer-events-none" />
-                <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-indigo-200/20 rounded-full blur-[100px] pointer-events-none" />
+                {/* Ambient Glows (Vibrant for dark mode) */}
+                <div className="absolute top-1/4 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+                <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
 
                 {/* Top spacer */}
                 <div className="h-2 sm:h-4"></div>
@@ -98,27 +101,27 @@ export default function Login() {
                         <img
                             src={logo}
                             alt="Jasmin Logo"
-                            className="h-16 sm:h-20 w-auto mb-2 drop-shadow-[0_4px_12px_rgba(104,4,161,0.15)] hover:scale-105 transition-transform duration-300"
+                            className="h-16 sm:h-20 w-auto mb-2 drop-shadow-[0_4px_16px_rgba(168,85,247,0.25)] hover:scale-105 transition-transform duration-300"
                         />
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight text-center">
+                        <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight text-center">
                             Welcome Back
                         </h2>
-                        <p className="text-slate-500 text-xs mt-1 text-center">
+                        <p className="text-slate-400 text-xs mt-1 text-center">
                             Sign in to your ERP dashboard
                         </p>
                     </div>
 
-                    {/* Premium Light Glassmorphic Form Card */}
-                    <div className="bg-white/80 backdrop-blur-2xl border border-slate-200/80 rounded-3xl p-5 sm:p-6 shadow-[0_15px_35px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_45px_rgba(0,0,0,0.05)] hover:border-purple-200/60 transition-all duration-300">
+                    {/* Premium Dark Glassmorphic Form Card */}
+                    <div className="bg-slate-900/40 backdrop-blur-2xl border border-slate-800/80 rounded-3xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.55)] hover:border-purple-500/20 transition-all duration-300">
                         <form onSubmit={handleLogin} className="space-y-4">
                             
                             {/* Username Field */}
                             <div className="space-y-1.5">
-                                <label htmlFor="username" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                <label htmlFor="username" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     Username
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                         </svg>
@@ -131,18 +134,18 @@ export default function Login() {
                                         placeholder="Enter your username"
                                         value={form.username}
                                         onChange={(e) => setForm({ ...form, username: e.target.value })}
-                                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-xs sm:text-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+                                        className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-white text-xs sm:text-sm outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 focus:bg-slate-900/60"
                                     />
                                 </div>
                             </div>
 
                             {/* Password Field */}
                             <div className="space-y-1.5">
-                                <label htmlFor="password" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                <label htmlFor="password" className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     Password
                                 </label>
                                 <div className="relative">
-                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4.5 h-4.5">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                                         </svg>
@@ -155,12 +158,12 @@ export default function Login() {
                                         placeholder="Enter your password"
                                         value={form.password}
                                         onChange={(e) => setForm({ ...form, password: e.target.value })}
-                                        className="w-full pl-11 pr-12 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-slate-800 text-xs sm:text-sm outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:bg-white"
+                                        className="w-full pl-11 pr-12 py-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-white text-xs sm:text-sm outline-none transition-all duration-200 placeholder:text-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500/50 focus:bg-slate-900/60"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
                                         tabIndex={-1}
                                     >
                                         {showPassword ? (
@@ -178,10 +181,10 @@ export default function Login() {
                             </div>
 
                             {/* Submit Button */}
-                            <button
+                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full py-2.5 rounded-xl text-white text-xs sm:text-sm font-semibold tracking-wider transition-all duration-300 bg-indigo-600 hover:bg-indigo-500 shadow-[0_4px_15px_rgba(104,4,161,0.15)] hover:shadow-[0_4px_20px_rgba(104,4,161,0.25)] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-[#f8fafc] disabled:opacity-75 disabled:cursor-not-allowed flex justify-center items-center gap-2 cursor-pointer"
+                                className="w-full py-2.5 rounded-xl text-white text-xs sm:text-sm font-semibold tracking-wider transition-all duration-300 bg-purple-600 hover:bg-purple-500 shadow-[0_4px_15px_rgba(122,5,189,0.3)] hover:shadow-[0_4px_25px_rgba(122,5,189,0.5)] hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:opacity-75 disabled:cursor-not-allowed flex justify-center items-center gap-2 cursor-pointer"
                             >
                                 {loading ? (
                                     <>
@@ -205,14 +208,14 @@ export default function Login() {
                 </div>
 
                 {/* Footer */}
-                <div className="z-10 mt-auto flex flex-col sm:flex-row justify-between items-center gap-2 border-t border-slate-200/60 pt-3 text-[10px] text-slate-400 w-full max-w-md mx-auto">
+                <div className="z-10 mt-auto flex flex-col sm:flex-row justify-between items-center gap-2 border-t border-slate-900/60 pt-3 text-[10px] text-slate-500 w-full max-w-md mx-auto">
                     <div className="flex items-center gap-1.5">
                         <span>Powered by</span>
-                        <img src={jwlogo} alt="Jeenweb" className="h-5 w-auto rounded-sm opacity-80 hover:opacity-100 transition-opacity" />
+                        <img src={jwlogo} alt="Jeenweb" className="h-5 w-auto rounded-sm opacity-60 hover:opacity-90 transition-opacity" />
                     </div>
                     <div className="text-center sm:text-right">
-                        <div>Helpline: <a href="tel:9824466017" className="font-semibold text-slate-500 hover:text-slate-700 transition-colors">9824466017</a></div>
-                        <div>Email: <a href="mailto:info@jeenweb.com" className="font-semibold text-slate-500 hover:text-slate-700 transition-colors">info@jeenweb.com</a></div>
+                        <div>Helpline: <a href="tel:9824466017" className="font-semibold text-slate-400 hover:text-slate-300 transition-colors">9824466017</a></div>
+                        <div>Email: <a href="mailto:info@jeenweb.com" className="font-semibold text-slate-400 hover:text-slate-300 transition-colors">info@jeenweb.com</a></div>
                     </div>
                 </div>
             </div>
