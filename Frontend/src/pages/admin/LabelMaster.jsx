@@ -62,7 +62,7 @@ function LabelModal({ isOpen, row, onClose, onSave, saving }) {
                 value={labelName}
                 onChange={(e) => setLabelName(e.target.value)}
                 required
-                placeholder="e.g. Raw Material, Finished Goods"
+                placeholder="e.g. Follow Up, Callback Scheduled, Interested"
                 style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9, padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b" }}
                 onFocus={e => e.target.style.borderColor = "#6804a1"}
                 onBlur={e => e.target.style.borderColor = "#cbd5e1"}

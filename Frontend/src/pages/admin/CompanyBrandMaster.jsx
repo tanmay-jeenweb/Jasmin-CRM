@@ -62,7 +62,7 @@ function CompanyBrandModal({ isOpen, row, onClose, onSave, saving }) {
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 required
-                placeholder="e.g. Nike, Adidas, Samsung"
+                placeholder="e.g. 8 to 9, Phone To Phone, Jasmin"
                 style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9, padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b" }}
                 onFocus={e => e.target.style.borderColor = "#6804a1"}
                 onBlur={e => e.target.style.borderColor = "#cbd5e1"}
