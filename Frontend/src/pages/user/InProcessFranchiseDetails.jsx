@@ -74,6 +74,7 @@ export default function InProcessFranchiseDetails() {
 
   const [openAccordion, setOpenAccordion] = useState(null);
   const [showApprovedBanner, setShowApprovedBanner] = useState(true);
+  const [showRejectedBanner, setShowRejectedBanner] = useState(true);
 
   const getLocalDateString = (dateStr) => {
     if (!dateStr) return "";
@@ -197,6 +198,8 @@ export default function InProcessFranchiseDetails() {
       const res = await getInProcessFranchiseById(id);
       if (res.data?.success) {
         setFranchise(res.data.data);
+        setShowApprovedBanner(true);
+        setShowRejectedBanner(true);
       }
     } catch (err) {
       console.error("Failed to reload data:", err);
@@ -512,14 +515,14 @@ export default function InProcessFranchiseDetails() {
               </div>
             )}
 
-            {findStoreStatus === "rejected" && (
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 shadow-sm">
+            {findStoreStatus === "rejected" && showRejectedBanner && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 shadow-sm relative">
                 <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center text-rose-600 shrink-0">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <div>
+                <div className="flex-1">
                   <h4 className="text-sm font-bold text-rose-800">Submission Rejected</h4>
                   <p className="text-xs text-rose-600 mt-0.5">
                     Reason: <span className="font-bold text-rose-800">{franchise.findStore?.rejection_reason || "No details provided."}</span>
@@ -528,6 +531,15 @@ export default function InProcessFranchiseDetails() {
                     Please modify the incorrect fields below and submit again for verification.
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setShowRejectedBanner(false)}
+                  className="text-rose-500 hover:text-rose-700 hover:bg-rose-100/50 p-1.5 rounded-lg transition-colors cursor-pointer shrink-0"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             )}
 

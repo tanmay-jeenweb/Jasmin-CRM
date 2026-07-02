@@ -23,8 +23,8 @@ router.get("/pending-devices", verifyToken, verifyPermission("device_approval", 
 router.put("/approve-device/:deviceRowId", verifyToken, verifyPermission("device_approval", "write"), approveDeviceController);
 router.put("/revoke-device/:userId", verifyToken, verifyPermission("device_approval", "write"), revokeDeviceController);
 
-router.get("/audit-logs", verifyToken, verifyAdmin, fetchAuditLogs);
-router.get("/audit-logs/:userId", verifyToken, verifyAdmin, fetchUserAuditLogs);
+router.get("/audit-logs", verifyToken, verifyPermission("device_approval", "read"), fetchAuditLogs);
+router.get("/audit-logs/:userId", verifyToken, verifyPermission("device_approval", "read"), fetchUserAuditLogs);
 router.get('/activity-logs', verifyToken, fetchActivityLogs);
 
 module.exports = router;    
