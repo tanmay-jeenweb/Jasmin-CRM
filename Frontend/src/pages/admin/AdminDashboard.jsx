@@ -278,18 +278,22 @@ export default function AdminDashboard() {
             key: 'actions',
             label: 'Actions',
             sortable: false,
-            render: (row) => (
-                <div className="flex justify-end">
-                    <button
-                        onClick={() => handleApproveDevice(row.id)}
-                        className="inline-flex justify-center rounded-md px-4 py-2 text-sm font-semibold text-white bg-[#6804a1] hover:bg-[#52037e] shadow-sm"
-                    >
-                        Approve
-                    </button>
-                </div>
-            )
+            render: (row) => {
+                const canApprove = hasPermission("device_approval", "write") || user.role === "admin";
+                if (!canApprove) return <span className="text-xs text-slate-400">—</span>;
+                return (
+                    <div className="flex justify-end">
+                        <button
+                            onClick={() => handleApproveDevice(row.id)}
+                            className="inline-flex justify-center rounded-md px-4 py-2 text-sm font-semibold text-white bg-[#6804a1] hover:bg-[#52037e] shadow-sm"
+                        >
+                            Approve
+                        </button>
+                    </div>
+                );
+            }
         }
-    ], []);
+    ], [hasPermission, user]);
 
     const historyColumns = useMemo(() => [
         {
