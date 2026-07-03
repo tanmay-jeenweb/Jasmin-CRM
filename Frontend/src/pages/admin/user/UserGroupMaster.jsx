@@ -466,7 +466,7 @@ export default function UserGroupMaster() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
-      <Navbar title="ERP Admin" />
+      <Navbar title="CRM Admin" />
 
       {editingRow && (
         <EditModal

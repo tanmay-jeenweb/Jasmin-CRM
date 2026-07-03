@@ -256,7 +256,7 @@ export default function DocumentMaster() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
-      <Navbar title="ERP Admin" />
+      <Navbar title="CRM Admin" />
 
       <DocumentModal
         isOpen={isModalOpen}

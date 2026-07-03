@@ -178,7 +178,7 @@ export default function CreateInquiry() {
 
     return (
         <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-900 pb-12">
-            <Navbar title="ERP System" />
+            <Navbar title="CRM System" />
 
             <main className="max-w-7xl mx-auto mt-8 px-4 sm:px-6 lg:px-8 w-full">
                 {/* Form Card */}

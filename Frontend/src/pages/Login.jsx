@@ -53,25 +53,29 @@ export default function Login() {
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col md:flex-row bg-slate-950 font-sans antialiased text-slate-200 overflow-hidden relative">
+        <div className="h-screen w-screen flex flex-col md:flex-row bg-gradient-to-br from-[#0c081b] via-slate-950 to-[#0e0a21] font-sans antialiased text-slate-200 overflow-hidden relative">
             
-            {/* Left Column: Jasmin Mobile Showroom (50% width on md and above) */}
-            <div className="hidden md:flex md:w-1/2 h-full relative overflow-hidden select-none bg-gradient-to-br from-slate-950 via-[#0d091e] to-slate-950 border-r border-slate-900/40 flex-col justify-center items-center p-8">
-                
-                {/* Ambient glow behind image */}
-                <div className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[60%] bg-purple-600/15 rounded-full blur-[130px] pointer-events-none z-0" />
+            {/* Ambient Glows (placed on parent to prevent clipping at 50% width and scrollbar triggers) */}
+            {/* Left side glow */}
+            <div className="absolute top-[45%] left-[25%] -translate-x-1/2 -translate-y-1/2 w-[40%] h-[60%] bg-purple-600/15 rounded-full blur-[130px] pointer-events-none z-0" />
+            {/* Right side glows */}
+            <div className="absolute top-[25%] left-[75%] -translate-x-1/2 -translate-y-1/2 w-[40%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none z-0" />
+            <div className="absolute bottom-[25%] left-[65%] -translate-x-1/2 -translate-y-1/2 w-[35%] h-[45%] bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none z-0" />
 
+            {/* Left Column: Jasmin Mobile Showroom (50% width on md and above) */}
+            <div className="hidden md:flex md:w-1/2 h-full relative overflow-hidden select-none bg-transparent flex-col justify-center items-center p-8 z-10">
+                
                 {/* Showroom Image container with subtle drop shadow and hover effect - Shifted higher */}
-                <div className="w-full flex justify-center items-center max-h-[70%] z-10 relative -top-8">
+                <div className="w-full flex justify-center items-center max-h-[70%] z-10 relative -top-16">
                     <img
-                        src="/jasmin_-removebg-preview.png"
+                        src="/Jasmin new (12).png"
                         alt="Jasmin Mobile Store front"
                         className="w-[95%] h-auto object-contain transition-transform duration-[6000ms] hover:scale-103 ease-out drop-shadow-[0_20px_50px_rgba(122,5,189,0.25)]"
                     />
                 </div>
                 
                 {/* Floating Brand Text */}
-                <div className="absolute bottom-12 left-12 z-20 max-w-md">
+                <div className="absolute bottom-4 left-12 z-20 max-w-md">
                     <h1 className="text-3xl lg:text-4xl font-extrabold text-white leading-tight tracking-tight">
                         Empowering Connection,<br />
                         <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -85,11 +89,7 @@ export default function Login() {
             </div>
 
             {/* Right Column: Login Form (50% width on md and above) - Added overflow-y-auto */}
-            <div className="w-full md:w-1/2 h-full flex flex-col justify-between p-5 sm:p-8 relative bg-gradient-to-br from-[#0c081b] via-slate-950 to-slate-950 overflow-y-auto">
-                
-                {/* Ambient Glows (Vibrant for dark mode) */}
-                <div className="absolute top-1/4 right-1/4 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
-                <div className="absolute bottom-1/4 left-1/3 w-80 h-80 bg-indigo-600/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="w-full md:w-1/2 h-full flex flex-col justify-between p-5 sm:p-8 relative bg-transparent overflow-y-auto z-10">
 
                 {/* Top spacer */}
                 <div className="h-2 sm:h-4"></div>

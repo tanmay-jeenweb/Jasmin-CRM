@@ -5,7 +5,7 @@ const db = require("./config/db.js");
 async function addUser() {
     const name = "User Four";
     const username = "user_4";
-    const email = "user4@erp.com";
+    const email = "user4@crm.com";
     const plainPassword = "admin";
     const role = "user";
 

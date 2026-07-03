@@ -5,7 +5,7 @@ export default function UserHome() {
 
     return (
         <div className="flex-1 bg-slate-50 font-sans text-slate-900">
-            <Navbar title="ERP System" />
+            <Navbar title="CRM System" />
 
             {/* Main Content */}
             <main className=" mx-auto py-8 px-4 sm:px-6 lg:px-8">
