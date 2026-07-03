@@ -75,6 +75,22 @@ const createInquiriesTable = async () => {
     } catch (err) {
         console.error("Error checking/adding inquiry_source_detail column:", err);
     }
+
+    // Check if close_reason column exists, if not add it
+    try {
+        const checkColumnQuery = `SHOW COLUMNS FROM inquiries LIKE 'close_reason'`;
+        const [columns] = await db.query(checkColumnQuery);
+        if (columns.length === 0) {
+            const addColumnQuery = `
+                ALTER TABLE inquiries 
+                ADD COLUMN close_reason VARCHAR(255) NULL;
+            `;
+            await db.query(addColumnQuery);
+            console.log("Inquiries table updated with close_reason column.");
+        }
+    } catch (err) {
+        console.error("Error checking/adding close_reason column:", err);
+    }
 };
 
 const createInquiry = async (data, addedBy, deviceId) => {
@@ -173,9 +189,17 @@ const updateInquiryLabel = async (id, labelId) => {
     return result;
 };
 
-const updateInquiryStatus = async (id, status) => {
-    const query = `UPDATE inquiries SET status = ? WHERE id = ?`;
-    const [result] = await db.execute(query, [status, id]);
+const updateInquiryStatus = async (id, status, reason = null) => {
+    let query;
+    let params;
+    if (status === 'closed') {
+        query = `UPDATE inquiries SET status = ?, close_reason = ? WHERE id = ?`;
+        params = [status, reason, id];
+    } else {
+        query = `UPDATE inquiries SET status = ? WHERE id = ?`;
+        params = [status, id];
+    }
+    const [result] = await db.execute(query, params);
     return result;
 };
 

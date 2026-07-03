@@ -195,7 +195,7 @@ const updateInquiryLabelController = async (req, res) => {
 const updateInquiryStatusController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, reason } = req.body;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
         const beforeData = await getInquiryById(id);
@@ -206,7 +206,7 @@ const updateInquiryStatusController = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access denied. You do not own this inquiry.' });
         }
 
-        await updateInquiryStatus(id, status);
+        await updateInquiryStatus(id, status, reason);
 
         await createAuditLog(
             req.user?.id,
@@ -215,7 +215,7 @@ const updateInquiryStatusController = async (req, res) => {
             'Inquiry',
             'status_updated',
             beforeData,
-            { id, status }
+            { id, status, close_reason: reason || null }
         );
 
         res.status(200).json({
