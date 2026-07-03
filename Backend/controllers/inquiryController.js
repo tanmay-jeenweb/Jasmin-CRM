@@ -30,6 +30,14 @@ const addInquiryController = async (req, res) => {
         if (!data.maxBudget || Number(data.maxBudget) < 5000000) {
             return res.status(400).json({ success: false, message: 'Maximum Budget must not be less than 5,000,000' });
         }
+        if (data.inquirySource) {
+            const sourceLower = data.inquirySource.toLowerCase();
+            if (['employee', 'franchisie', 'social media'].includes(sourceLower)) {
+                if (!data.inquirySourceDetail || !data.inquirySourceDetail.trim()) {
+                    return res.status(400).json({ success: false, message: `Inquiry source detail is required for source: ${data.inquirySource}` });
+                }
+            }
+        }
 
         const result = await createInquiry(data, addedBy, deviceId);
 
@@ -102,6 +110,14 @@ const updateInquiryController = async (req, res) => {
         }
         if (!data.maxBudget || Number(data.maxBudget) < 5000000) {
             return res.status(400).json({ success: false, message: 'Maximum Budget must not be less than 5,000,000' });
+        }
+        if (data.inquirySource) {
+            const sourceLower = data.inquirySource.toLowerCase();
+            if (['employee', 'franchisie', 'social media'].includes(sourceLower)) {
+                if (!data.inquirySourceDetail || !data.inquirySourceDetail.trim()) {
+                    return res.status(400).json({ success: false, message: `Inquiry source detail is required for source: ${data.inquirySource}` });
+                }
+            }
         }
 
         const beforeData = await getInquiryById(id);

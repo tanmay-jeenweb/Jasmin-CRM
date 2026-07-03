@@ -171,35 +171,40 @@ export default function InquirySourceMaster() {
     if (canUpdate || canDelete) {
       cols.push({
         key: "actions", label: "Actions", sortable: false, minWidth: "120px",
-        render: (row) => (
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {canUpdate && (
-              <button
-                onClick={() => {
-                  setSelectedRow(row);
-                  setIsModalOpen(true);
-                }}
-                style={{ display: "flex", width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #d8b4fe", background: "#f3e8ff", color: "#6804a1", cursor: "pointer" }}
-                title="Edit"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ width: 15, height: 15 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931Z" />
-                </svg>
-              </button>
-            )}
-            {canDelete && (
-              <button
-                onClick={() => handleDelete(row.id)}
-                style={{ display: "flex", width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #fecdd3", background: "#fff1f2", color: "#be123c", cursor: "pointer" }}
-                title="Delete"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ width: 15, height: 15 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 7.5h12m-1.5 0-.563 12.375A2.25 2.25 0 0113.693 21H10.307a2.25 2.25 0 01-2.244-2.125L7.5 7.5m3-3h3A1.5 1.5 0 0115 6v1.5H9V6a1.5 1.5 0 011.5-1.5Z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )
+        render: (row) => {
+          const isFixed = ["employee", "franchisie", "social media"].includes(row.source_name?.toLowerCase());
+          if (isFixed) return null;
+
+          return (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {canUpdate && (
+                <button
+                  onClick={() => {
+                    setSelectedRow(row);
+                    setIsModalOpen(true);
+                  }}
+                  style={{ display: "flex", width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #d8b4fe", background: "#f3e8ff", color: "#6804a1", cursor: "pointer" }}
+                  title="Edit"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ width: 15, height: 15 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931Z" />
+                  </svg>
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={() => handleDelete(row.id)}
+                  style={{ display: "flex", width: 32, height: 32, alignItems: "center", justifyContent: "center", borderRadius: 8, border: "1px solid #fecdd3", background: "#fff1f2", color: "#be123c", cursor: "pointer" }}
+                  title="Delete"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" style={{ width: 15, height: 15 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 7.5h12m-1.5 0-.563 12.375A2.25 2.25 0 0113.693 21H10.307a2.25 2.25 0 01-2.244-2.125L7.5 7.5m3-3h3A1.5 1.5 0 0115 6v1.5H9V6a1.5 1.5 0 011.5-1.5Z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          );
+        }
       });
     }
 
@@ -208,7 +213,7 @@ export default function InquirySourceMaster() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
-      <Navbar title="ERP Admin" />
+      <Navbar title="CRM Admin" />
 
       <InquirySourceModal
         isOpen={isModalOpen}

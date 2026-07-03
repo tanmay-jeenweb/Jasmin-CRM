@@ -12,7 +12,8 @@ import NoteModal from "./NoteModal";
 import LabelModal from "./LabelModal";
 import InProcessFranchiseModal from "./InProcessFranchiseModal";
 import WhatsAppModal from "./WhatsAppModal";
-import { createInProcessFranchise } from "../../api/inProcessFranchiseApi";
+import { createInProcessFranchise, getActiveUsers } from "../../api/inProcessFranchiseApi";
+import { getFranchises } from "../../api/franchiseApi";
 import toast from "react-hot-toast";
 
 // ─── Detailed View Modal ──────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ function DetailedInquiryModal({ isOpen, inquiry, onClose }) {
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: "#0f172a" }}>{inquiry.name}</h3>
-              <p style={{ margin: "2px 0 0", fontSize: 13, color: "#64748b", fontWeight: 600 }}>Source: {inquiry.inquirySource || "N/A"}</p>
+              <p style={{ margin: "2px 0 0", fontSize: 13, color: "#64748b", fontWeight: 600 }}>Source: {inquiry.inquirySource || "N/A"} {inquiry.inquirySourceDetail ? `(${inquiry.inquirySourceDetail})` : ""}</p>
             </div>
           </div>
 
@@ -134,10 +135,35 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
     fieldOfOccupation: "",
     businessLocation: "own",
     inquirySource: "",
+    inquirySourceDetail: "",
     minBudget: "",
     maxBudget: "",
   });
   const [errors, setErrors] = useState({});
+  const [users, setUsers] = useState([]);
+  const [franchises, setFranchises] = useState([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchDetails = async () => {
+        setLoadingDetails(true);
+        try {
+          const [usersRes, franchisesRes] = await Promise.all([
+            getActiveUsers(),
+            getFranchises()
+          ]);
+          setUsers(usersRes.data.data || []);
+          setFranchises(franchisesRes.data.data || []);
+        } catch (err) {
+          console.error("Failed to load users/franchises in EditInquiryModal:", err);
+        } finally {
+          setLoadingDetails(false);
+        }
+      };
+      fetchDetails();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (inquiry) {
@@ -152,6 +178,7 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
         fieldOfOccupation: inquiry.fieldOfOccupation || "",
         businessLocation: inquiry.businessLocation || "own",
         inquirySource: inquiry.inquirySource || "",
+        inquirySourceDetail: inquiry.inquirySourceDetail || "",
         minBudget: inquiry.minBudget || "",
         maxBudget: inquiry.maxBudget || "",
       });
@@ -163,9 +190,18 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
+    if (name === "inquirySource") {
+      setFormData(prev => ({
+        ...prev,
+        inquirySource: value,
+        inquirySourceDetail: ""
+      }));
+      setErrors(prev => ({ ...prev, inquirySource: "", inquirySourceDetail: "" }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+      if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: "" }));
+      }
     }
   };
 
@@ -181,6 +217,13 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
     if (!formData.currentOccupation.trim()) newErrors.currentOccupation = "Current occupation is required";
     if (!formData.fieldOfOccupation.trim()) newErrors.fieldOfOccupation = "Field of occupation is required";
     if (!formData.inquirySource) newErrors.inquirySource = "Inquiry source is required";
+
+    if (formData.inquirySource) {
+      const sourceLower = formData.inquirySource.toLowerCase();
+      if (["employee", "franchisie", "social media"].includes(sourceLower) && !formData.inquirySourceDetail) {
+        newErrors.inquirySourceDetail = "Inquiry source detail is required";
+      }
+    }
 
     const minBudgetVal = Number(formData.minBudget);
     const maxBudgetVal = Number(formData.maxBudget);
@@ -362,7 +405,11 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: ["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr",
+              gap: 16
+            }}>
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Inquiry Source *</label>
                 <select
@@ -380,10 +427,40 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
                 </select>
                 {errors.inquirySource && <p style={{ color: "#e11d48", fontSize: 11, margin: "4px 0 0" }}>{errors.inquirySource}</p>}
               </div>
+
+              {["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) && (
+                <div>
+                  <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>
+                    {formData.inquirySource.toLowerCase() === "employee" && "Select Employee *"}
+                    {formData.inquirySource.toLowerCase() === "franchisie" && "Select Franchise *"}
+                    {formData.inquirySource.toLowerCase() === "social media" && "Select Platform *"}
+                  </label>
+                  <select
+                    name="inquirySourceDetail"
+                    value={formData.inquirySourceDetail}
+                    onChange={handleChange}
+                    style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 8, padding: "8px 12px", fontSize: 14, outline: "none", background: "#fff" }}
+                  >
+                    <option value="">Select option...</option>
+                    {formData.inquirySource.toLowerCase() === "employee" && users.map(u => (
+                      <option key={u.id} value={u.name}>{u.name}</option>
+                    ))}
+                    {formData.inquirySource.toLowerCase() === "franchisie" && franchises.map(f => (
+                      <option key={f.id} value={f.store_name}>{f.store_name} ({f.partner_name})</option>
+                    ))}
+                    {formData.inquirySource.toLowerCase() === "social media" && ["YouTube", "WhatsApp", "Facebook", "Instagram"].map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                  {errors.inquirySourceDetail && <p style={{ color: "#e11d48", fontSize: 11, margin: "4px 0 0" }}>{errors.inquirySourceDetail}</p>}
+                </div>
+              )}
+
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Min Budget *</label>
                 <input
                   type="number"
+                  min="1000000"
                   name="minBudget"
                   value={formData.minBudget}
                   onChange={handleChange}
@@ -395,6 +472,7 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Max Budget *</label>
                 <input
                   type="number"
+                  min="5000000"
                   name="maxBudget"
                   value={formData.maxBudget}
                   onChange={handleChange}
@@ -651,6 +729,7 @@ export default function Inquiries() {
         fieldOfOccupation: inq.field_of_occupation,
         businessLocation: inq.business_location,
         inquirySource: inq.inquiry_source,
+        inquirySourceDetail: inq.inquiry_source_detail || "",
         minBudget: Number(inq.min_budget),
         maxBudget: Number(inq.max_budget),
         label_id: inq.label_id,
@@ -760,7 +839,7 @@ export default function Inquiries() {
   return (
     <div className="flex flex-col h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
       {/* Navigation Header */}
-      <Navbar title="ERP System" />
+      <Navbar title="CRM System" />
 
       <DetailedInquiryModal
         isOpen={isViewModalOpen}

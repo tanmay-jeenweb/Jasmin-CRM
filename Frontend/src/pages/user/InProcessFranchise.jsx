@@ -233,6 +233,43 @@ export default function InProcessFranchise() {
       )
     },
     {
+      key: "approval_status",
+      label: "Permissions Status",
+      render: (row) => {
+        const getBadge = (type, status) => {
+          let label = "";
+          let bgClass = "";
+
+          if (status === "approved") {
+            label = `${type}: Granted`;
+            bgClass = "bg-emerald-50 text-emerald-700 border-emerald-200";
+          } else if (status === "rejected") {
+            label = `${type}: Rejected`;
+            bgClass = "bg-rose-50 text-rose-700 border-rose-200";
+          } else if (status === "pending") {
+            label = `${type}: Asked`;
+            bgClass = "bg-amber-50 text-amber-700 border-amber-200";
+          } else {
+            label = `${type}: Not Asked`;
+            bgClass = "bg-slate-50 text-slate-500 border-slate-200";
+          }
+
+          return (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${bgClass}`}>
+              {label}
+            </span>
+          );
+        };
+
+        return (
+          <div className="flex flex-col gap-1 items-start">
+            {getBadge("Store Loc", row.store_location_status)}
+            {getBadge("Dep & Stock", row.deposit_stock_status)}
+          </div>
+        );
+      }
+    },
+    {
       key: "actions",
       label: "Actions",
       sortable: false,

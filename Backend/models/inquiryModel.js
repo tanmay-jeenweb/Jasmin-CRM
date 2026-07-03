@@ -59,6 +59,22 @@ const createInquiriesTable = async () => {
     } catch (err) {
         console.error("Error checking/adding status column:", err);
     }
+
+    // Check if inquiry_source_detail column exists, if not add it
+    try {
+        const checkColumnQuery = `SHOW COLUMNS FROM inquiries LIKE 'inquiry_source_detail'`;
+        const [columns] = await db.query(checkColumnQuery);
+        if (columns.length === 0) {
+            const addColumnQuery = `
+                ALTER TABLE inquiries 
+                ADD COLUMN inquiry_source_detail VARCHAR(255) NULL;
+            `;
+            await db.query(addColumnQuery);
+            console.log("Inquiries table updated with inquiry_source_detail column.");
+        }
+    } catch (err) {
+        console.error("Error checking/adding inquiry_source_detail column:", err);
+    }
 };
 
 const createInquiry = async (data, addedBy, deviceId) => {
@@ -66,9 +82,9 @@ const createInquiry = async (data, addedBy, deviceId) => {
         INSERT INTO inquiries (
             name, email, phone, state, city, district, 
             current_occupation, field_of_occupation, 
-            business_location, inquiry_source, min_budget, max_budget, 
+            business_location, inquiry_source, inquiry_source_detail, min_budget, max_budget, 
             added_by, device_id
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const [result] = await db.execute(query, [
         data.name,
@@ -81,6 +97,7 @@ const createInquiry = async (data, addedBy, deviceId) => {
         data.fieldOfOccupation,
         data.businessLocation,
         data.inquirySource,
+        data.inquirySourceDetail || null,
         data.minBudget,
         data.maxBudget,
         addedBy,
@@ -126,6 +143,7 @@ const updateInquiry = async (id, data) => {
             field_of_occupation = ?, 
             business_location = ?, 
             inquiry_source = ?, 
+            inquiry_source_detail = ?, 
             min_budget = ?, 
             max_budget = ?
         WHERE id = ?
@@ -141,6 +159,7 @@ const updateInquiry = async (id, data) => {
         data.fieldOfOccupation,
         data.businessLocation,
         data.inquirySource,
+        data.inquirySourceDetail || null,
         data.minBudget,
         data.maxBudget,
         id
