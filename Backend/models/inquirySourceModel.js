@@ -13,6 +13,30 @@ const createInquirySourcesTable = async () => {
     `;
     await db.execute(query);
     console.log("Inquiry source master table ready");
+
+    // Seed fixed inquiry sources: Employee, Franchisie, Social Media
+    const seedSources = ["Employee", "Franchisie", "Social Media"];
+    let addedBy = 1;
+    try {
+        const [users] = await db.execute("SELECT id FROM users LIMIT 1");
+        if (users.length > 0) {
+            addedBy = users[0].id;
+        }
+    } catch (e) {
+        // Fallback to 1 if users table is not queried successfully
+    }
+
+    for (const source of seedSources) {
+        try {
+            const [rows] = await db.execute("SELECT id FROM inquiry_source_master WHERE LOWER(source_name) = ?", [source.toLowerCase()]);
+            if (rows.length === 0) {
+                await db.execute("INSERT INTO inquiry_source_master (source_name, added_by, device_id) VALUES (?, ?, 'System')", [source, addedBy]);
+                console.log(`Seeded inquiry source: ${source}`);
+            }
+        } catch (err) {
+            console.error(`Failed to seed inquiry source: ${source}`, err);
+        }
+    }
 };
 
 const createInquirySource = async (sourceName, addedBy, deviceId) => {

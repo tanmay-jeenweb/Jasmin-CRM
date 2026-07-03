@@ -3,12 +3,18 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { getInquirySources } from "../../api/inquirySourceApi";
 import { createInquiry as createInquiryApi } from "../../api/inquiryApi";
+import { getActiveUsers } from "../../api/inProcessFranchiseApi";
+import { getFranchises } from "../../api/franchiseApi";
 import { toast } from "react-hot-toast";
 
 export default function CreateInquiry() {
     const navigate = useNavigate();
     const [sources, setSources] = useState([]);
     const [loadingSources, setLoadingSources] = useState(false);
+    const [users, setUsers] = useState([]);
+    const [franchises, setFranchises] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [loadingFranchises, setLoadingFranchises] = useState(false);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -22,6 +28,7 @@ export default function CreateInquiry() {
         fieldOfOccupation: "",
         businessLocation: "own", // default radio
         inquirySource: "",
+        inquirySourceDetail: "",
         minBudget: "",
         maxBudget: "",
     });
@@ -29,7 +36,7 @@ export default function CreateInquiry() {
     // Error states for validation
     const [errors, setErrors] = useState({});
 
-    // Fetch Inquiry Source Master values
+    // Fetch Inquiry Source Master, Users, and Franchises values
     useEffect(() => {
         const fetchSources = async () => {
             setLoadingSources(true);
@@ -38,7 +45,6 @@ export default function CreateInquiry() {
                 setSources(response.data.data || []);
             } catch (err) {
                 console.error("Failed to load inquiry sources from backend:", err);
-                // Fallback dummy sources if API fails
                 setSources([
                     { id: "s1", source_name: "Google Search" },
                     { id: "s2", source_name: "Social Media" },
@@ -50,18 +56,44 @@ export default function CreateInquiry() {
                 setLoadingSources(false);
             }
         };
+        const fetchUsersAndFranchises = async () => {
+            setLoadingUsers(true);
+            setLoadingFranchises(true);
+            try {
+                const [usersRes, franchisesRes] = await Promise.all([
+                    getActiveUsers(),
+                    getFranchises()
+                ]);
+                setUsers(usersRes.data.data || []);
+                setFranchises(franchisesRes.data.data || []);
+            } catch (err) {
+                console.error("Failed to load active users or franchises:", err);
+            } finally {
+                setLoadingUsers(false);
+                setLoadingFranchises(false);
+            }
+        };
         fetchSources();
+        fetchUsersAndFranchises();
     }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        // Clear errors for this field as the user types
-        if (errors[name]) {
-            setErrors(prev => ({ ...prev, [name]: "" }));
+        if (name === "inquirySource") {
+            setFormData(prev => ({
+                ...prev,
+                inquirySource: value,
+                inquirySourceDetail: ""
+            }));
+            setErrors(prev => ({ ...prev, inquirySource: "", inquirySourceDetail: "" }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+            if (errors[name]) {
+                setErrors(prev => ({ ...prev, [name]: "" }));
+            }
         }
     };
 
@@ -79,6 +111,13 @@ export default function CreateInquiry() {
         if (!formData.currentOccupation.trim()) newErrors.currentOccupation = "Current occupation is required";
         if (!formData.fieldOfOccupation.trim()) newErrors.fieldOfOccupation = "Field of occupation is required";
         if (!formData.inquirySource) newErrors.inquirySource = "Inquiry source is required";
+
+        if (formData.inquirySource) {
+            const sourceLower = formData.inquirySource.toLowerCase();
+            if (["employee", "franchisie", "social media"].includes(sourceLower) && !formData.inquirySourceDetail) {
+                newErrors.inquirySourceDetail = "Inquiry source detail is required";
+            }
+        }
 
         const minBudgetVal = Number(formData.minBudget);
         const maxBudgetVal = Number(formData.maxBudget);
@@ -117,6 +156,7 @@ export default function CreateInquiry() {
                     fieldOfOccupation: formData.fieldOfOccupation,
                     businessLocation: formData.businessLocation,
                     inquirySource: formData.inquirySource,
+                    inquirySourceDetail: formData.inquirySourceDetail || null,
                     minBudget: minBudgetVal,
                     maxBudget: maxBudgetVal
                 });
@@ -340,7 +380,7 @@ export default function CreateInquiry() {
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
                                 Inquiry Source & Budget
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className={`grid grid-cols-1 ${["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"} gap-6`}>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Inquiry Source *</label>
                                     <select
@@ -361,10 +401,41 @@ export default function CreateInquiry() {
                                     {errors.inquirySource && <p className="text-xs text-red-500 mt-1">{errors.inquirySource}</p>}
                                 </div>
 
+                                {["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-600 mb-1.5">
+                                            {formData.inquirySource.toLowerCase() === "employee" && "Select Employee *"}
+                                            {formData.inquirySource.toLowerCase() === "franchisie" && "Select Franchise *"}
+                                            {formData.inquirySource.toLowerCase() === "social media" && "Select Social Media Platform *"}
+                                        </label>
+                                        <select
+                                            name="inquirySourceDetail"
+                                            value={formData.inquirySourceDetail}
+                                            onChange={handleChange}
+                                            className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all cursor-pointer ${
+                                                errors.inquirySourceDetail ? "border-red-500" : "border-slate-200"
+                                            }`}
+                                        >
+                                            <option value="">Select option...</option>
+                                            {formData.inquirySource.toLowerCase() === "employee" && users.map(u => (
+                                                <option key={u.id} value={u.name}>{u.name}</option>
+                                            ))}
+                                            {formData.inquirySource.toLowerCase() === "franchisie" && franchises.map(f => (
+                                                <option key={f.id} value={f.store_name}>{f.store_name} ({f.partner_name})</option>
+                                            ))}
+                                            {formData.inquirySource.toLowerCase() === "social media" && ["YouTube", "WhatsApp", "Facebook", "Instagram"].map(p => (
+                                                <option key={p} value={p}>{p}</option>
+                                            ))}
+                                        </select>
+                                        {errors.inquirySourceDetail && <p className="text-xs text-red-500 mt-1">{errors.inquirySourceDetail}</p>}
+                                    </div>
+                                )}
+
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Minimum Budget *</label>
                                     <input
                                         type="number"
+                                        min="1000000"
                                         name="minBudget"
                                         value={formData.minBudget}
                                         onChange={handleChange}
@@ -381,6 +452,7 @@ export default function CreateInquiry() {
                                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Maximum Budget *</label>
                                     <input
                                         type="number"
+                                        min="5000000"
                                         name="maxBudget"
                                         value={formData.maxBudget}
                                         onChange={handleChange}

@@ -88,10 +88,14 @@ const getAllInProcessFranchises = async (userId = null, userRole = null) => {
         SELECT 
             ipf.*,
             u_mgr.name AS inquiry_manager_name,
-            u_add.name AS added_by_name
+            u_add.name AS added_by_name,
+            fs.status AS store_location_status,
+            ds.status AS deposit_stock_status
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
+        LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_deposit_stock ds ON ipf.id = ds.in_process_franchise_id
         ${whereClause}
         ORDER BY ipf.timestamp DESC
     `;
@@ -110,10 +114,14 @@ const getAllCompletedFranchises = async (userId = null, userRole = null) => {
         SELECT 
             ipf.*,
             u_mgr.name AS inquiry_manager_name,
-            u_add.name AS added_by_name
+            u_add.name AS added_by_name,
+            fs.status AS store_location_status,
+            ds.status AS deposit_stock_status
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
+        LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_deposit_stock ds ON ipf.id = ds.in_process_franchise_id
         ${whereClause}
         ORDER BY ipf.timestamp DESC
     `;

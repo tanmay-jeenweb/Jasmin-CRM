@@ -83,6 +83,11 @@ const updateInquirySourceController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Inquiry source not found' });
         }
 
+        const fixedSources = ['employee', 'franchisie', 'social media'];
+        if (fixedSources.includes(beforeData.source_name.toLowerCase())) {
+            return res.status(400).json({ success: false, message: 'Cannot modify a system-defined fixed inquiry source' });
+        }
+
         await updateInquirySource(id, sourceName.trim());
         
         await createAuditLog(
@@ -114,6 +119,11 @@ const deleteInquirySourceController = async (req, res) => {
         const beforeData = await getInquirySourceById(id);
         if (!beforeData) {
             return res.status(404).json({ success: false, message: 'Inquiry source not found' });
+        }
+
+        const fixedSources = ['employee', 'franchisie', 'social media'];
+        if (fixedSources.includes(beforeData.source_name.toLowerCase())) {
+            return res.status(400).json({ success: false, message: 'Cannot delete a system-defined fixed inquiry source' });
         }
 
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';

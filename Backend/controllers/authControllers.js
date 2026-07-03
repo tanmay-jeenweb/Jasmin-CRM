@@ -59,7 +59,7 @@ const login = async (req, res) => {
         }
 
         // ================= ADMIN LOGIN =================
-        if (user.role === "admin") {
+        if (user.role === "admin" && (user.device_verification_required === 0 || user.device_verification_required === false)) {
             const token = jwt.sign(
                 { id: user.id, role: user.role, name: user.name, username: user.username, mob_no: user.mob_no },
                 process.env.JWT_SECRET,
