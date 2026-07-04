@@ -4,7 +4,7 @@ import DataTable from "../../components/DataTable";
 import { fetchActivityLogs } from "../../api/authApi";
 import toast from "react-hot-toast";
 
-// ─── Modal to view detailed change data ──────────────────────────────────────────
+// ─── Modal to view detailed inquiry data ──────────────────────────────────────────
 function DetailModal({ isOpen, row, onClose }) {
   if (!isOpen || !row) return null;
 
@@ -46,9 +46,9 @@ function DetailModal({ isOpen, row, onClose }) {
         {/* Modal Header */}
         <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
           <div style={{ flex: 1 }}>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Activity Log Detail</h2>
+            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Closed Inquiry Details</h2>
             <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>
-              {row.master_name} — {row.change_type.toUpperCase()} by {row.username}
+              Inquiry: {beforeObj.name || "Unknown"} — Closed by {row.username}
             </p>
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
@@ -63,24 +63,19 @@ function DetailModal({ isOpen, row, onClose }) {
           {/* Metadata Grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginBottom: 20, background: "#fff", padding: 16, borderRadius: 12, border: "1px solid #e2e8f0" }}>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>User</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Closed By</span>
               <p style={{ margin: "2px 0 0", fontSize: 14, fontWeight: 600, color: "#1e293b" }}>{row.username || "System"}</p>
             </div>
             <div>
               <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Action Type</span>
               <p style={{ margin: "2px 0 0" }}>
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
-                  row.change_type === 'created' || row.change_type === 'approved' ? 'bg-green-100 text-green-800' :
-                  row.change_type === 'updated' ? 'bg-amber-100 text-amber-800' :
-                  row.change_type === 'deleted' || row.change_type === 'rejected' ? 'bg-rose-100 text-rose-800' :
-                  'bg-slate-100 text-slate-800'
-                }`}>
-                  {row.change_type.toUpperCase()}
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800">
+                  CLOSED
                 </span>
               </p>
             </div>
             <div>
-              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Timestamp</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Closed At</span>
               <p style={{ margin: "2px 0 0", fontSize: 14, color: "#1e293b" }}>{new Date(row.created_at).toLocaleString()}</p>
             </div>
           </div>
@@ -98,8 +93,8 @@ function DetailModal({ isOpen, row, onClose }) {
               <thead>
                 <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
                   <th style={{ padding: "10px 14px", fontWeight: 600, color: "#475569" }}>Field</th>
-                  <th style={{ padding: "10px 14px", fontWeight: 600, color: "#475569" }}>Before</th>
-                  <th style={{ padding: "10px 14px", fontWeight: 600, color: "#475569" }}>After</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 600, color: "#475569" }}>Before Closure</th>
+                  <th style={{ padding: "10px 14px", fontWeight: 600, color: "#475569" }}>After Closure</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,8 +142,8 @@ function DetailModal({ isOpen, row, onClose }) {
   );
 }
 
-// ─── Main Activity Report Component ──────────────────────────────────────────────
-export default function ActivityReport() {
+// ─── Main Closed Inquiry Report Component ──────────────────────────────────────────
+export default function ClosedInquiryReport() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedRow, setSelectedRow] = useState(null);
@@ -160,20 +155,27 @@ export default function ActivityReport() {
       const res = await fetchActivityLogs();
       if (res.data?.success) {
         const rawLogs = res.data.logs || [];
-        // Filter out closed inquiries from the Audit Log report
-        const filteredLogs = rawLogs.filter(row => {
-          const isClosedInquiry = row.master_name === 'Inquiry' && 
-                                  row.change_type === 'status_updated' && 
-                                  row.after_data?.status === 'closed';
-          return !isClosedInquiry;
-        });
-        setLogs(filteredLogs);
+        // Filter and flat-map for closed inquiries
+        const closedLogs = rawLogs
+          .filter(row => {
+            return row.master_name === 'Inquiry' && 
+                   row.change_type === 'status_updated' && 
+                   row.after_data?.status === 'closed';
+          })
+          .map(row => ({
+            ...row,
+            inquiry_name: row.before_data?.name || "Unknown",
+            close_reason: row.after_data?.close_reason || "No reason provided",
+            phone: row.before_data?.phone || "—",
+            email: row.before_data?.email || "—"
+          }));
+        setLogs(closedLogs);
       } else {
-        toast.error(res.data?.message || "Failed to fetch activity logs");
+        toast.error(res.data?.message || "Failed to fetch closed inquiries");
       }
     } catch (err) {
-      console.error("Error fetching activity logs:", err);
-      toast.error("Failed to load activity logs");
+      console.error("Error fetching closed inquiries:", err);
+      toast.error("Failed to load closed inquiries");
     } finally {
       setLoading(false);
     }
@@ -185,34 +187,34 @@ export default function ActivityReport() {
 
   const columns = useMemo(() => [
     {
+      key: "inquiry_name",
+      label: "Inquiry Name",
+      render: (row) => <span className="font-semibold text-slate-800">{row.inquiry_name}</span>
+    },
+    {
+      key: "contact",
+      label: "Contact Details",
+      render: (row) => (
+        <div className="text-xs text-slate-700">
+          <div>{row.phone}</div>
+          <div className="text-slate-400">{row.email}</div>
+        </div>
+      )
+    },
+    {
       key: "username",
-      label: "Username",
+      label: "Closed By",
       render: (row) => <span className="font-semibold text-slate-800">{row.username || "System"}</span>
     },
     {
-      key: "master_name",
-      label: "Module / Master",
-      render: (row) => <span className="text-slate-700">{row.master_name}</span>
+      key: "close_reason",
+      label: "Close Reason",
+      render: (row) => <span className="text-slate-700 font-medium">{row.close_reason}</span>
     },
     {
-      key: "change_type",
-      label: "Action",
-      render: (row) => {
-        const isClosedInquiry = row.master_name === 'Inquiry' && 
-                                row.change_type === 'status_updated' && 
-                                row.after_data?.status === 'closed';
-        const displayAction = isClosedInquiry ? 'closed' : row.change_type;
-        return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${
-            displayAction === 'created' || displayAction === 'approved' ? 'bg-green-50 text-green-700 border border-green-200' :
-            displayAction === 'updated' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-            displayAction === 'deleted' || displayAction === 'rejected' || displayAction === 'closed' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-            'bg-slate-50 text-slate-700 border border-slate-200'
-          }`}>
-            {displayAction.toUpperCase()}
-          </span>
-        );
-      }
+      key: "created_at",
+      label: "Closed Date & Time",
+      render: (row) => <span className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString()}</span>
     },
     {
       key: "details",
@@ -229,27 +231,22 @@ export default function ActivityReport() {
           View Details
         </button>
       ) : <span className="text-slate-400">—</span>
-    },
-    {
-      key: "created_at",
-      label: "Date & Time",
-      render: (row) => <span className="text-xs text-slate-500">{new Date(row.created_at).toLocaleString()}</span>
     }
   ], []);
 
   return (
     <div className="flex-1 flex flex-col bg-slate-50 font-sans text-slate-900 min-h-screen">
-      <Navbar title="User Activity Report" />
+      <Navbar title="Closed Inquiry Report" />
 
       <main className="flex-1 flex flex-col w-full mx-auto py-8 px-4 sm:px-6 lg:px-8">
         <div className="flex-1 flex flex-col mb-8">
           <DataTable
-            tableId="user_activity_report"
-            title="User Activity Report"
+            tableId="closed_inquiry_report"
+            title="Closed Inquiry Report"
             data={logs}
             columns={columns}
             loading={loading}
-            searchPlaceholder="Search by username, module or action..."
+            searchPlaceholder="Search by inquiry name, username or reason..."
           />
         </div>
       </main>

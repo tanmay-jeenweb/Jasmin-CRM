@@ -27,6 +27,7 @@ import BankMaster from "./pages/admin/BankMaster";
 import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
 import Approval from "./pages/admin/Approval";
 import ActivityReport from "./pages/admin/ActivityReport";
+import ClosedInquiryReport from "./pages/admin/ClosedInquiryReport";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -100,6 +101,10 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/report"
                     element={<ActivityReport />}
+                />
+                <Route
+                    path="/admin/report/closed-inquiry"
+                    element={<ClosedInquiryReport />}
                 />
             </Route>
 

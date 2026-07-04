@@ -345,7 +345,7 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
               type="submit"
               disabled={saving || loadingUsers}
               style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer", boxShadow: saving ? "none" : "0 2px 8px rgba(104,4,161,0.35)" }}>
-              {saving ? "Saving…" : (isEdit ? "Update Franchise" : "Convert Franchise")}
+              {saving ? "Saving…" : (isEdit ? "Update In Process Franchise" : "Convert Franchise")}
             </button>
           </div>
         </form>

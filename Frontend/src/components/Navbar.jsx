@@ -14,6 +14,7 @@ export default function Navbar() {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
     const [isOpen, setIsOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [isReportOpen, setIsReportOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [prevNotificationIds, setPrevNotificationIds] = useState(new Set());
@@ -92,7 +93,7 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleOutsideClick = (e) => {
-            if (isOpen && !e.target.closest("#custom-nav-dropdown")) {
+            if (isOpen && !e.target.closest("#masters-dropdown")) {
                 setIsOpen(false);
             }
             if (isProfileOpen && !e.target.closest("#profile-dropdown")) {
@@ -101,11 +102,27 @@ export default function Navbar() {
             if (isNotificationsOpen && !e.target.closest("#notifications-dropdown")) {
                 setIsNotificationsOpen(false);
             }
-
+            if (isReportOpen && !e.target.closest("#report-dropdown")) {
+                setIsReportOpen(false);
+            }
         };
         document.addEventListener("click", handleOutsideClick);
         return () => document.removeEventListener("click", handleOutsideClick);
-    }, [isOpen, isProfileOpen, isNotificationsOpen]);
+    }, [isOpen, isProfileOpen, isNotificationsOpen, isReportOpen]);
+
+    const toggleMasters = () => {
+        setIsOpen(!isOpen);
+        if (!isOpen) {
+            setIsReportOpen(false);
+        }
+    };
+
+    const toggleReport = () => {
+        setIsReportOpen(!isReportOpen);
+        if (!isReportOpen) {
+            setIsOpen(false);
+        }
+    };
 
     const handleLogout = async () => {
         try {
@@ -453,9 +470,9 @@ export default function Navbar() {
 
                         {/* Masters Dropdown */}
                         {availableMasters.length > 0 && (
-                            <div className="relative">
+                            <div className="relative" id="masters-dropdown">
                                 <button
-                                    onClick={() => setIsOpen(!isOpen)}
+                                    onClick={toggleMasters}
                                     className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
                                         isOpen ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
                                     }`}
@@ -584,19 +601,73 @@ export default function Navbar() {
 
                         {/* Report Tab */}
                         {isAdmin && (
-                            <div className="relative">
+                            <div className="relative" id="report-dropdown">
                                 <button
-                                    onClick={() => {
-                                        navigate("/admin/report");
-                                    }}
+                                    onClick={toggleReport}
                                     className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                        location.pathname.startsWith("/admin/report") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                        isReportOpen || location.pathname.startsWith("/admin/report") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
                                     }`}
                                 >
                                     <span className="flex items-center gap-2.5 truncate mx-auto">
                                         <span className="font-semibold text-white truncate">Report</span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            strokeWidth={2.5}
+                                            stroke="currentColor"
+                                            className={`w-3.5 h-3.5 text-slate-300 transition-transform duration-200 ${isReportOpen ? "rotate-180 text-white" : ""}`}
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                        </svg>
                                     </span>
                                 </button>
+                                {isReportOpen && (
+                                    <div className="absolute left-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/report");
+                                                    setIsReportOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/report"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/report" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                }`}>
+                                                    <i className="fa-solid fa-list-check text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold leading-snug">Audit Log Report</p>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/report/closed-inquiry");
+                                                    setIsReportOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/report/closed-inquiry"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/report/closed-inquiry" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                }`}>
+                                                    <i className="fa-solid fa-folder-closed text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold leading-snug">Closed Inquiry Report</p>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
