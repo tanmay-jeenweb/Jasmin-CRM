@@ -85,6 +85,13 @@ function DetailModal({ isOpen, row, onClose }) {
             </div>
           </div>
 
+          {afterObj.close_reason && (
+            <div style={{ marginBottom: 20, background: "#fef2f2", border: "1px solid #fee2e2", padding: "14px 18px", borderRadius: 12, color: "#991b1b" }}>
+              <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", display: "block", color: "#b91c1c" }}>Inquiry Close Reason</span>
+              <p style={{ margin: "4px 0 0", fontSize: 14, fontWeight: 600 }}>{afterObj.close_reason}</p>
+            </div>
+          )}
+
           {/* Table View */}
           <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 13 }}>
@@ -182,16 +189,22 @@ export default function ActivityReport() {
     {
       key: "change_type",
       label: "Action",
-      render: (row) => (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${
-          row.change_type === 'created' || row.change_type === 'approved' ? 'bg-green-50 text-green-700 border border-green-200' :
-          row.change_type === 'updated' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-          row.change_type === 'deleted' || row.change_type === 'rejected' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
-          'bg-slate-50 text-slate-700 border border-slate-200'
-        }`}>
-          {row.change_type.toUpperCase()}
-        </span>
-      )
+      render: (row) => {
+        const isClosedInquiry = row.master_name === 'Inquiry' && 
+                                row.change_type === 'status_updated' && 
+                                row.after_data?.status === 'closed';
+        const displayAction = isClosedInquiry ? 'closed' : row.change_type;
+        return (
+          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${
+            displayAction === 'created' || displayAction === 'approved' ? 'bg-green-50 text-green-700 border border-green-200' :
+            displayAction === 'updated' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+            displayAction === 'deleted' || displayAction === 'rejected' || displayAction === 'closed' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+            'bg-slate-50 text-slate-700 border border-slate-200'
+          }`}>
+            {displayAction.toUpperCase()}
+          </span>
+        );
+      }
     },
     {
       key: "details",

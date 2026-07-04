@@ -31,7 +31,9 @@ export default function UserHome() {
         setLoadingReminders(true);
         try {
             const res = await getUnreadReminders();
-            setReminders(res.data.data || []);
+            const allReminders = res.data.data || [];
+            const userReminders = allReminders.filter(r => !r.is_document_expiry);
+            setReminders(userReminders);
         } catch (err) {
             console.error("Failed to load reminders:", err);
         } finally {

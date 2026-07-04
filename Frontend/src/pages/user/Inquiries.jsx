@@ -12,6 +12,7 @@ import NoteModal from "./NoteModal";
 import LabelModal from "./LabelModal";
 import InProcessFranchiseModal from "./InProcessFranchiseModal";
 import WhatsAppModal from "./WhatsAppModal";
+import CloseInquiryModal from "./CloseInquiryModal";
 import { createInProcessFranchise, getActiveUsers } from "../../api/inProcessFranchiseApi";
 import { getFranchises } from "../../api/franchiseApi";
 import toast from "react-hot-toast";
@@ -523,6 +524,7 @@ export default function Inquiries() {
   const [isLabelModalOpen, setIsLabelModalOpen] = useState(false);
   const [isInProcessModalOpen, setIsInProcessModalOpen] = useState(false);
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   const [callLogs, setCallLogs] = useState([]);
   const [loadingCallLogs, setLoadingCallLogs] = useState(false);
@@ -687,14 +689,18 @@ export default function Inquiries() {
     }
   };
 
-  const handleCloseInquiry = async () => {
+  const handleCloseInquiry = () => {
     if (!selectedInquiry) return;
-    if (!window.confirm("Are you sure you want to close this inquiry?")) return;
+    setIsCloseModalOpen(true);
+  };
+
+  const handleConfirmCloseInquiry = async (reason) => {
     setSaving(true);
     try {
-      const response = await updateInquiryStatus(selectedInquiry.id, "closed");
+      const response = await updateInquiryStatus(selectedInquiry.id, "closed", reason);
       if (response.data.success) {
         toast.success("Inquiry closed successfully!");
+        setIsCloseModalOpen(false);
         setSelectedInquiry(null);
         await loadInquiries();
       } else {
@@ -900,6 +906,14 @@ export default function Inquiries() {
         isOpen={isWhatsAppModalOpen}
         inquiry={selectedInquiry}
         onClose={() => setIsWhatsAppModalOpen(false)}
+      />
+
+      <CloseInquiryModal
+        isOpen={isCloseModalOpen}
+        inquiry={selectedInquiry}
+        onClose={() => setIsCloseModalOpen(false)}
+        onConfirm={handleConfirmCloseInquiry}
+        saving={saving}
       />
 
       {/* Main CRM Workspace (2-Column Setup) */}
