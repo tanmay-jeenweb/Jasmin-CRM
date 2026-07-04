@@ -25,10 +25,7 @@ const addInquiryController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Phone is required' });
         }
         if (!data.minBudget || Number(data.minBudget) < 1000000) {
-            return res.status(400).json({ success: false, message: 'Minimum Budget must not be less than 1,000,000' });
-        }
-        if (!data.maxBudget || Number(data.maxBudget) < 5000000) {
-            return res.status(400).json({ success: false, message: 'Maximum Budget must not be less than 5,000,000' });
+            return res.status(400).json({ success: false, message: 'Budget must not be less than 1,000,000' });
         }
         if (data.inquirySource) {
             const sourceLower = data.inquirySource.toLowerCase();
@@ -106,10 +103,7 @@ const updateInquiryController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Phone is required' });
         }
         if (!data.minBudget || Number(data.minBudget) < 1000000) {
-            return res.status(400).json({ success: false, message: 'Minimum Budget must not be less than 1,000,000' });
-        }
-        if (!data.maxBudget || Number(data.maxBudget) < 5000000) {
-            return res.status(400).json({ success: false, message: 'Maximum Budget must not be less than 5,000,000' });
+            return res.status(400).json({ success: false, message: 'Budget must not be less than 1,000,000' });
         }
         if (data.inquirySource) {
             const sourceLower = data.inquirySource.toLowerCase();

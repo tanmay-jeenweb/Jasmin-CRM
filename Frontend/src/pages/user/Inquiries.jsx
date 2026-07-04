@@ -100,13 +100,9 @@ function DetailedInquiryModal({ isOpen, inquiry, onClose }) {
                 {inquiry.businessLocation === "own" ? "Own Property" : inquiry.businessLocation === "rental" ? "Rental Property" : "N/A"}
               </span>
             </div>
-            <div style={{ background: "#ecfdf5", padding: "10px 14px", borderRadius: 10, border: "1px solid #a7f3d0" }}>
-              <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em" }}>Min Budget</span>
+            <div style={{ background: "#ecfdf5", padding: "10px 14px", borderRadius: 10, border: "1px solid #a7f3d0", gridColumn: "span 2" }}>
+              <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em" }}>Budget</span>
               <span style={{ fontSize: 15, fontWeight: 700, color: "#047857" }}>{formatCurrency(inquiry.minBudget)}</span>
-            </div>
-            <div style={{ background: "#f5f3ff", padding: "10px 14px", borderRadius: 10, border: "1px solid #ddd6fe" }}>
-              <span style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#7c3aed", textTransform: "uppercase", letterSpacing: "0.05em" }}>Max Budget</span>
-              <span style={{ fontSize: 15, fontWeight: 700, color: "#6d28d9" }}>{formatCurrency(inquiry.maxBudget)}</span>
             </div>
           </div>
         </div>
@@ -227,20 +223,11 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
     }
 
     const minBudgetVal = Number(formData.minBudget);
-    const maxBudgetVal = Number(formData.maxBudget);
 
     if (!formData.minBudget || isNaN(minBudgetVal)) {
-      newErrors.minBudget = "Minimum Budget is required";
+      newErrors.minBudget = "Budget is required";
     } else if (minBudgetVal < 1000000) {
-      newErrors.minBudget = "Minimum Budget must not be less than 1,000,000";
-    }
-
-    if (!formData.maxBudget || isNaN(maxBudgetVal)) {
-      newErrors.maxBudget = "Maximum Budget is required";
-    } else if (maxBudgetVal < 5000000) {
-      newErrors.maxBudget = "Maximum Budget must not be less than 5,000,000";
-    } else if (minBudgetVal && maxBudgetVal < minBudgetVal) {
-      newErrors.maxBudget = "Maximum Budget must be greater than or equal to Minimum Budget";
+      newErrors.minBudget = "Budget must not be less than 1,000,000";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -251,7 +238,7 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
     onSave(inquiry.id, {
       ...formData,
       minBudget: minBudgetVal,
-      maxBudget: maxBudgetVal
+      maxBudget: minBudgetVal
     });
   };
 
@@ -458,7 +445,7 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
               )}
 
               <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Min Budget *</label>
+                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Budget *</label>
                 <input
                   type="number"
                   min="1000000"
@@ -468,18 +455,6 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
                   style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 8, padding: "8px 12px", fontSize: 14, outline: "none" }}
                 />
                 {errors.minBudget && <p style={{ color: "#e11d48", fontSize: 11, margin: "4px 0 0" }}>{errors.minBudget}</p>}
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Max Budget *</label>
-                <input
-                  type="number"
-                  min="5000000"
-                  name="maxBudget"
-                  value={formData.maxBudget}
-                  onChange={handleChange}
-                  style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 8, padding: "8px 12px", fontSize: 14, outline: "none" }}
-                />
-                {errors.maxBudget && <p style={{ color: "#e11d48", fontSize: 11, margin: "4px 0 0" }}>{errors.maxBudget}</p>}
               </div>
             </div>
           </div>

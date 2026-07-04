@@ -642,7 +642,7 @@ export default function Navbar() {
                                                     <i className="fa-solid fa-list-check text-xs"></i>
                                                 </div>
                                                 <div className="flex-1">
-                                                    <p className="text-sm font-semibold leading-snug">Audit Log Report</p>
+                                                    <p className="text-sm font-semibold leading-snug">Activity Report</p>
                                                 </div>
                                             </button>
                                             <button

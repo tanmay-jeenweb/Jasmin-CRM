@@ -120,20 +120,11 @@ export default function CreateInquiry() {
         }
 
         const minBudgetVal = Number(formData.minBudget);
-        const maxBudgetVal = Number(formData.maxBudget);
 
         if (!formData.minBudget || isNaN(minBudgetVal)) {
-            newErrors.minBudget = "Minimum Budget is required";
+            newErrors.minBudget = "Budget is required";
         } else if (minBudgetVal < 1000000) {
-            newErrors.minBudget = "Minimum Budget must not be less than 10,00,000";
-        }
-
-        if (!formData.maxBudget || isNaN(maxBudgetVal)) {
-            newErrors.maxBudget = "Maximum Budget is required";
-        } else if (maxBudgetVal < 5000000) {
-            newErrors.maxBudget = "Maximum Budget must not be less than 50,00,000";
-        } else if (minBudgetVal && maxBudgetVal < minBudgetVal) {
-            newErrors.maxBudget = "Maximum Budget must be greater than or equal to Minimum Budget";
+            newErrors.minBudget = "Budget must not be less than 10,00,000";
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -158,7 +149,7 @@ export default function CreateInquiry() {
                     inquirySource: formData.inquirySource,
                     inquirySourceDetail: formData.inquirySourceDetail || null,
                     minBudget: minBudgetVal,
-                    maxBudget: maxBudgetVal
+                    maxBudget: minBudgetVal
                 });
 
                 if (response.data.success) {
@@ -380,7 +371,7 @@ export default function CreateInquiry() {
                             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 pb-1.5 border-b border-slate-100">
                                 Inquiry Source & Budget
                             </h3>
-                            <div className={`grid grid-cols-1 ${["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) ? "md:grid-cols-2 lg:grid-cols-4" : "md:grid-cols-3"} gap-6`}>
+                            <div className={`grid grid-cols-1 ${["employee", "franchisie", "social media"].includes(formData.inquirySource?.toLowerCase()) ? "md:grid-cols-3" : "md:grid-cols-2"} gap-6`}>
                                 <div>
                                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Inquiry Source *</label>
                                     <select
@@ -432,37 +423,20 @@ export default function CreateInquiry() {
                                 )}
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Minimum Budget *</label>
+                                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Budget *</label>
                                     <input
                                         type="number"
                                         min="1000000"
                                         name="minBudget"
                                         value={formData.minBudget}
                                         onChange={handleChange}
-                                        placeholder="Min (e.g. 1000000)"
+                                        placeholder="Budget (e.g. 1000000)"
                                         className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all ${
                                             errors.minBudget ? "border-red-500" : "border-slate-200"
                                         }`}
                                     />
                                     <p className="text-[10px] text-slate-400 mt-1">Must be at least 10,00,000</p>
                                     {errors.minBudget && <p className="text-xs text-red-500 mt-1">{errors.minBudget}</p>}
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-600 mb-1.5">Maximum Budget *</label>
-                                    <input
-                                        type="number"
-                                        min="5000000"
-                                        name="maxBudget"
-                                        value={formData.maxBudget}
-                                        onChange={handleChange}
-                                        placeholder="Max (e.g. 5000000)"
-                                        className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all ${
-                                            errors.maxBudget ? "border-red-500" : "border-slate-200"
-                                        }`}
-                                    />
-                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 50,00,000</p>
-                                    {errors.maxBudget && <p className="text-xs text-red-500 mt-1">{errors.maxBudget}</p>}
                                 </div>
                             </div>
                         </div>

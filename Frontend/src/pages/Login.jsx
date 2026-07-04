@@ -211,11 +211,11 @@ export default function Login() {
                 <div className="z-10 mt-auto flex flex-col sm:flex-row justify-between items-center gap-2 border-t border-slate-900/60 pt-3 text-[10px] text-slate-500 w-full max-w-md mx-auto">
                     <div className="flex items-center gap-1.5">
                         <span>Powered by</span>
-                        <img src={jwlogo} alt="Jeenweb" className="h-5 w-auto rounded-sm opacity-60 hover:opacity-90 transition-opacity" />
+                        <img src={jwlogo} alt="Jeenweb" className="h-9 w-auto rounded-sm" />
                     </div>
                     <div className="text-center sm:text-right">
-                        <div>Helpline: <a href="tel:9824466017" className="font-semibold text-slate-400 hover:text-slate-300 transition-colors">9824466017</a></div>
-                        <div>Email: <a href="mailto:info@jeenweb.com" className="font-semibold text-slate-400 hover:text-slate-300 transition-colors">info@jeenweb.com</a></div>
+                        <div>Helpline: <a href="tel:9824466017" className="font-semibold text-slate-400">9824466017</a></div>
+                        <div>Email: <a href="mailto:info@jeenweb.com" className="font-semibold text-slate-400">info@jeenweb.com</a></div>
                     </div>
                 </div>
             </div>
