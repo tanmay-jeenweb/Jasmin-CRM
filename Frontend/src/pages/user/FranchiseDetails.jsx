@@ -4,7 +4,8 @@ import Navbar from "../../components/Navbar";
 import {
   getActiveUsers,
   approveFindStoreForm,
-  rejectFindStoreForm
+  rejectFindStoreForm,
+  getFranchiseActivityLogs
 } from "../../api/inProcessFranchiseApi";
 import {
   getFranchiseById,
@@ -43,6 +44,20 @@ export default function FranchiseDetails() {
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
   const [companyBrands, setCompanyBrands] = useState([]);
+
+  // States for Accordion Activity Reports
+  const [activityLogs, setActivityLogs] = useState([]);
+  const [logHistoryModalOpen, setLogHistoryModalOpen] = useState(false);
+  const [logHistoryAccordionTitle, setLogHistoryAccordionTitle] = useState("");
+  const [logHistoryAccordionMasters, setLogHistoryAccordionMasters] = useState([]);
+  const [selectedAuditRow, setSelectedAuditRow] = useState(null);
+  const [auditDetailOpen, setAuditDetailOpen] = useState(false);
+
+  const handleOpenAccordionLogs = (title, masters) => {
+    setLogHistoryAccordionTitle(title);
+    setLogHistoryAccordionMasters(masters);
+    setLogHistoryModalOpen(true);
+  };
 
   // Form states for editable fields (top level details)
   const [tentativeOpeningDate, setTentativeOpeningDate] = useState("");
@@ -91,11 +106,12 @@ export default function FranchiseDetails() {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [franchiseRes, usersRes, docsRes, brandsRes] = await Promise.all([
+        const [franchiseRes, usersRes, docsRes, brandsRes, logsRes] = await Promise.all([
           getFranchiseById(id),
           getActiveUsers(),
           getDocuments().catch(() => ({ data: { success: false, data: [] } })),
-          getCompanyBrands().catch(() => ({ data: { success: false, data: [] } }))
+          getCompanyBrands().catch(() => ({ data: { success: false, data: [] } })),
+          getFranchiseActivityLogs(id).catch(() => ({ data: { success: false, logs: [] } }))
         ]);
 
         if (docsRes.data?.success) {
@@ -123,6 +139,10 @@ export default function FranchiseDetails() {
 
         if (brandsRes.data?.success) {
           setCompanyBrands(brandsRes.data.data || []);
+        }
+
+        if (logsRes && logsRes.data?.success) {
+          setActivityLogs(logsRes.data.logs || []);
         }
       } catch (err) {
         console.error("Failed to load details:", err);
@@ -195,9 +215,15 @@ export default function FranchiseDetails() {
 
   const reloadFranchiseData = async () => {
     try {
-      const res = await getFranchiseById(id);
+      const [res, logsRes] = await Promise.all([
+        getFranchiseById(id),
+        getFranchiseActivityLogs(id).catch(() => ({ data: { success: false, logs: [] } }))
+      ]);
       if (res.data?.success) {
         setFranchise(res.data.data);
+      }
+      if (logsRes.data?.success) {
+        setActivityLogs(logsRes.data.logs || []);
       }
     } catch (err) {
       console.error("Failed to reload data:", err);
@@ -449,11 +475,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 1: Find Store Details */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "find-store" ? null : "find-store")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "find-store" ? null : "find-store")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -465,6 +487,19 @@ export default function FranchiseDetails() {
                   {findStoreStatus === "approved" && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Approved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Find Store Details", ["In Process Franchise Find Store"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -476,7 +511,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "find-store" && (
                 <div className="p-6">
@@ -494,11 +529,7 @@ export default function FranchiseDetails() {
             {/* Accordion 2: Agreement and GST */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-                >
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -509,6 +540,19 @@ export default function FranchiseDetails() {
                     {franchise?.agreementGst && (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                     )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Agreement and GST", ["In Process Franchise Agreement & GST"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -520,7 +564,7 @@ export default function FranchiseDetails() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </span>
-                </button>
+                </div>
 
                 {openAccordion === "agreement-gst" && (
                   <div className="p-6">
@@ -539,11 +583,7 @@ export default function FranchiseDetails() {
             {/* Accordion 3: Document Preparation */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-                >
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -554,6 +594,19 @@ export default function FranchiseDetails() {
                     {franchise?.docPrep && (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                     )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Document Preparation", ["In Process Franchise Document Preparation"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -565,7 +618,7 @@ export default function FranchiseDetails() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </span>
-                </button>
+                </div>
 
                 {openAccordion === "doc-prep" && (
                   <div className="p-6">
@@ -583,11 +636,7 @@ export default function FranchiseDetails() {
             {/* Accordion 4: Store Planning */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-                >
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -598,6 +647,19 @@ export default function FranchiseDetails() {
                     {franchise?.storePlanning && (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                     )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Store Planning", ["In Process Franchise Store Planning"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -609,7 +671,7 @@ export default function FranchiseDetails() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </span>
-                </button>
+                </div>
 
                 {openAccordion === "store-planning" && (
                   <div className="p-6">
@@ -627,11 +689,7 @@ export default function FranchiseDetails() {
             {/* Accordion 5: Store ambiance */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")}
-                  className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-                >
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -642,6 +700,19 @@ export default function FranchiseDetails() {
                     {franchise?.storeAmbiance && (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                     )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Store Ambiance", ["In Process Franchise Store Ambiance"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
@@ -653,7 +724,7 @@ export default function FranchiseDetails() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </span>
-                </button>
+                </div>
 
                 {openAccordion === "store-ambiance" && (
                   <div className="p-6">
@@ -675,11 +746,7 @@ export default function FranchiseDetails() {
           <div className="space-y-4">
             {/* Accordion 1: Team */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "team" ? null : "team")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "team" ? null : "team")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.386 11.386 0 0 1 10.089 20c-2.302 0-4.474-.685-6.294-1.859A4.125 4.125 0 0 1 7.5 14.25c1.472 0 2.793.774 3.537 1.95M20.25 8.253a3.75 3.75 0 1 0-3.75-3.75 3.75 3.75 0 0 0 3.75 3.75ZM9 10.5a3.75 3.75 0 1 0-3.75-3.75A3.75 3.75 0 0 0 9 10.5Z" />
@@ -690,6 +757,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseTeam && franchise.franchiseTeam.some(t => t.is_selected) && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Team", ["In Process Franchise Team"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -701,7 +781,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "team" && (
                 <div className="p-6">
@@ -716,11 +796,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 2: Marketing */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "marketing" ? null : "marketing")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "marketing" ? null : "marketing")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
@@ -732,6 +808,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseMarketing && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Marketing", ["In Process Franchise Marketing"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -743,7 +832,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "marketing" && (
                 <div className="p-6">
@@ -759,11 +848,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 3: Mapping */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "mapping" ? null : "mapping")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "mapping" ? null : "mapping")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 8.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
@@ -774,6 +859,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseMapping && franchise.franchiseMapping.length > 0 && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Branch Finance Mapping", ["In Process Franchise Mapping"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -785,7 +883,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "mapping" && (
                 <div className="p-6">
@@ -800,11 +898,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 4: Branch Finance Code */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "branch-finance-code" ? null : "branch-finance-code")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "branch-finance-code" ? null : "branch-finance-code")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 10.18 12 9 12 9c0-.29.414-.636.879-.97 1.171-.879 3.07-.879 4.242 0M12 6c-.465-.33-.879-.675-.879-.97m0 0a2.44 2.44 0 0 1 0-3.472M12 6a2.44 2.44 0 0 0 0-3.472M6 8.25h12M6 15.75h12" />
@@ -815,6 +909,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseBranchFinanceCode && (franchise.franchiseBranchFinanceCode.brands?.some(b => b.brand_code) || franchise.franchiseBranchFinanceCode.machines?.some(m => m.tid || m.pos_id || m.serial_no) || franchise.franchiseBranchFinanceCode.companies?.some(c => c.company_code)) && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Branch Finance Code", ["In Process Franchise Branch Finance Code"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -826,7 +933,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "branch-finance-code" && (
                 <div className="p-6">
@@ -846,11 +953,7 @@ export default function FranchiseDetails() {
           <div className="space-y-4">
             {/* Accordion 1: Installation */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "installation" ? null : "installation")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "installation" ? null : "installation")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A1.5 1.5 0 0020 20l-5.83-5.83m-2.75 1a8.5 8.5 0 11-8.5-8.5v3m0 0l-1.5 1.5M3.75 6.75L5.25 8.25" />
@@ -861,6 +964,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseInstallation && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Installation", ["In Process Franchise Installation"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -872,7 +988,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "installation" && (
                 <div className="p-6">
@@ -887,11 +1003,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 2: Swip Machine */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "swipe-machine" ? null : "swipe-machine")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "swipe-machine" ? null : "swipe-machine")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
@@ -902,6 +1014,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseSwipeMachine && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Swipe Machine", ["In Process Franchise Swipe Machine"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -913,7 +1038,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "swipe-machine" && (
                 <div className="p-6">
@@ -928,11 +1053,7 @@ export default function FranchiseDetails() {
 
             {/* Accordion 3: Training */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "training" ? null : "training")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "training" ? null : "training")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.9c-2.79 0-5.437-.472-7.897-1.33A4.952 4.952 0 003 15.03V9.75m11.963-3.078a31.29 31.29 0 00-6.917-1.096m6.917 1.096A31.182 31.182 0 0118 9.75v5.28c0 1.95-1.12 3.67-2.84 4.53A48.618 48.618 0 0112 20.9m11.963-14.228L12 3 2.037 6.672m19.926 0l-9.963 3.668-9.963-3.668m9.963 3.668v6.528" />
@@ -943,6 +1064,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseTraining && franchise.franchiseTraining.some(t => t.is_done) && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Training", ["In Process Franchise Training"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -954,7 +1088,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "training" && (
                 <div className="p-6">
@@ -974,11 +1108,7 @@ export default function FranchiseDetails() {
           <div className="space-y-4">
             {/* Accordion 1: Deposit & Stock */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "deposit-stock" ? null : "deposit-stock")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "deposit-stock" ? null : "deposit-stock")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-1.958-.59-1.172-.88-1.172-2.303 0-3.183 1.171-.879 3.07-.879 4.242 0 .224.168.4.373.53.597m-9 3.33H18" />
@@ -989,6 +1119,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseDepositStock && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Deposit & Stock", ["In Process Franchise Deposit Stock", "In Process Franchise Deposit Stock Approval", "In Process Franchise Deposit Stock Rejection"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -1000,7 +1143,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "deposit-stock" && (
                 <div className="p-6">
@@ -1020,11 +1163,7 @@ export default function FranchiseDetails() {
           <div className="space-y-4">
             {/* Accordion: Insurance */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setOpenAccordion(openAccordion === "insurance" ? null : "insurance")}
-                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
-              >
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "insurance" ? null : "insurance")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
@@ -1035,6 +1174,19 @@ export default function FranchiseDetails() {
                   {franchise?.franchiseInsurance && (
                     <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Insurance", ["In Process Franchise Insurance"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -1046,7 +1198,7 @@ export default function FranchiseDetails() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                   </svg>
                 </span>
-              </button>
+              </div>
 
               {openAccordion === "insurance" && (
                 <div className="p-6">
@@ -1207,6 +1359,232 @@ export default function FranchiseDetails() {
           </div>
         </div>
       )}
+      {/* Accordion Activity Logs Modal */}
+      <AccordionLogsModal
+        isOpen={logHistoryModalOpen}
+        title={logHistoryAccordionTitle}
+        masters={logHistoryAccordionMasters}
+        logs={activityLogs}
+        onClose={() => setLogHistoryModalOpen(false)}
+        onViewDetails={(row) => {
+          setSelectedAuditRow(row);
+          setAuditDetailOpen(true);
+        }}
+      />
+
+      {/* Accordion Activity Log Detail Modal */}
+      <AuditDetailModal
+        isOpen={auditDetailOpen}
+        row={selectedAuditRow}
+        onClose={() => {
+          setAuditDetailOpen(false);
+          setSelectedAuditRow(null);
+        }}
+      />
     </div>
   );
 }
+
+// ─── Modal to view detailed change data inside accordions ──────────────────────────────────
+function AuditDetailModal({ isOpen, row, onClose }) {
+  if (!isOpen || !row) return null;
+
+  const beforeObj = row.before_data || {};
+  const afterObj = row.after_data || {};
+
+  const allKeys = Array.from(new Set([...Object.keys(beforeObj), ...Object.keys(afterObj)]))
+    .filter(key => key !== 'device_id')
+    .sort();
+
+  const isFieldChanged = (key) => {
+    const vBefore = beforeObj[key];
+    const vAfter = afterObj[key];
+    if (typeof vBefore === "object" || typeof vAfter === "object") {
+      return JSON.stringify(vBefore) !== JSON.stringify(vAfter);
+    }
+    return vBefore !== vAfter;
+  };
+
+  const formatValue = (val) => {
+    if (val === null || val === undefined) return <span style={{ color: "#94a3b8" }}>—</span>;
+    if (typeof val === "boolean") return val ? "True" : "False";
+    if (typeof val === "object") return JSON.stringify(val);
+    return String(val);
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 1100,
+      background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: 18, width: "100%", maxWidth: 650, margin: "0 auto",
+        boxShadow: "0 25px 60px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column",
+        maxHeight: "85vh"
+      }}>
+        <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#fff" }}>Change Details</h2>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#d9e2ec" }}>
+              {row.change_type.toUpperCase()} by {row.username || 'System'}
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 30, height: 30, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, background: "#f8fafc" }}>
+          <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                  <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>Field</th>
+                  <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>Before</th>
+                  <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>After</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allKeys.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} style={{ padding: 12, textAlign: "center", color: "#64748b" }}>No details available</td>
+                  </tr>
+                ) : (
+                  allKeys.map((key) => {
+                    const changed = isFieldChanged(key);
+                    return (
+                      <tr key={key} style={{
+                        borderBottom: "1px solid #f1f5f9",
+                        background: changed ? "rgba(254, 243, 199, 0.4)" : "transparent"
+                      }}>
+                        <td style={{ padding: "10px 12px", fontWeight: 550, color: "#1e293b", width: "30%" }}>{key}</td>
+                        <td style={{ padding: "10px 12px", color: "#475569", width: "35%", wordBreak: "break-all" }}>{formatValue(beforeObj[key])}</td>
+                        <td style={{
+                          padding: "10px 12px",
+                          color: changed ? "#92400e" : "#475569",
+                          fontWeight: changed ? 600 : 400,
+                          width: "35%",
+                          wordBreak: "break-all"
+                        }}>
+                          {formatValue(afterObj[key])}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style={{ padding: "12px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", background: "#fafafa" }}>
+          <button type="button" onClick={onClose}
+            style={{ padding: "6px 18px", borderRadius: 8, border: "1.5px solid #cbd5e1", color: "#475569", background: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal to view activity history logs for an accordion ──────────────────────────────────
+function AccordionLogsModal({ isOpen, title, masters, logs, onClose, onViewDetails }) {
+  if (!isOpen) return null;
+
+  const filteredLogs = logs.filter(row => masters.includes(row.master_name));
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 1050,
+      background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 16
+    }}>
+      <div style={{
+        background: "#fff", borderRadius: 18, width: "100%", maxWidth: 700, margin: "0 auto",
+        boxShadow: "0 25px 60px rgba(0,0,0,0.2)", overflow: "hidden", display: "flex", flexDirection: "column",
+        maxHeight: "85vh"
+      }}>
+        <div style={{ padding: "18px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#fff" }}>Activity History</h2>
+            <p style={{ margin: "2px 0 0", fontSize: 12, color: "#d9e2ec" }}>{title}</p>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 30, height: 30, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 16, height: 16 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, background: "#f8fafc" }}>
+          {filteredLogs.length === 0 ? (
+            <div style={{ padding: "40px 20px", textAlign: "center", background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor" style={{ width: 36, height: 36, color: "#94a3b8", margin: "0 auto 10px" }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#64748b", margin: 0 }}>No activity logged yet for this form</p>
+            </div>
+          ) : (
+            <div style={{ background: "#fff", borderRadius: 12, border: "1px solid #e2e8f0", overflow: "hidden" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: "#f1f5f9", borderBottom: "1px solid #e2e8f0" }}>
+                    <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>User</th>
+                    <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>Action</th>
+                    <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569" }}>Date & Time</th>
+                    <th style={{ padding: "10px 12px", fontWeight: 600, color: "#475569", width: "15%" }}>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((row) => (
+                    <tr key={row.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "10px 12px", fontWeight: 600, color: "#334155" }}>{row.username || "System"}</td>
+                      <td style={{ padding: "10px 12px" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", borderRadius: 9999, fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px",
+                          background: row.change_type === 'created' || row.change_type === 'approved' ? '#ecfdf5' : row.change_type === 'updated' ? '#fffbeb' : '#fef2f2',
+                          color: row.change_type === 'created' || row.change_type === 'approved' ? '#047857' : row.change_type === 'updated' ? '#b45309' : '#b91c1c',
+                          border: `1px solid ${row.change_type === 'created' || row.change_type === 'approved' ? '#a7f3d0' : row.change_type === 'updated' ? '#fde68a' : '#fecaca'}`
+                        }}>
+                          {row.change_type}
+                        </span>
+                      </td>
+                      <td style={{ padding: "10px 12px", color: "#64748b" }}>{new Date(row.created_at).toLocaleString()}</td>
+                      <td style={{ padding: "10px 12px" }}>
+                        {(row.before_data || row.after_data) ? (
+                          <button
+                            onClick={() => onViewDetails(row)}
+                            style={{
+                              fontSize: 11, color: "#4f46e5", background: "#f5f3ff", border: "1px solid #ddd6fe",
+                              borderRadius: 6, padding: "3px 8px", cursor: "pointer", fontWeight: 600
+                            }}
+                          >
+                            Details
+                          </button>
+                        ) : (
+                          <span style={{ color: "#cbd5e1" }}>—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div style={{ padding: "16px 24px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContext: "flex-end", background: "#fafafa", justifyContent: "flex-end" }}>
+          <button type="button" onClick={onClose}
+            style={{ padding: "6px 18px", borderRadius: 8, border: "1.5px solid #cbd5e1", color: "#475569", background: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+

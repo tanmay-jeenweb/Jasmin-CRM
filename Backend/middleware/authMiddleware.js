@@ -154,4 +154,61 @@ const verifyFindStoreApproved = async (req, res, next) => {
     }
 };
 
-module.exports = { verifyToken, verifyAdmin, verifyPermission, verifyFindStoreApproved };
+const verifyReportPermission = async (req, res, next) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized. No user information."
+            });
+        }
+
+        // Admin/Super Admin bypass all permission checks
+        if (req.user.role === "admin" || req.user.role === "super admin") {
+            return next();
+        }
+
+        const userId = req.user.id;
+
+        // Get user's user_type_id
+        const [userRows] = await db.execute(
+            "SELECT user_type_id FROM users WHERE id = ?",
+            [userId]
+        );
+
+        if (userRows.length === 0 || userRows[0].user_type_id === null) {
+            return res.status(403).json({
+                success: false,
+                message: "Access Denied. You do not have report permissions."
+            });
+        }
+
+        const userTypeId = userRows[0].user_type_id;
+
+        // Check if they have read permission on activity_report or closed_inquiry_report
+        const query = `
+            SELECT master_name, can_read AS permitted 
+            FROM user_type_permissions 
+            WHERE user_type_id = ? AND master_name IN ('activity_report', 'closed_inquiry_report')
+        `;
+        const [permRows] = await db.execute(query, [userTypeId]);
+        const hasAnyPerm = permRows.some(row => row.permitted === 1);
+
+        if (hasAnyPerm) {
+            return next();
+        }
+
+        return res.status(403).json({
+            success: false,
+            message: "Access Denied. You do not have permission to view reports."
+        });
+    } catch (error) {
+        console.error("verifyReportPermission error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error verifying report permissions."
+        });
+    }
+};
+
+module.exports = { verifyToken, verifyAdmin, verifyPermission, verifyFindStoreApproved, verifyReportPermission };

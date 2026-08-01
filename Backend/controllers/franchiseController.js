@@ -143,7 +143,8 @@ const updateFranchiseController = async (req, res) => {
             'Franchise',
             'updated',
             beforeData,
-            { id, ...data }
+            { id, ...data },
+            id
         );
 
         res.status(200).json({
@@ -181,7 +182,8 @@ const deleteFranchiseController = async (req, res) => {
             'Franchise',
             'deleted',
             beforeData,
-            null
+            null,
+            id
         );
 
         res.status(200).json({

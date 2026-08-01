@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Navbar from "../../../components/Navbar";
 import { getUserTypes, updateUserType, deleteUserType } from "../../../api/userTypeMasterApi";
 import DataTable from "../../../components/DataTable";
@@ -7,22 +7,52 @@ import { useNavigate } from "react-router-dom";
 import { usePermission } from "../../../context/PermissionContext";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
-const MASTERS = [
-  { key: "user_type", label: "User Type Master" },
-  { key: "label_master", label: "Label Master" },
-  { key: "inquiry_source_master", label: "Inquiry Source Master" },
-  { key: "company_brand_master", label: "Company Brand Master" },
-  { key: "document_master", label: "Document Master" },
-  { key: "team_role_master", label: "Team Role Master" },
-  { key: "call_outcome_master", label: "Call Outcome Master" },
-  { key: "mobile_brand_master", label: "Brand Master" },
-  { key: "bank_master", label: "Finance Company Master" },
-  { key: "finance_machine_master", label: "Finance Machine Master" },
-  { key: "store_details_approval", label: "Store Details Approval" },
-  { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
-  { key: "user_master", label: "User Master" },
-  { key: "device_approval", label: "Device Approval" },
+const PERMISSION_SECTIONS = [
+  {
+    title: "User Management",
+    masters: [
+      { key: "user_type", label: "User Type Master" },
+      { key: "user_master", label: "User Master" },
+      { key: "device_approval", label: "Device Approval" },
+      { key: "activity_report", label: "Activity Report" },
+      { key: "closed_inquiry_report", label: "Closed Inquiry Report" },
+    ]
+  },
+  {
+    title: "Inquiry Management",
+    masters: [
+      { key: "inquiry_master", label: "Inquiry Master" },
+      { key: "inquiry_source_master", label: "Inquiry Source Master" },
+      { key: "call_log_master", label: "Call Log Master" },
+      { key: "note_master", label: "Note Master" },
+      { key: "reminder_master", label: "Reminder Master" },
+    ]
+  },
+  {
+    title: "Franchise Stage Trackers",
+    masters: [
+      { key: "in_process_franchise", label: "In Process Franchise" },
+      { key: "franchise_master", label: "Franchise Master" },
+      { key: "store_details_approval", label: "Store Details Approval" },
+      { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
+    ]
+  },
+  {
+    title: "CRM Configurations & Masters",
+    masters: [
+      { key: "label_master", label: "Label Master" },
+      { key: "company_brand_master", label: "Company Brand Master" },
+      { key: "document_master", label: "Document Master" },
+      { key: "team_role_master", label: "Team Role Master" },
+      { key: "call_outcome_master", label: "Call Outcome Master" },
+      { key: "mobile_brand_master", label: "Brand Master" },
+      { key: "bank_master", label: "Finance Company Master" },
+      { key: "finance_machine_master", label: "Finance Machine Master" },
+    ]
+  }
 ];
+
+const MASTERS = PERMISSION_SECTIONS.flatMap(s => s.masters);
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
 const PERM_LABELS = { canRead: "Read", canWrite: "Write / Approval", canUpdate: "Update", canDelete: "Delete" };
 const PERM_COLORS = {
@@ -129,7 +159,7 @@ function PermBadges({ permissions }) {
 }
 
 // ─── Edit Modal ──────────────────────────────────────────────────────────────
-function EditModal({ row, onClose, onSave, saving }) {
+function EditForm({ row, onClose, onSave, saving }) {
   const [typeName, setTypeName] = useState(row.type_name || "");
   const [permissions, setPermissions] = useState(buildPermsFromApi(row.permissions));
 
@@ -202,142 +232,217 @@ function EditModal({ row, onClose, onSave, saving }) {
   });
 
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 1000,
-      background: "rgba(15,23,42,0.55)", backdropFilter: "blur(4px)",
-      display: "flex", alignItems: "center", justifycontent: "center", padding: 16
-    }}>
-      <div style={{
-        background: "#fff", borderRadius: 18, width: "100%", maxWidth: 1100, margin: "0 auto",
-        maxHeight: "92vh", display: "flex", flexDirection: "column",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.2)", overflow: "hidden"
-      }}>
-        {/* Modal Header */}
-        <div style={{ padding: "20px 28px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifycontent: "space-between", background: "linear-gradient(135deg,#6804a1,#52037e)" }}>
+    <div className="flex flex-col flex-1 font-sans" style={{ background: "linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%)" }}>
+
+      <main className="flex-1 flex flex-col w-full mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-7">
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#fff" }}>Edit User Type</h2>
-            <p style={{ margin: "4px 0 0", fontSize: 13, color: "#d9e2ec" }}>Update the name and module permissions</p>
+            <h1 className="text-2xl font-bold text-slate-800 m-0">Edit User Type</h1>
+            <p className="text-slate-500 mt-1 text-sm">Update the user group name and its module permissions.</p>
           </div>
-          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 34, height: 34, cursor: "pointer", display: "flex", alignItems: "center", justifycontent: "center", color: "#fff" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" style={{ width: 18, height: 18 }}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 text-slate-500 bg-transparent border-none cursor-pointer text-sm font-medium hover:text-slate-700 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
+            Back to User Types
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div style={{ overflowY: "auto", flex: 1, padding: "24px 28px" }}>
+        <form onSubmit={(e) => { e.preventDefault(); onSave(row.id, typeName, permissions); }}>
 
-          {/* Name field */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#475569", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              User Type Name <span style={{ color: "#e11d48" }}>*</span>
+          {/* Type Name Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-5 shadow-sm">
+            <label className="block text-[13px] font-semibold text-slate-600 mb-2 uppercase tracking-[0.05em]">
+              User Type Name <span className="text-rose-600">*</span>
             </label>
             <input
               type="text"
+              placeholder="e.g. Supervisor, Technician, Manager"
               value={typeName}
               onChange={(e) => setTypeName(e.target.value)}
-              style={{ width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9, padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b" }}
-              onFocus={e => e.target.style.borderColor = "#6804a1"}
-              onBlur={e => e.target.style.borderColor = "#cbd5e1"}
+              required
+              className="w-full box-border border-[1.5px] border-slate-300 rounded-[9px] py-[11px] px-[14px] text-[15px] outline-none text-slate-800 transition-[border-color] duration-200 focus:border-purple-700"
             />
           </div>
 
-          {/* Permissions Grid */}
-          <div style={{ background: "#f8fafc", borderRadius: 12, padding: 20, border: "1px solid #e2e8f0" }}>
-            <div style={{ display: "flex", alignItems: "center", justifycontent: "space-between", marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Module Permissions</h3>
+          {/* Permissions Card */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-5 shadow-sm">
+            <div className="flex items-center justify-between mb-[18px]">
+              <div>
+                <h2 className="text-[15px] font-bold text-slate-800 m-0">Module Permissions</h2>
+                <p className="text-[13px] text-slate-400 mt-1 mb-0">Set read, write, update and delete access per master module.</p>
+              </div>
               <button
                 type="button"
                 onClick={toggleAll}
-                style={{ fontSize: 11, fontWeight: 700, padding: "5px 12px", borderRadius: 7, cursor: "pointer", border: `1.5px solid #6804a1`, color: isAllAll() ? "#fff" : "#6804a1", background: isAllAll() ? "#6804a1" : "#e6ebf0", transition: "all 0.2s" }}
+                className={`text-xs font-semibold py-1.5 px-3.5 rounded-lg cursor-pointer border-[1.5px] border-purple-700 transition-all duration-200 ${isAllAll() ? "bg-[#6804a1] text-white" : "bg-[#e6ebf0] text-[#6804a1]"}`}
               >
                 {isAllAll() ? "Deselect All" : "Select All"}
               </button>
             </div>
 
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse" style={{ minWidth: 500 }}>
                 <thead>
-                  <tr style={{ background: "#fff" }}>
-                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "2px solid #e2e8f0", minWidth: 150 }}>Module</th>
+                  <tr className="bg-slate-50">
+                    <th className="text-left py-2.5 px-3.5 text-xs font-bold text-slate-500 uppercase tracking-[0.05em] border-b-2 border-slate-200 min-w-[160px]">
+                      Master Module
+                    </th>
                     {PERMS.map((perm) => {
                       const c = PERM_COLORS[perm];
                       return (
-                        <th key={perm} style={{ textAlign: "center", padding: "10px 8px", borderBottom: "2px solid #e2e8f0", minWidth: 80 }}>
-                          <button type="button" onClick={() => toggleColumn(perm)} title={`Toggle all ${PERM_LABELS[perm]}`}
-                            style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: c.text, background: c.bg, border: `1px solid ${c.border}`, borderRadius: 5, padding: "2px 7px" }}>
+                        <th key={perm} className="text-center py-2.5 px-2 border-b-2 border-slate-200 min-w-[90px]">
+                          <button
+                            type="button"
+                            onClick={() => toggleColumn(perm)}
+                            title={`Toggle all ${PERM_LABELS[perm]}`}
+                            className="inline-flex flex-col items-center gap-1 bg-transparent border-none cursor-pointer p-1"
+                          >
+                            <span className="text-[11px] font-bold uppercase tracking-[0.06em] rounded-md px-2 py-0.5 border"
+                              style={{ color: c.text, background: c.bg, borderColor: c.border }}>
                               {PERM_LABELS[perm]}
                             </span>
-                            <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${isColAll(perm) ? c.check : "#cbd5e1"}`, background: isColAll(perm) ? c.check : "#fff", display: "flex", alignItems: "center", justifycontent: "center", transition: "all 0.15s" }}>
-                              {isColAll(perm) && <svg viewBox="0 0 12 10" style={{ width: 9, height: 9 }}><polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                            <div className="w-[18px] h-[18px] rounded-[5px] flex items-center justify-center transition-all duration-150 border-2"
+                              style={{
+                                borderColor: isColAll(perm) ? c.check : "#cbd5e1",
+                                background: isColAll(perm) ? c.check : "#fff"
+                              }}>
+                              {isColAll(perm) && (
+                                <svg viewBox="0 0 12 10" className="w-2.5 h-2.5">
+                                  <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              )}
                             </div>
                           </button>
                         </th>
                       );
                     })}
-                    <th style={{ textAlign: "center", padding: "10px 8px", borderBottom: "2px solid #e2e8f0", minWidth: 70, fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>All</th>
+                    <th className="text-center py-2.5 px-2 border-b-2 border-slate-200 min-w-[80px] text-[11px] font-bold text-slate-400 uppercase tracking-[0.05em]">
+                      All
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {MASTERS.map((master, idx) => {
-                    const rowData = permissions.find((p) => p.masterName === master.key);
-                    const rowAll = isRowAll(master.key);
-                    const isApprovalRow = master.key.endsWith("_approval");
-                    return (
-                      <tr key={master.key} style={{ background: idx % 2 === 0 ? "#fff" : "#f8fafc" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
-                        onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#f8fafc"}>
-                        <td style={{ padding: "11px 12px", fontSize: 13, fontWeight: 600, color: "#334155", borderBottom: "1px solid #f1f5f9" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#6804a1" }} />
-                            {master.label}
-                          </div>
-                        </td>
-                        {PERMS.map((perm) => {
-                          if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
-                            return (
-                              <td key={perm} style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
-                                —
-                              </td>
-                            );
-                          }
-                          return (
-                            <td key={perm} style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9" }}>
-                              <CheckCell checked={rowData[perm]} color={PERM_COLORS[perm]} onChange={() => togglePerm(master.key, perm)} />
-                            </td>
-                          );
-                        })}
-                        <td style={{ textAlign: "center", padding: "11px 8px", borderBottom: "1px solid #f1f5f9" }}>
-                          <button type="button" onClick={() => toggleRow(master.key)}
-                            style={{ fontSize: 10, fontWeight: 700, padding: "3px 9px", borderRadius: 5, cursor: "pointer", border: `1.5px solid ${rowAll ? "#6804a1" : "#cbd5e1"}`, color: rowAll ? "#fff" : "#64748b", background: rowAll ? "#6804a1" : "#f8fafc", transition: "all 0.15s" }}>
-                            {rowAll ? "✓" : "All"}
-                          </button>
+                  {PERMISSION_SECTIONS.map((section, secIdx) => (
+                    <React.Fragment key={`sec-${secIdx}`}>
+                      <tr style={{ background: "linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%)" }}>
+                        <td colSpan={6} className="py-2.5 px-3.5 text-[11px] font-extrabold text-[#6804a1] uppercase tracking-[0.05em] border-b border-slate-200">
+                          {section.title}
                         </td>
                       </tr>
-                    );
-                  })}
+                      {section.masters.map((master, idx) => {
+                        const rowData = permissions.find((p) => p.masterName === master.key);
+                        const rowAll = isRowAll(master.key);
+                        const isApprovalRow = master.key.endsWith("_approval");
+                        const isReportRow = master.key === "activity_report" || master.key === "closed_inquiry_report";
+                        return (
+                          <tr
+                            key={master.key}
+                            className="transition-colors duration-150 hover:bg-slate-100"
+                            style={{ background: idx % 2 === 0 ? "#fff" : "#fafafa" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
+                            onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fafafa"}
+                          >
+                            <td className="py-3 px-3.5 text-sm font-semibold text-slate-700 border-b border-slate-50">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-[#6804a1] shrink-0" />
+                                {master.label}
+                              </div>
+                            </td>
+                            {PERMS.map((perm) => {
+                              const c = PERM_COLORS[perm];
+                              const checked = rowData[perm];
+                              if (
+                                (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) ||
+                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete"))
+                              ) {
+                                return (
+                                  <td key={perm} className="text-center py-3 px-2 border-b border-slate-50 text-slate-400">
+                                    —
+                                  </td>
+                                );
+                              }
+                              return (
+                                <td key={perm} className="text-center py-3 px-2 border-b border-slate-50">
+                                  <div
+                                    onClick={() => togglePerm(master.key, perm)}
+                                    className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center cursor-pointer transition-all duration-150 mx-auto border-2"
+                                    style={{
+                                      borderColor: checked ? c.check : "#cbd5e1",
+                                      background: checked ? c.check : "#fff",
+                                      boxShadow: checked ? `0 0 0 3px ${c.bg}` : "none"
+                                    }}
+                                  >
+                                    {checked && (
+                                      <svg viewBox="0 0 12 10" className="w-[11px] h-[11px]">
+                                        <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                            <td className="text-center py-3 px-2 border-b border-slate-50">
+                              <button
+                                type="button"
+                                onClick={() => toggleRow(master.key)}
+                                className={`text-[11px] font-semibold py-1 px-2.5 rounded-md cursor-pointer border-[1.5px] transition-all duration-150 ${rowAll ? "border-[#6804a1] bg-[#6804a1] text-white" : "border-slate-300 bg-slate-50 text-slate-500"}`}
+                              >
+                                {rowAll ? "✓ All" : "All"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>
-          </div>
-        </div>
 
-        {/* Modal Footer */}
-        <div style={{ padding: "16px 28px", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: 12, background: "#fafafa" }}>
-          <button onClick={onClose} disabled={saving}
-            style={{ padding: "9px 20px", borderRadius: 8, border: "1.5px solid #cbd5e1", color: "#475569", background: "#fff", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-            Cancel
-          </button>
-          <button
-            onClick={() => onSave(row.id, typeName, permissions)}
-            disabled={saving || !typeName.trim()}
-            style={{ padding: "9px 24px", borderRadius: 8, border: "none", background: saving ? "#94a3b8" : "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: saving ? "not-allowed" : "pointer", boxShadow: saving ? "none" : "0 2px 8px rgba(104,4,161,0.35)" }}>
-            {saving ? "Saving…" : "Save Changes"}
-          </button>
-        </div>
-      </div>
+            {/* Legend */}
+            <div className="flex flex-wrap gap-2.5 mt-4 pt-3.5 border-t border-slate-50">
+              {PERMS.map((perm) => {
+                const c = PERM_COLORS[perm];
+                return (
+                  <div key={perm} className="flex items-center gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-[3px]" style={{ background: c.check }} />
+                    <span className="text-xs text-slate-500 font-medium">{PERM_LABELS[perm]}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={saving}
+              className="py-2.5 px-[22px] rounded-[9px] border-[1.5px] border-slate-300 text-slate-600 bg-white font-semibold text-sm cursor-pointer transition-colors duration-150 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving || !typeName.trim()}
+              className={`py-2.5 px-7 rounded-[9px] border-none text-white font-bold text-sm transition-all duration-200 ${saving ? "bg-slate-400 cursor-not-allowed" : "cursor-pointer"}`}
+              style={{
+                background: saving ? undefined : "linear-gradient(135deg,#6804a1,#52037e)",
+                boxShadow: saving ? "none" : "0 2px 8px rgba(104,4,161,0.35)"
+              }}
+            >
+              {saving ? "Saving…" : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </main>
     </div>
   );
 }
@@ -468,42 +573,42 @@ export default function UserGroupMaster() {
     <div style={{ display: "flex", flexDirection: "column", flex: 1, background: "#f8fafc", fontFamily: "'Inter',sans-serif" }}>
       <Navbar title="CRM Admin" />
 
-      {editingRow && (
-        <EditModal
-          row={editingRow}
-          onClose={() => setEditingRow(null)}
-          onSave={handleSave}
-          saving={saving}
-        />
-      )}
-
       <main style={{ flex: 1, display: "flex", flexDirection: "column", width: "100%", margin: "0 auto", padding: "32px 30px" }}>
         {error && (
           <div style={{ background: "#fff1f2", border: "1px solid #fecdd3", color: "#be123c", padding: "12px 16px", borderRadius: 10, marginBottom: 20, fontSize: 14, fontWeight: 500 }}>
             {error}
           </div>
         )}
-        <DataTable
-          tableId="user_group_master"
-          title="User Type Master"
-          data={userTypes}
-          columns={columns}
-          loading={loading}
-          searchPlaceholder="Search user types..."
-          actionButton={
-            hasPermission("user_type", "write") ? (
-              <button
-                onClick={() => navigate("/admin/user-types/create")}
-                style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
-                title="Create User Type"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </button>
-            ) : null
-          }
-        />
+        {editingRow ? (
+          <EditForm
+            row={editingRow}
+            onClose={() => setEditingRow(null)}
+            onSave={handleSave}
+            saving={saving}
+          />
+        ) : (
+          <DataTable
+            tableId="user_group_master"
+            title="User Type Master"
+            data={userTypes}
+            columns={columns}
+            loading={loading}
+            searchPlaceholder="Search user types..."
+            actionButton={
+              hasPermission("user_type", "write") ? (
+                <button
+                  onClick={() => navigate("/admin/user-types/create")}
+                  style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
+                  title="Create User Type"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              ) : null
+            }
+          />
+        )}
       </main>
     </div>
   );

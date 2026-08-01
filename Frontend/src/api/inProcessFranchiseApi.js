@@ -140,4 +140,8 @@ export const convertToFranchise = async (id, data) => {
     return apiClient.post(`/in-process-franchises/${id}/convert`, data);
 };
 
+export const getFranchiseActivityLogs = async (id) => {
+    return apiClient.get(`/in-process-franchises/${id}/activity-logs`);
+};
+
 

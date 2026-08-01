@@ -20,10 +20,12 @@ export default function Navbar() {
     const [prevNotificationIds, setPrevNotificationIds] = useState(new Set());
     const [hasUnseen, setHasUnseen] = useState(false);
     const { hasPermission } = usePermission();
+    const isAdmin = user.role === "admin" || user.role === "super admin";
 
 
     const fetchNotifications = async () => {
         if (!user.id) return;
+        if (!isAdmin && !hasPermission("reminder_master", "read")) return;
         try {
             const res = await getUnreadReminders();
             if (res.data?.success) {
@@ -138,7 +140,6 @@ export default function Navbar() {
     };
 
     const userModules = user.modules || [];
-    const isAdmin = user.role === "admin" || user.role === "super admin";
 
     const allMasters = [
         {
@@ -534,52 +535,59 @@ export default function Navbar() {
                         )}
 
                         {/* Inquiry Tab */}
-                        <div className="relative">
-                            <button
-                                onClick={() => {
-                                    navigate("/user/inquiries");
-                                }}
-                                className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                    location.pathname === "/user/inquiries" ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
-                                }`}
-                            >
-                                <span className="flex items-center gap-2.5 truncate mx-auto">
-                                    <span className="font-semibold text-white truncate">Inquiry</span>
-                                </span>
-                            </button>
-                        </div>
+                        {(isAdmin || hasPermission("inquiry_master", "read") || hasPermission("inquiry_master", "write")) && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => {
+                                        navigate("/user/inquiries");
+                                    }}
+                                    className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                        location.pathname === "/user/inquiries" ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2.5 truncate mx-auto">
+                                        <span className="font-semibold text-white truncate">Inquiry</span>
+                                    </span>
+                                </button>
+                            </div>
+                        )}
 
                         {/* In Process Franchise Tab */}
-                        <div className="relative">
-                            <button
-                                onClick={() => {
-                                    navigate("/user/in-process-franchises");
-                                }}
-                                className={`flex items-center justify-between w-48 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                    location.pathname.startsWith("/user/in-process-franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
-                                }`}
-                            >
-                                <span className="flex items-center gap-2.5 truncate mx-auto">
-                                    <span className="font-semibold text-white truncate">In Process Franchise</span>
-                                </span>
-                            </button>
-                        </div>
+                        {(isAdmin || hasPermission("in_process_franchise", "read") || hasPermission("in_process_franchise", "write")) && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => {
+                                        navigate("/user/in-process-franchises");
+                                    }}
+                                    className={`flex items-center justify-between w-48 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                        location.pathname.startsWith("/user/in-process-franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2.5 truncate mx-auto">
+                                        <span className="font-semibold text-white truncate">In Process Franchise</span>
+                                    </span>
+                                </button>
+                            </div>
+                        )}
 
                         {/* Franchise Tab */}
-                        <div className="relative">
-                            <button
-                                onClick={() => {
-                                    navigate("/user/franchises");
-                                }}
-                                className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
-                                    location.pathname.startsWith("/user/franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
-                                }`}
-                            >
-                                <span className="flex items-center gap-2.5 truncate mx-auto">
-                                    <span className="font-semibold text-white truncate">Franchise</span>
-                                </span>
-                            </button>
-                        </div>
+                        {(isAdmin || hasPermission("franchise_master", "read") || hasPermission("franchise_master", "write")) && (
+                            <div className="relative">
+                                <button
+                                    onClick={() => {
+                                        navigate("/user/franchises");
+                                    }}
+                                    className={`flex items-center justify-between w-40 px-4 py-2.5 text-sm border-r border-white/10 rounded-none focus:outline-none transition-all duration-200 font-semibold text-white cursor-pointer ${
+                                        location.pathname.startsWith("/user/franchises") ? "bg-white/15" : "bg-[#6804a1] hover:bg-white/5"
+                                    }`}
+                                >
+                                    <span className="flex items-center gap-2.5 truncate mx-auto">
+                                        <span className="font-semibold text-white truncate">Franchise</span>
+                                    </span>
+                                </button>
+                            </div>
+                        )}
+
 
                         {/* Approval Tab */}
                         {(isAdmin || hasPermission("store_details_approval", "read") || hasPermission("deposit_stock_approval", "read")) && (
@@ -600,7 +608,7 @@ export default function Navbar() {
                         )}
 
                         {/* Report Tab */}
-                        {isAdmin && (
+                        {(isAdmin || hasPermission("activity_report", "read") || hasPermission("closed_inquiry_report", "read")) && (
                             <div className="relative" id="report-dropdown">
                                 <button
                                     onClick={toggleReport}
@@ -625,46 +633,50 @@ export default function Navbar() {
                                 {isReportOpen && (
                                     <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="flex flex-col gap-1">
-                                            <button
-                                                onClick={() => {
-                                                    navigate("/admin/report");
-                                                    setIsReportOpen(false);
-                                                }}
-                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
-                                                    location.pathname === "/admin/report"
-                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
-                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
-                                                }`}
-                                            >
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
-                                                    location.pathname === "/admin/report" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
-                                                }`}>
-                                                    <i className="fa-solid fa-list-check text-xs"></i>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-semibold leading-snug">Audit Log Report</p>
-                                                </div>
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    navigate("/admin/report/closed-inquiry");
-                                                    setIsReportOpen(false);
-                                                }}
-                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
-                                                    location.pathname === "/admin/report/closed-inquiry"
-                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
-                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
-                                                }`}
-                                            >
-                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
-                                                    location.pathname === "/admin/report/closed-inquiry" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
-                                                }`}>
-                                                    <i className="fa-solid fa-folder-closed text-xs"></i>
-                                                </div>
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-semibold leading-snug">Closed Inquiry Report</p>
-                                                </div>
-                                            </button>
+                                            {(isAdmin || hasPermission("activity_report", "read")) && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate("/admin/report");
+                                                        setIsReportOpen(false);
+                                                    }}
+                                                    className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                        location.pathname === "/admin/report"
+                                                            ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                    }`}
+                                                >
+                                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                        location.pathname === "/admin/report" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                    }`}>
+                                                        <i className="fa-solid fa-list-check text-xs"></i>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-semibold leading-snug">Audit Log Report</p>
+                                                    </div>
+                                                </button>
+                                            )}
+                                            {(isAdmin || hasPermission("closed_inquiry_report", "read")) && (
+                                                <button
+                                                    onClick={() => {
+                                                        navigate("/admin/report/closed-inquiry");
+                                                        setIsReportOpen(false);
+                                                    }}
+                                                    className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                        location.pathname === "/admin/report/closed-inquiry"
+                                                            ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                    }`}
+                                                >
+                                                    <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                        location.pathname === "/admin/report/closed-inquiry" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                    }`}>
+                                                        <i className="fa-solid fa-folder-closed text-xs"></i>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <p className="text-sm font-semibold leading-snug">Closed Inquiry Report</p>
+                                                    </div>
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 )}

@@ -1,25 +1,55 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Navbar from "../../../components/Navbar";
 import { createUserType } from "../../../api/userTypeMasterApi";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const MASTERS = [
-  { key: "user_type",             label: "User Type Master" },
-  { key: "label_master",          label: "Label Master" },
-  { key: "inquiry_source_master", label: "Inquiry Source Master" },
-  { key: "company_brand_master",  label: "Company Brand Master" },
-  { key: "document_master",       label: "Document Master" },
-  { key: "team_role_master",      label: "Team Role Master" },
-  { key: "call_outcome_master",   label: "Call Outcome Master" },
-  { key: "mobile_brand_master",   label: "Brand Master" },
-  { key: "bank_master",           label: "Finance Company Master" },
-  { key: "finance_machine_master", label: "Finance Machine Master" },
-  { key: "store_details_approval", label: "Store Details Approval" },
-  { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
-  { key: "user_master",             label: "User Master" },
-  { key: "device_approval",         label: "Device Approval" },
+const PERMISSION_SECTIONS = [
+  {
+    title: "User Management",
+    masters: [
+      { key: "user_type",             label: "User Type Master" },
+      { key: "user_master",             label: "User Master" },
+      { key: "device_approval",         label: "Device Approval" },
+      { key: "activity_report",         label: "Activity Report" },
+      { key: "closed_inquiry_report",   label: "Closed Inquiry Report" },
+    ]
+  },
+  {
+    title: "Inquiry Management",
+    masters: [
+      { key: "inquiry_master",          label: "Inquiry Master" },
+      { key: "inquiry_source_master", label: "Inquiry Source Master" },
+      { key: "call_log_master",         label: "Call Log Master" },
+      { key: "note_master",             label: "Note Master" },
+      { key: "reminder_master",         label: "Reminder Master" },
+    ]
+  },
+  {
+    title: "Franchise Stage Trackers",
+    masters: [
+      { key: "in_process_franchise",    label: "In Process Franchise" },
+      { key: "franchise_master",        label: "Franchise Master" },
+      { key: "store_details_approval", label: "Store Details Approval" },
+      { key: "deposit_stock_approval", label: "Deposit & Stock Approval" },
+    ]
+  },
+  {
+    title: "CRM Configurations & Masters",
+    masters: [
+      { key: "label_master",          label: "Label Master" },
+      { key: "company_brand_master",  label: "Company Brand Master" },
+      { key: "document_master",       label: "Document Master" },
+      { key: "team_role_master",      label: "Team Role Master" },
+      { key: "call_outcome_master",   label: "Call Outcome Master" },
+      { key: "mobile_brand_master",   label: "Brand Master" },
+      { key: "bank_master",           label: "Finance Company Master" },
+      { key: "finance_machine_master", label: "Finance Machine Master" },
+    ]
+  }
 ];
+
+const MASTERS = PERMISSION_SECTIONS.flatMap(s => s.masters);
 
 const PERMS = ["canRead", "canWrite", "canUpdate", "canDelete"];
 const PERM_LABELS = { canRead: "Read", canWrite: "Write / Approval", canUpdate: "Update", canDelete: "Delete" };
@@ -279,77 +309,90 @@ export default function CreateUserType() {
                   </tr>
                 </thead>
                 <tbody>
-                  {MASTERS.map((master, idx) => {
-                    const row = permissions.find((p) => p.masterName === master.key);
-                    const rowAll = isRowAll(master.key);
-                    return (
-                      <tr
-                        key={master.key}
-                        style={{ background: idx % 2 === 0 ? "#fff" : "#fafafa", transition: "background 0.15s" }}
-                        onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
-                        onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fafafa"}
-                      >
-                        <td style={{ padding: "12px 14px", fontSize: 14, fontWeight: 600, color: "#334155", borderBottom: "1px solid #f1f5f9" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#6804a1", flexShrink: 0 }} />
-                            {master.label}
-                          </div>
-                        </td>
-                        {PERMS.map((perm) => {
-                          const c = PERM_COLORS[perm];
-                          const checked = row[perm];
-                          const isApprovalRow = master.key.endsWith("_approval");
-
-                          if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
-                            return (
-                              <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
-                                —
-                              </td>
-                            );
-                          }
-
-                          return (
-                            <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9" }}>
-                              <div
-                                onClick={() => togglePerm(master.key, perm)}
-                                style={{
-                                  width: 22, height: 22, borderRadius: 6,
-                                  border: `2px solid ${checked ? c.check : "#cbd5e1"}`,
-                                  background: checked ? c.check : "#fff",
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                  cursor: "pointer", transition: "all 0.15s",
-                                  margin: "0 auto",
-                                  boxShadow: checked ? `0 0 0 3px ${c.bg}` : "none"
-                                }}
-                              >
-                                {checked && (
-                                  <svg viewBox="0 0 12 10" style={{ width: 11, height: 11 }}>
-                                    <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
-                                )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                        {/* Row toggle */}
-                        <td style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9" }}>
-                          <button
-                            type="button"
-                            onClick={() => toggleRow(master.key)}
-                            style={{
-                              fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
-                              border: `1.5px solid ${rowAll ? "#6804a1" : "#cbd5e1"}`,
-                              color: rowAll ? "#fff" : "#64748b",
-                              background: rowAll ? "#6804a1" : "#f8fafc",
-                              transition: "all 0.15s"
-                            }}
-                          >
-                            {rowAll ? "✓ All" : "All"}
-                          </button>
+                  {PERMISSION_SECTIONS.map((section, secIdx) => (
+                    <React.Fragment key={`sec-${secIdx}`}>
+                      {/* Section Title Header Row */}
+                      <tr style={{ background: "linear-gradient(90deg, #f8fafc 0%, #eef2ff 100%)" }}>
+                        <td colSpan={6} style={{ padding: "10px 14px", fontSize: 11, fontWeight: 800, color: "#6804a1", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #e2e8f0" }}>
+                          {section.title}
                         </td>
                       </tr>
-                    );
-                  })}
+                      {section.masters.map((master, idx) => {
+                        const row = permissions.find((p) => p.masterName === master.key);
+                        const rowAll = isRowAll(master.key);
+                        return (
+                          <tr
+                            key={master.key}
+                            style={{ background: idx % 2 === 0 ? "#fff" : "#fafafa", transition: "background 0.15s" }}
+                            onMouseEnter={e => e.currentTarget.style.background = "#f1f5f9"}
+                            onMouseLeave={e => e.currentTarget.style.background = idx % 2 === 0 ? "#fff" : "#fafafa"}
+                          >
+                            <td style={{ padding: "12px 14px", fontSize: 14, fontWeight: 600, color: "#334155", borderBottom: "1px solid #f1f5f9" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#6804a1", flexShrink: 0 }} />
+                                {master.label}
+                              </div>
+                            </td>
+                            {PERMS.map((perm) => {
+                              const c = PERM_COLORS[perm];
+                              const checked = row[perm];
+                              const isApprovalRow = master.key.endsWith("_approval");
+                              const isReportRow = master.key === "activity_report" || master.key === "closed_inquiry_report";
+                              if (
+                                (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) ||
+                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete"))
+                              ) {
+                                return (
+                                  <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
+                                    —
+                                  </td>
+                                );
+                              }
+
+                              return (
+                                <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9" }}>
+                                  <div
+                                    onClick={() => togglePerm(master.key, perm)}
+                                    style={{
+                                      width: 22, height: 22, borderRadius: 6,
+                                      border: `2px solid ${checked ? c.check : "#cbd5e1"}`,
+                                      background: checked ? c.check : "#fff",
+                                      display: "flex", alignItems: "center", justifyContent: "center",
+                                      cursor: "pointer", transition: "all 0.15s",
+                                      margin: "0 auto",
+                                      boxShadow: checked ? `0 0 0 3px ${c.bg}` : "none"
+                                    }}
+                                  >
+                                    {checked && (
+                                      <svg viewBox="0 0 12 10" style={{ width: 11, height: 11 }}>
+                                        <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                      </svg>
+                                    )}
+                                  </div>
+                                </td>
+                              );
+                            })}
+                            {/* Row toggle */}
+                            <td style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9" }}>
+                              <button
+                                type="button"
+                                onClick={() => toggleRow(master.key)}
+                                style={{
+                                  fontSize: 11, fontWeight: 600, padding: "4px 10px", borderRadius: 6, cursor: "pointer",
+                                  border: `1.5px solid ${rowAll ? "#6804a1" : "#cbd5e1"}`,
+                                  color: rowAll ? "#fff" : "#64748b",
+                                  background: rowAll ? "#6804a1" : "#f8fafc",
+                                  transition: "all 0.15s"
+                                }}
+                              >
+                                {rowAll ? "✓ All" : "All"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
                 </tbody>
               </table>
             </div>

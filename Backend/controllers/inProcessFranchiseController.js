@@ -121,7 +121,7 @@ const addInProcessFranchiseController = async (req, res) => {
                 partner_mobile: data.partnerMobile,
                 store_name: data.storeName
             }
-        );
+        , result.insertId);
 
         res.status(201).json({
             success: true,
@@ -206,7 +206,8 @@ const updateInProcessFranchiseController = async (req, res) => {
             'In Process Franchise',
             'updated',
             beforeData,
-            { id, ...data }
+            { id, ...data },
+            id
         );
 
         res.status(200).json({
@@ -244,7 +245,8 @@ const deleteInProcessFranchiseController = async (req, res) => {
             'In Process Franchise',
             'deleted',
             beforeData,
-            null
+            null,
+            id
         );
 
         res.status(200).json({
@@ -405,7 +407,8 @@ const upsertFindStoreController = async (req, res) => {
             'In Process Franchise Find Store',
             result.action,
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -442,7 +445,8 @@ const approveFindStoreController = async (req, res) => {
             'In Process Franchise Find Store',
             'approved',
             existing,
-            { ...existing, status: 'approved', approved_by: approvedBy }
+            { ...existing, status: 'approved', approved_by: approvedBy },
+            id
         );
 
         res.status(200).json({
@@ -483,7 +487,8 @@ const rejectFindStoreController = async (req, res) => {
             'In Process Franchise Find Store',
             'rejected',
             existing,
-            { ...existing, status: 'rejected', rejection_reason: reason.trim() }
+            { ...existing, status: 'rejected', rejection_reason: reason.trim() },
+            id
         );
 
         res.status(200).json({
@@ -588,7 +593,8 @@ const saveAgreementGstController = async (req, res) => {
             'In Process Franchise Agreement & GST',
             existing ? 'updated' : 'created',
             existing,
-            { partnerDate, gstRegistrationDate, gstNumber, documentsCount: finalDocs.length }
+            { partnerDate, gstRegistrationDate, gstNumber, documentsCount: finalDocs.length },
+            id
         );
 
         res.status(200).json({
@@ -657,7 +663,8 @@ const saveDocPrepController = async (req, res) => {
             'In Process Franchise Document Preparation',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -734,7 +741,8 @@ const saveStorePlanningController = async (req, res) => {
             'In Process Franchise Store Planning',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -811,7 +819,8 @@ const saveStoreAmbianceController = async (req, res) => {
             'In Process Franchise Store Ambiance',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -848,7 +857,8 @@ const saveFranchiseTeamController = async (req, res) => {
             'In Process Franchise Team',
             beforeData && beforeData.some(r => r.is_selected) ? 'updated' : 'created',
             beforeData,
-            afterData
+            afterData,
+            id
         );
 
         res.status(200).json({
@@ -939,7 +949,8 @@ const saveFranchiseMarketingController = async (req, res) => {
             'In Process Franchise Marketing',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -993,7 +1004,8 @@ const saveFranchiseInstallationController = async (req, res) => {
             'In Process Franchise Installation',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -1045,7 +1057,8 @@ const saveFranchiseSwipeMachineController = async (req, res) => {
             'In Process Franchise Swipe Machine',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -1091,7 +1104,8 @@ const saveFranchiseTrainingController = async (req, res) => {
             'In Process Franchise Training',
             'updated',
             existing,
-            modulesData
+            modulesData,
+            id
         );
 
         res.status(200).json({
@@ -1166,7 +1180,8 @@ const saveFranchiseDepositStockController = async (req, res) => {
             'In Process Franchise Deposit Stock',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -1232,7 +1247,8 @@ const approveFranchiseDepositStockController = async (req, res) => {
             'In Process Franchise Deposit Stock Approval',
             'approved',
             existing,
-            { ...existing, status: 'approved', approved_by: approvedBy }
+            { ...existing, status: 'approved', approved_by: approvedBy },
+            id
         );
 
         res.status(200).json({
@@ -1271,7 +1287,8 @@ const rejectFranchiseDepositStockController = async (req, res) => {
             'In Process Franchise Deposit Stock Rejection',
             'rejected',
             existing,
-            { ...existing, status: 'rejected', rejection_reason: reason.trim() }
+            { ...existing, status: 'rejected', rejection_reason: reason.trim() },
+            id
         );
 
         res.status(200).json({
@@ -1312,7 +1329,8 @@ const saveFranchiseMappingController = async (req, res) => {
             'In Process Franchise Mapping',
             'updated',
             existing,
-            mappingsData
+            mappingsData,
+            id
         );
 
         res.status(200).json({
@@ -1371,7 +1389,8 @@ const saveFranchiseInsuranceController = async (req, res) => {
             'In Process Franchise Insurance',
             existing ? 'updated' : 'created',
             existing,
-            data
+            data,
+            id
         );
 
         res.status(200).json({
@@ -1415,7 +1434,8 @@ const saveFranchiseBranchFinanceCodeController = async (req, res) => {
             'In Process Franchise Branch Finance Code',
             'updated',
             existing,
-            { brands, machines, companies }
+            { brands, machines, companies },
+            id
         );
 
         res.status(200).json({
@@ -1453,7 +1473,8 @@ const convertToFranchiseController = async (req, res) => {
             'In Process Franchise Conversion',
             'converted',
             franchise,
-            { ...franchise, status: 'completed', tentative_opening_date: tentativeOpeningDate, final_opening_date: finalOpeningDate }
+            { ...franchise, status: 'completed', tentative_opening_date: tentativeOpeningDate, final_opening_date: finalOpeningDate },
+            id
         );
 
         res.status(200).json({
@@ -1466,6 +1487,30 @@ const convertToFranchiseController = async (req, res) => {
             success: false,
             message: 'Internal server error'
         });
+    }
+};
+
+const getFranchiseActivityLogsController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'Franchise not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && franchise.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        }
+
+        const { getAuditLogsByFranchiseId } = require('../models/auditLogModel.js');
+        const logs = await getAuditLogsByFranchiseId(id);
+
+        res.status(200).json({
+            success: true,
+            logs
+        });
+    } catch (error) {
+        console.error('Error fetching franchise activity logs:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
@@ -1496,5 +1541,6 @@ module.exports = {
     getAllDepositStocksController,
     approveFranchiseDepositStockController,
     rejectFranchiseDepositStockController,
-    convertToFranchiseController
+    convertToFranchiseController,
+    getFranchiseActivityLogsController
 };
