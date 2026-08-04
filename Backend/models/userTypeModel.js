@@ -16,6 +16,14 @@ const MASTERS = [
     { key: 'deposit_stock_approval', label: 'Deposit & Stock Approval' },
     { key: 'user_master', label: 'User Master' },
     { key: 'device_approval', label: 'Device Approval' },
+    { key: 'inquiry_master', label: 'Inquiry Master' },
+    { key: 'franchise_master', label: 'Franchise Master' },
+    { key: 'in_process_franchise', label: 'In Process Franchise' },
+    { key: 'call_log_master', label: 'Call Log Master' },
+    { key: 'note_master', label: 'Note Master' },
+    { key: 'reminder_master', label: 'Reminder Master' },
+    { key: 'activity_report', label: 'Activity Report' },
+    { key: 'closed_inquiry_report', label: 'Closed Inquiry Report' },
 ];
 
 // ─── Table creation ──────────────────────────────────────────────────────────

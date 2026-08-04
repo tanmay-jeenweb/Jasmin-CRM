@@ -177,7 +177,48 @@ const fetchUserAuditLogs = async (req, res) => {
 
 const fetchActivityLogs = async (req, res) => {
     try {
-        const logs = await getAllAuditLogs();
+        const isAdmin = req.user.role === "admin" || req.user.role === "super admin";
+        let logs = [];
+
+        if (isAdmin) {
+            logs = await getAllAuditLogs(null);
+        } else {
+            const userId = req.user.id;
+            const [userRows] = await db.execute(
+                "SELECT user_type_id FROM users WHERE id = ?",
+                [userId]
+            );
+            if (userRows.length > 0 && userRows[0].user_type_id !== null) {
+                const userTypeId = userRows[0].user_type_id;
+                const [permRows] = await db.execute(
+                    "SELECT master_name, can_read AS permitted FROM user_type_permissions WHERE user_type_id = ? AND master_name IN ('activity_report', 'closed_inquiry_report')",
+                    [userTypeId]
+                );
+                
+                const hasActivity = permRows.some(r => r.master_name === 'activity_report' && r.permitted === 1);
+                const hasClosed = permRows.some(r => r.master_name === 'closed_inquiry_report' && r.permitted === 1);
+
+                if (hasActivity || hasClosed) {
+                    const rawLogs = await getAllAuditLogs(userId);
+                    logs = rawLogs.filter(row => {
+                        const isClosedInquiry = row.master_name === 'Inquiry' && 
+                                                row.change_type === 'status_updated' && 
+                                                row.after_data?.status === 'closed';
+                        
+                        if (hasActivity && hasClosed) {
+                            return true;
+                        }
+                        if (hasActivity) {
+                            return !isClosedInquiry;
+                        }
+                        if (hasClosed) {
+                            return isClosedInquiry;
+                        }
+                        return false;
+                    });
+                }
+            }
+        }
         return res.status(200).json({ success: true, logs });
     } catch (error) {
         console.log("Fetch Activity Logs Error:", error);

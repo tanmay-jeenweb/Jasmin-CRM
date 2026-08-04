@@ -57,38 +57,54 @@ export default function AppRoutes() {
                     element={<UserHome />}
                 />
                 <Route
+                    path="/profile"
+                    element={<Profile />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="inquiry_master" requiredAction="read" />}>
+                <Route
                     path="/user/inquiries"
                     element={<Inquiries />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="inquiry_master" requiredAction="write" />}>
                 <Route
                     path="/user/inquiries/create"
                     element={<CreateInquiry />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="in_process_franchise" requiredAction="read" />}>
                 <Route
                     path="/user/in-process-franchises"
                     element={<InProcessFranchise />}
                 />
                 <Route
-                    path="/user/franchises"
-                    element={<Franchise />}
+                    path="/user/in-process-franchises/:id"
+                    element={<InProcessFranchiseDetails />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="in_process_franchise" requiredAction="write" />}>
                 <Route
                     path="/user/in-process-franchises/create"
                     element={<CreateInProcessFranchise />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute requiredMaster="franchise_master" requiredAction="read" />}>
                 <Route
-                    path="/user/in-process-franchises/:id"
-                    element={<InProcessFranchiseDetails />}
+                    path="/user/franchises"
+                    element={<Franchise />}
                 />
                 <Route
                     path="/user/franchises/:id"
                     element={<FranchiseDetails />}
                 />
-                <Route
-                    path="/profile"
-                    element={<Profile />}
-                />
             </Route>
+
 
             <Route element={<ProtectedRoute allowedRole="admin" requiredMasters={["user_master", "device_approval"]} requiredAction="read" />}>
                 <Route
@@ -97,11 +113,14 @@ export default function AppRoutes() {
                 />
             </Route>
 
-            <Route element={<ProtectedRoute allowedRole="admin" />}>
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="activity_report" requiredAction="read" />}>
                 <Route
                     path="/admin/report"
                     element={<ActivityReport />}
                 />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="closed_inquiry_report" requiredAction="read" />}>
                 <Route
                     path="/admin/report/closed-inquiry"
                     element={<ClosedInquiryReport />}
