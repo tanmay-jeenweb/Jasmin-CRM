@@ -48,14 +48,14 @@ export default function Footer() {
                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-slate-500">
                     <div className="flex items-center gap-2">
                         <span className="font-medium">Powered by</span>
-                        <img src={jwLogo} alt="Jeenweb" className="h-9 w-auto rounded-sm cursor-pointer" onClick={() => window.open("https://www.jeenweb.com", "_blank")} />
+                        <img src={jwLogo} alt="Jeenweb" className="h-14 w-auto rounded-sm cursor-pointer" onClick={() => window.open("https://www.jeenweb.com", "_blank")} />
                     </div>
                     <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
                         <span>
-                            Helpline: <a href="tel:9824466017" className="hover:text-indigo-600 transition-colors">9824466017</a>
+                            Helpline: <a href="tel:9824466017" className="text-slate-500">9824466017</a>
                         </span>
                         <span>
-                            Email: <a href="mailto:info@jeenweb.com" className="hover:text-indigo-600 transition-colors">info@jeenweb.com</a>
+                            Email: <a href="mailto:info@jeenweb.com" className="text-slate-500">info@jeenweb.com</a>
                         </span>
                     </div>
                 </div>

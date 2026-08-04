@@ -631,6 +631,48 @@ export default function Navbar() {
                                     </span>
                                 </button>
                                 {isReportOpen && (
+                                    <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="flex flex-col gap-1">
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/report");
+                                                    setIsReportOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/report"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/report" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                }`}>
+                                                    <i className="fa-solid fa-list-check text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold leading-snug">Activity Report</p>
+                                                </div>
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    navigate("/admin/report/closed-inquiry");
+                                                    setIsReportOpen(false);
+                                                }}
+                                                className={`relative group flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all cursor-pointer text-left border border-transparent ${
+                                                    location.pathname === "/admin/report/closed-inquiry"
+                                                        ? "bg-indigo-50/70 text-indigo-700 font-semibold border-indigo-100/50"
+                                                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-100"
+                                                }`}
+                                            >
+                                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg transition-all shadow-sm shrink-0 ${
+                                                    location.pathname === "/admin/report/closed-inquiry" ? "bg-indigo-100/80 text-indigo-700" : "bg-slate-100/80 text-slate-500"
+                                                }`}>
+                                                    <i className="fa-solid fa-folder-closed text-xs"></i>
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-semibold leading-snug">Closed Inquiry Report</p>
+                                                </div>
+                                            </button>
                                     <div className="absolute right-0 top-full mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 z-50 origin-top animate-in fade-in slide-in-from-top-2 duration-200">
                                         <div className="flex flex-col gap-1">
                                             {(isAdmin || hasPermission("activity_report", "read")) && (
