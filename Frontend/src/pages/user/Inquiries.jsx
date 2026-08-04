@@ -228,8 +228,8 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
 
     if (!formData.minBudget || isNaN(minBudgetVal)) {
       newErrors.minBudget = "Budget is required";
-    } else if (minBudgetVal < 1000000) {
-      newErrors.minBudget = "Budget must not be less than 1,000,000";
+    } else if (minBudgetVal < 50000) {
+      newErrors.minBudget = "Budget must not be less than 50,000";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -450,7 +450,7 @@ function EditInquiryModal({ isOpen, inquiry, onClose, onSave, saving, sources })
                 <label style={{ display: "block", fontSize: 11, fontWeight: 700, color: "#475569", textTransform: "uppercase", marginBottom: 6 }}>Budget *</label>
                 <input
                   type="number"
-                  min="1000000"
+                  min="50000"
                   name="minBudget"
                   value={formData.minBudget}
                   onChange={handleChange}

@@ -24,8 +24,8 @@ const addInquiryController = async (req, res) => {
         if (!data.phone || !data.phone.trim()) {
             return res.status(400).json({ success: false, message: 'Phone is required' });
         }
-        if (!data.minBudget || Number(data.minBudget) < 1000000) {
-            return res.status(400).json({ success: false, message: 'Budget must not be less than 1,000,000' });
+        if (!data.minBudget || Number(data.minBudget) < 50000) {
+            return res.status(400).json({ success: false, message: 'Budget must not be less than 50,000' });
         }
         if (data.inquirySource) {
             const sourceLower = data.inquirySource.toLowerCase();
@@ -102,8 +102,8 @@ const updateInquiryController = async (req, res) => {
         if (!data.phone || !data.phone.trim()) {
             return res.status(400).json({ success: false, message: 'Phone is required' });
         }
-        if (!data.minBudget || Number(data.minBudget) < 1000000) {
-            return res.status(400).json({ success: false, message: 'Budget must not be less than 1,000,000' });
+        if (!data.minBudget || Number(data.minBudget) < 50000) {
+            return res.status(400).json({ success: false, message: 'Budget must not be less than 50,000' });
         }
         if (data.inquirySource) {
             const sourceLower = data.inquirySource.toLowerCase();
