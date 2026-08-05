@@ -123,8 +123,8 @@ export default function CreateInquiry() {
 
         if (!formData.minBudget || isNaN(minBudgetVal)) {
             newErrors.minBudget = "Budget is required";
-        } else if (minBudgetVal < 1000000) {
-            newErrors.minBudget = "Budget must not be less than 10,00,000";
+        } else if (minBudgetVal < 50000) {
+            newErrors.minBudget = "Budget must not be less than 50,000";
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -426,16 +426,16 @@ export default function CreateInquiry() {
                                     <label className="block text-xs font-bold text-slate-600 mb-1.5">Budget *</label>
                                     <input
                                         type="number"
-                                        min="1000000"
+                                        min="50000"
                                         name="minBudget"
                                         value={formData.minBudget}
                                         onChange={handleChange}
-                                        placeholder="Budget (e.g. 1000000)"
+                                        placeholder="Budget (e.g. 50000)"
                                         className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-xl text-sm focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all ${
                                             errors.minBudget ? "border-red-500" : "border-slate-200"
                                         }`}
                                     />
-                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 10,00,000</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">Must be at least 50,000</p>
                                     {errors.minBudget && <p className="text-xs text-red-500 mt-1">{errors.minBudget}</p>}
                                 </div>
                             </div>
