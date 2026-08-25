@@ -6,6 +6,7 @@ const PermissionContext = createContext(null);
 export function PermissionProvider({ children }) {
     const [permissions, setPermissions] = useState({});
     const [isAdmin, setIsAdmin] = useState(false);
+    const [showNotification, setShowNotification] = useState(true);
     const [loading, setLoading] = useState(true);
 
     const fetchPermissions = async () => {
@@ -15,13 +16,15 @@ export function PermissionProvider({ children }) {
         if (!token || !user) {
             setPermissions({});
             setIsAdmin(false);
+            setShowNotification(false);
             setLoading(false);
             return;
         }
 
-        if (user.role === "admin") {
+        if (user.role === "admin" || user.role === "super admin") {
             setIsAdmin(true);
             setPermissions({});
+            setShowNotification(true);
             setLoading(false);
             return;
         }
@@ -32,14 +35,17 @@ export function PermissionProvider({ children }) {
             if (response.data && response.data.success) {
                 setPermissions(response.data.permissions || {});
                 setIsAdmin(!!response.data.isAdmin);
+                setShowNotification(response.data.showNotification !== false);
             } else {
                 setPermissions({});
                 setIsAdmin(false);
+                setShowNotification(false);
             }
         } catch (error) {
             console.error("Failed to fetch user permissions:", error);
             setPermissions({});
             setIsAdmin(false);
+            setShowNotification(false);
         } finally {
             setLoading(false);
         }
@@ -65,7 +71,7 @@ export function PermissionProvider({ children }) {
         // Admins always have all permissions
         if (isAdmin) return true;
         const user = JSON.parse(localStorage.getItem("user") || "null");
-        if (user && user.role === "admin") return true;
+        if (user && (user.role === "admin" || user.role === "super admin")) return true;
 
         const perm = permissions[masterName];
         if (!perm) return false;
@@ -74,7 +80,7 @@ export function PermissionProvider({ children }) {
     };
 
     return (
-        <PermissionContext.Provider value={{ permissions, isAdmin, loading, hasPermission, refreshPermissions: fetchPermissions }}>
+        <PermissionContext.Provider value={{ permissions, isAdmin, loading, hasPermission, showNotification, refreshPermissions: fetchPermissions }}>
             {children}
         </PermissionContext.Provider>
     );

@@ -9,6 +9,8 @@ const createAgreementGstTables = async () => {
             partner_date DATE NULL,
             gst_registration_date DATE NULL,
             gst_number VARCHAR(100) NULL,
+            additional_business_address TEXT NULL,
+            serial_number_gst_form VARCHAR(255) NULL,
             submitted_by INT NOT NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -17,6 +19,14 @@ const createAgreementGstTables = async () => {
         )
     `;
     await db.execute(query1);
+
+    // Alter table to add new columns if they do not exist
+    try {
+        await db.execute(`ALTER TABLE in_process_franchise_agreement_gst ADD COLUMN additional_business_address TEXT NULL`);
+    } catch (e) {}
+    try {
+        await db.execute(`ALTER TABLE in_process_franchise_agreement_gst ADD COLUMN serial_number_gst_form VARCHAR(255) NULL`);
+    } catch (e) {}
     console.log("In Process Franchise Agreement & GST table ready");
 
     // 2. Agreement & GST documents table
@@ -79,7 +89,7 @@ const getAgreementGstByFranchiseId = async (franchiseId) => {
     };
 };
 
-const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate, gstNumber, submittedBy, documents) => {
+const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate, gstNumber, additionalBusinessAddress, serialNumberGstForm, submittedBy, documents) => {
     // 1. Upsert into in_process_franchise_agreement_gst
     const checkQuery = `SELECT id FROM in_process_franchise_agreement_gst WHERE in_process_franchise_id = ?`;
     const [rows] = await db.execute(checkQuery, [franchiseId]);
@@ -87,6 +97,8 @@ const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate,
     const partnerDateVal = partnerDate || null;
     const gstRegDateVal = gstRegistrationDate || null;
     const gstNumVal = gstNumber || null;
+    const additionalAddressVal = additionalBusinessAddress || null;
+    const serialNumberVal = serialNumberGstForm || null;
 
     if (rows.length > 0) {
         const updateQuery = `
@@ -94,17 +106,19 @@ const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate,
                 partner_date = ?,
                 gst_registration_date = ?,
                 gst_number = ?,
+                additional_business_address = ?,
+                serial_number_gst_form = ?,
                 submitted_by = ?
             WHERE in_process_franchise_id = ?
         `;
-        await db.execute(updateQuery, [partnerDateVal, gstRegDateVal, gstNumVal, submittedBy, franchiseId]);
+        await db.execute(updateQuery, [partnerDateVal, gstRegDateVal, gstNumVal, additionalAddressVal, serialNumberVal, submittedBy, franchiseId]);
     } else {
         const insertQuery = `
             INSERT INTO in_process_franchise_agreement_gst (
-                in_process_franchise_id, partner_date, gst_registration_date, gst_number, submitted_by
-            ) VALUES (?, ?, ?, ?, ?)
+                in_process_franchise_id, partner_date, gst_registration_date, gst_number, additional_business_address, serial_number_gst_form, submitted_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
-        await db.execute(insertQuery, [franchiseId, partnerDateVal, gstRegDateVal, gstNumVal, submittedBy]);
+        await db.execute(insertQuery, [franchiseId, partnerDateVal, gstRegDateVal, gstNumVal, additionalAddressVal, serialNumberVal, submittedBy]);
     }
 
     // 2. Save documents list

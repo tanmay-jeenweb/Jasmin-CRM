@@ -524,7 +524,7 @@ const getAllFindStoresController = async (req, res) => {
 const saveAgreementGstController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { partnerDate, gstRegistrationDate, gstNumber } = req.body;
+        const { partnerDate, gstRegistrationDate, gstNumber, additionalBusinessAddress, serialNumberGstForm } = req.body;
         const submittedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -580,7 +580,7 @@ const saveAgreementGstController = async (req, res) => {
 
         const existing = await getAgreementGstByFranchiseId(id);
 
-        await upsertAgreementGst(id, partnerDate, gstRegistrationDate, gstNumber, submittedBy, finalDocs);
+        await upsertAgreementGst(id, partnerDate, gstRegistrationDate, gstNumber, additionalBusinessAddress, serialNumberGstForm, submittedBy, finalDocs);
 
         // Fetch updated details
         const updated = await getAgreementGstByFranchiseId(id);
@@ -593,7 +593,7 @@ const saveAgreementGstController = async (req, res) => {
             'In Process Franchise Agreement & GST',
             existing ? 'updated' : 'created',
             existing,
-            { partnerDate, gstRegistrationDate, gstNumber, documentsCount: finalDocs.length },
+            { partnerDate, gstRegistrationDate, gstNumber, additionalBusinessAddress, serialNumberGstForm, documentsCount: finalDocs.length },
             id
         );
 

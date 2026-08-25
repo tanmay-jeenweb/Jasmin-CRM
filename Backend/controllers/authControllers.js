@@ -295,10 +295,11 @@ const getMyPermissions = async (req, res) => {
         const userId = req.user.id;
 
         // Admin has unrestricted access — return a wildcard flag or full permissions
-        if (req.user.role === 'admin') {
+        if (req.user.role === 'admin' || req.user.role === 'super admin') {
             return res.status(200).json({
                 success: true,
                 isAdmin: true,
+                showNotification: true,
                 permissions: {}
             });
         }
@@ -313,11 +314,19 @@ const getMyPermissions = async (req, res) => {
             return res.status(200).json({
                 success: true,
                 isAdmin: false,
+                showNotification: false,
                 permissions: {}
             });
         }
 
         const userTypeId = userRows[0].user_type_id;
+
+        // Fetch show_notification from user_types
+        const [userTypeRows] = await db.execute(
+            'SELECT show_notification FROM user_types WHERE id = ?',
+            [userTypeId]
+        );
+        const showNotification = userTypeRows.length > 0 ? !!userTypeRows[0].show_notification : false;
 
         // Fetch all permission rows for this user type
         const [rows] = await db.execute(
@@ -341,6 +350,7 @@ const getMyPermissions = async (req, res) => {
         return res.status(200).json({
             success: true,
             isAdmin: false,
+            showNotification: showNotification,
             permissions
         });
 

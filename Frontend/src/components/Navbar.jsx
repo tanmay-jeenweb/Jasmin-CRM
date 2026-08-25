@@ -19,13 +19,16 @@ export default function Navbar() {
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [prevNotificationIds, setPrevNotificationIds] = useState(new Set());
     const [hasUnseen, setHasUnseen] = useState(false);
-    const { hasPermission } = usePermission();
+    const { hasPermission, showNotification } = usePermission();
     const isAdmin = user.role === "admin" || user.role === "super admin";
 
 
     const fetchNotifications = async () => {
         if (!user.id) return;
-        if (!isAdmin && !hasPermission("reminder_master", "read")) return;
+        if (!isAdmin) {
+            if (showNotification === false) return;
+            if (!hasPermission("reminder_master", "read")) return;
+        }
         try {
             const res = await getUnreadReminders();
             if (res.data?.success) {
@@ -263,117 +266,131 @@ export default function Navbar() {
 
                 <div className="flex items-center gap-6">
                     {/* Notification Dropdown */}
-                    <div className="relative" id="notifications-dropdown">
-                        <button
-                            onClick={() => {
-                                setIsNotificationsOpen(!isNotificationsOpen);
-                                if (!isNotificationsOpen) {
-                                    setHasUnseen(false);
-                                }
-                            }}
-                            className="text-slate-500 hover:text-indigo-600 transition-colors relative cursor-pointer focus:outline-none flex items-center justify-center p-1.5 rounded-full hover:bg-slate-50"
-                            title="Notifications"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
-                            </svg>
-                            {hasUnseen && notifications.length > 0 && (
-                                <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
-                                    {notifications.length}
-                                </span>
-                            )}
-                        </button>
+                    {(isAdmin || (showNotification !== false && hasPermission("reminder_master", "read"))) && (
+                        <div className="relative" id="notifications-dropdown">
+                            <button
+                                onClick={() => {
+                                    setIsNotificationsOpen(!isNotificationsOpen);
+                                    if (!isNotificationsOpen) {
+                                        setHasUnseen(false);
+                                    }
+                                }}
+                                className="text-slate-500 hover:text-indigo-600 transition-colors relative cursor-pointer focus:outline-none flex items-center justify-center p-1.5 rounded-full hover:bg-slate-50"
+                                title="Notifications"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                                </svg>
+                                {hasUnseen && notifications.length > 0 && (
+                                    <span className="absolute top-0.5 right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+                                        {notifications.length}
+                                    </span>
+                                )}
+                            </button>
 
-                        {isNotificationsOpen && (
-                            <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-150">
-                                {/* Header */}
-                                <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
-                                    <h3 className="text-sm font-semibold text-slate-800">Active Reminders</h3>
-                                    {notifications.length > 0 && (
-                                        <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
-                                            {notifications.length} active
-                                        </span>
-                                    )}
-                                </div>
+                            {isNotificationsOpen && (
+                                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50 origin-top-right animate-in fade-in slide-in-from-top-2 duration-150">
+                                    {/* Header */}
+                                    <div className="px-4 py-2 border-b border-slate-100 flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold text-slate-800">Active Reminders</h3>
+                                        {notifications.length > 0 && (
+                                            <span className="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+                                                {notifications.length} active
+                                            </span>
+                                        )}
+                                    </div>
 
-                                {/* List */}
-                                <div className="max-h-80 overflow-y-auto divide-y divide-slate-50">
-                                    {notifications.length === 0 ? (
-                                        <div className="px-4 py-8 text-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.2} stroke="currentColor" className="w-8 h-8 text-slate-300 mx-auto mb-2">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9.143 17.082a24.248 24.248 0 0 0 3.844.148m-3.844-.148a23.856 23.856 0 0 1-5.455-1.31 8.961 8.961 0 0 1-2.3-5.523m5.455 1.31s.515-3.064 1.391-4.882c.114-.236.29-.452.508-.606a5.976 5.976 0 0 1 7.98 0c.218.154.394.37.508.606.876 1.818 1.391 4.882 1.391 4.882M18.857 17.082a23.848 23.848 0 0 0 5.454-1.31 8.962 8.962 0 0 0-2.3-5.523m-3.15 11.33c.705-1.666 1.346-3.707 1.346-5.81a8.95 8.95 0 0 0-1.347-4.882M18.857 17.082a24.257 24.257 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M9 9h.008v.008H9V9Zm3 0h.008v.008H12V9Zm3 0h.008v.008H15V9Z" />
-                                            </svg>
-                                            <p className="text-xs text-slate-500">No active reminders</p>
-                                        </div>
-                                    ) : (
-                                        notifications.map((notif) => {
-                                            const timeString = notif.reminder_time.slice(0, 5); // HH:MM
-                                            const dateString = new Date(notif.reminder_date).toLocaleDateString(undefined, {
-                                                month: 'short',
-                                                day: 'numeric'
-                                            });
+                                    {/* Notifications list */}
+                                    <div className="max-h-72 overflow-y-auto">
+                                        {notifications.length === 0 ? (
+                                            <div className="px-4 py-6 text-center text-slate-400 text-xs flex flex-col items-center justify-center gap-2">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-slate-300">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                                                </svg>
+                                                No active reminders.
+                                            </div>
+                                        ) : (
+                                            notifications.map((notif) => {
+                                                let dateString = "—";
+                                                let timeString = "";
+                                                if (notif.is_document_expiry && notif.expiry_date) {
+                                                    dateString = new Date(notif.expiry_date).toLocaleDateString();
+                                                } else if (notif.reminder_date) {
+                                                    dateString = new Date(notif.reminder_date).toLocaleDateString();
+                                                    if (notif.reminder_time) {
+                                                        const [h, m] = notif.reminder_time.split(':');
+                                                        const hrs = parseInt(h);
+                                                        const ampm = hrs >= 12 ? 'PM' : 'AM';
+                                                        const formattedHrs = hrs % 12 || 12;
+                                                        timeString = `${formattedHrs}:${m} ${ampm}`;
+                                                    }
+                                                }
 
-                                            return (
-                                                <div key={notif.id} className="p-3 hover:bg-slate-50 flex items-start gap-2.5 transition-colors group">
-                                                    {/* Indicator */}
-                                                    <div className="mt-1.5 w-2 h-2 rounded-full bg-indigo-500 shrink-0"></div>
-                                                    
-                                                    {/* Content */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-xs text-slate-700 font-medium break-words">
-                                                            {notif.reminder_text}
-                                                        </p>
-                                                        {notif.inquiry_name && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setIsNotificationsOpen(false);
-                                                                    navigate("/user/inquiries");
-                                                                }}
-                                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left"
-                                                            >
-                                                                Inquiry: {notif.inquiry_name}
-                                                            </button>
-                                                        )}
-                                                        {notif.in_process_franchise_id && (
-                                                            <button
-                                                                onClick={() => {
-                                                                    setIsNotificationsOpen(false);
-                                                                    navigate(`/user/in-process-franchises/${notif.in_process_franchise_id}`);
-                                                                }}
-                                                                className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left cursor-pointer"
-                                                            >
-                                                                {notif.franchise_status === 'completed' ? 'Franchise' : 'In Process Franchise'}: {notif.partner_name}
-                                                            </button>
-                                                        )}
-                                                        {notif.is_document_expiry ? (
-                                                            <span className="text-[10px] text-slate-400 mt-1 block">
-                                                                Expires on {dateString}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[10px] text-slate-400 mt-1 block">
-                                                                {dateString} at {timeString}
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Dismiss button */}
-                                                    <button
-                                                        onClick={() => handleDismissReminder(notif.id)}
-                                                        className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-100 transition-all shrink-0 cursor-pointer self-center"
-                                                        title="Mark as read"
+                                                return (
+                                                    <div
+                                                        key={notif.id}
+                                                        className="px-4 py-3 hover:bg-slate-50 border-b border-slate-100 flex items-start gap-3 justify-between"
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            );
-                                        })
-                                    )}
+                                                        {/* Status dot */}
+                                                        <div className="w-2 h-2 rounded-full bg-indigo-600 mt-1.5 shrink-0 animate-pulse" />
+                                                        
+                                                        {/* Content */}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-xs text-slate-700 font-medium break-words">
+                                                                {notif.reminder_text}
+                                                            </p>
+                                                            {notif.inquiry_name && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setIsNotificationsOpen(false);
+                                                                        navigate("/user/inquiries");
+                                                                    }}
+                                                                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left"
+                                                                >
+                                                                    Inquiry: {notif.inquiry_name}
+                                                                </button>
+                                                            )}
+                                                            {notif.in_process_franchise_id && (
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setIsNotificationsOpen(false);
+                                                                        navigate(`/user/in-process-franchises/${notif.in_process_franchise_id}`);
+                                                                    }}
+                                                                    className="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold hover:underline mt-1 block text-left cursor-pointer"
+                                                                >
+                                                                    {notif.franchise_status === 'completed' ? 'Franchise' : 'In Process Franchise'}: {notif.partner_name}
+                                                                </button>
+                                                            )}
+                                                            {notif.is_document_expiry ? (
+                                                                <span className="text-[10px] text-slate-400 mt-1 block">
+                                                                    Expires on {dateString}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] text-slate-400 mt-1 block">
+                                                                    {dateString} at {timeString}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Dismiss button */}
+                                                        <button
+                                                            onClick={() => handleDismissReminder(notif.id)}
+                                                            className="text-slate-400 hover:text-indigo-600 p-1 rounded-md hover:bg-slate-100 transition-all shrink-0 cursor-pointer self-center"
+                                                            title="Mark as read"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
 
 
                     {/* Profile Dropdown */}

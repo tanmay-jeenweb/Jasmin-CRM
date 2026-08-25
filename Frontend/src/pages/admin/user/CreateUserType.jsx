@@ -72,6 +72,7 @@ const defaultPerms = () =>
 export default function CreateUserType() {
   const [newTypeName, setNewTypeName] = useState("");
   const [permissions, setPermissions] = useState(defaultPerms());
+  const [showNotification, setShowNotification] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -171,10 +172,11 @@ export default function CreateUserType() {
     setError("");
     // setMessage("");
     try {
-      await createUserType({ typeName: newTypeName.trim(), permissions });
+      await createUserType({ typeName: newTypeName.trim(), permissions, showNotification });
       toast.success(`User type '${newTypeName.trim()}' added successfully.`);
       setNewTypeName("");
       setPermissions(defaultPerms());
+      setShowNotification(true);
       setTimeout(() => navigate("/admin/user-types"), 1200);
     } catch (err) {
       console.error("Failed to add user type", err);
@@ -222,23 +224,50 @@ export default function CreateUserType() {
         <form onSubmit={handleAddType}>
           {/* Type Name Card */}
           <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: "24px", marginBottom: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }}>
-            <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              User Type Name <span style={{ color: "#e11d48" }}>*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Supervisor, Technician, Manager"
-              value={newTypeName}
-              onChange={(e) => setNewTypeName(e.target.value)}
-              required
-              style={{
-                width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9,
-                padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b",
-                transition: "border 0.2s",
-              }}
-              onFocus={e => e.target.style.borderColor = "#6804a1"}
-              onBlur={e => e.target.style.borderColor = "#cbd5e1"}
-            />
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#475569", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                User Type Name <span style={{ color: "#e11d48" }}>*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Supervisor, Technician, Manager"
+                value={newTypeName}
+                onChange={(e) => setNewTypeName(e.target.value)}
+                required
+                style={{
+                  width: "100%", boxSizing: "border-box", border: "1.5px solid #cbd5e1", borderRadius: 9,
+                  padding: "11px 14px", fontSize: 15, outline: "none", color: "#1e293b",
+                  transition: "border 0.2s",
+                }}
+                onFocus={e => e.target.style.borderColor = "#6804a1"}
+                onBlur={e => e.target.style.borderColor = "#cbd5e1"}
+              />
+            </div>
+
+            {/* Show Notification Checkbox */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 16, borderTop: "1px solid #f1f5f9" }}>
+              <div
+                onClick={() => setShowNotification(!showNotification)}
+                style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  border: `2px solid ${showNotification ? "#6804a1" : "#cbd5e1"}`,
+                  background: showNotification ? "#6804a1" : "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", transition: "all 0.15s",
+                  boxShadow: showNotification ? `0 0 0 3px #f3e8ff` : "none"
+                }}
+              >
+                {showNotification && (
+                  <svg viewBox="0 0 12 10" style={{ width: 11, height: 11 }}>
+                    <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <div style={{ cursor: "pointer" }} onClick={() => setShowNotification(!showNotification)}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "#334155" }}>Allow Notifications</span>
+                <p style={{ fontSize: 12, color: "#64748b", margin: "2px 0 0" }}>If checked, users of this type will see and receive system reminders and notifications.</p>
+              </div>
+            </div>
           </div>
 
           {/* Permissions Card */}
