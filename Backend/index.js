@@ -26,6 +26,7 @@ const mobileBrandRoutes = require("./routes/mobileBrandRoutes.js");
 const bankRoutes = require("./routes/bankRoutes.js");
 const financeMachineRoutes = require("./routes/financeMachineRoutes.js");
 const franchiseRoutes = require("./routes/franchiseRoutes.js");
+const branchFranchiseMappingRoutes = require("./routes/branchFranchiseMappingRoutes.js");
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -60,6 +61,7 @@ const { createFranchiseMappingTable } = require("./models/franchiseMappingModel.
 const { createFranchiseInsuranceTable } = require("./models/franchiseInsuranceModel.js");
 const { createFinanceMachineTable } = require("./models/financeMachineModel.js");
 const { createFranchiseBranchFinanceCodeTables } = require("./models/franchiseBranchFinanceCodeModel.js");
+const { createBranchFranchiseMappingTables } = require("./models/branchFranchiseMappingModel.js");
 
 
 const app = express();
@@ -115,6 +117,7 @@ app.use(["/api/calloutcomes", "/calloutcomes"], callOutcomeRoutes);
 app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
 app.use(["/api/banks", "/banks"], bankRoutes);
 app.use(["/api/financemachines", "/financemachines"], financeMachineRoutes);
+app.use(["/api/branch-franchise-mappings", "/branch-franchise-mappings"], branchFranchiseMappingRoutes);
 
 
 // Global 404 handler
@@ -167,6 +170,7 @@ const startServer = async () => {
         await createFranchiseMappingTable();
         await createFranchiseInsuranceTable();
         await createFranchiseBranchFinanceCodeTables();
+        await createBranchFranchiseMappingTables();
 
         console.log("All database tables are initialized and ready.");
 

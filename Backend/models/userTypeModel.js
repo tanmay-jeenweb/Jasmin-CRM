@@ -24,6 +24,7 @@ const MASTERS = [
     { key: 'reminder_master', label: 'Reminder Master' },
     { key: 'activity_report', label: 'Activity Report' },
     { key: 'closed_inquiry_report', label: 'Closed Inquiry Report' },
+    { key: 'branch_franchise_mapping', label: 'Branch Franchise Mapping Master' },
 ];
 
 // ─── Table creation ──────────────────────────────────────────────────────────

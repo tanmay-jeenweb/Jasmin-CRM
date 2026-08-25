@@ -48,6 +48,7 @@ const PERMISSION_SECTIONS = [
       { key: "mobile_brand_master", label: "Brand Master" },
       { key: "bank_master", label: "Finance Company Master" },
       { key: "finance_machine_master", label: "Finance Machine Master" },
+      { key: "branch_franchise_mapping", label: "Branch Franchise Mapping" },
     ]
   }
 ];
