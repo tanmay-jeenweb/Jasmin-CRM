@@ -243,15 +243,6 @@ export default function Navbar() {
             color: "bg-violet-50 text-violet-600 border border-violet-100/50",
             activeColor: "bg-violet-100 text-violet-700",
             desc: "Manage finance machines"
-        },
-        {
-            name: "Branch Franchise Mapping",
-            path: "/admin/branch-franchise-mapping",
-            masterKey: "branch_franchise_mapping",
-            icon: "fa-solid fa-map-location-dot",
-            color: "bg-emerald-50 text-emerald-600 border border-emerald-100/50",
-            activeColor: "bg-emerald-100 text-emerald-700",
-            desc: "Map franchises to synced branches"
         }
     ];
 

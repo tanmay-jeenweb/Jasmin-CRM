@@ -84,6 +84,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
+
 // Serve uploaded files statically if set to express
 if (uploadConfig.serveMethod === "express") {
     console.log(`Serving uploaded files statically from: ${uploadConfig.uploadDir}`);
@@ -184,4 +185,4 @@ const startServer = async () => {
     }
 };
 
-startServer();
+startServer();

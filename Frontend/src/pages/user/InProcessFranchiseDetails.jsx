@@ -26,8 +26,10 @@ import FranchiseSwipeMachineForm from "./components/FranchiseSwipeMachineForm";
 import FranchiseTrainingForm from "./components/FranchiseTrainingForm";
 import FranchiseDepositStockForm from "./components/FranchiseDepositStockForm";
 import FranchiseMappingForm from "./components/FranchiseMappingForm";
+import FranchiseBranchMappingForm from "./components/FranchiseBranchMappingForm";
 import FranchiseInsuranceForm from "./components/FranchiseInsuranceForm";
 import FranchiseBranchFinanceCodeForm from "./components/FranchiseBranchFinanceCodeForm";
+import { usePermission } from "../../context/PermissionContext";
 
 export default function InProcessFranchiseDetails() {
   const { id } = useParams();
@@ -39,6 +41,7 @@ export default function InProcessFranchiseDetails() {
   const [activeStage, setActiveStage] = useState("store-operations");
   const currentUser = JSON.parse(localStorage.getItem("user") || "null");
   const isAdmin = currentUser?.role === "admin";
+  const { hasPermission } = usePermission();
 
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -1077,6 +1080,46 @@ export default function InProcessFranchiseDetails() {
         {/* Tab Content: Mapping Stage */}
         {activeStage === "mapping" && (
           <div className="space-y-4">
+            {/* Accordion 0: Branch Franchise Mapping (APX) */}
+            {hasPermission("branch_franchise_mapping", "read") && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-visible relative">
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "branch-franchise-mapping" ? null : "branch-franchise-mapping")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer rounded-t-2xl">
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                    Branch Franchise Mapping
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.branchMapping && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Mapped</span>
+                    )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "branch-franchise-mapping" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </div>
+
+                {openAccordion === "branch-franchise-mapping" && (
+                  <div className="p-6">
+                    <FranchiseBranchMappingForm
+                      franchiseId={id}
+                      branchMapping={franchise.branchMapping}
+                      reloadFranchiseData={reloadFranchiseData}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Accordion 1: Branch Finance Mapping */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
               <div role="button" onClick={() => setOpenAccordion(openAccordion === "mapping" ? null : "mapping")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">

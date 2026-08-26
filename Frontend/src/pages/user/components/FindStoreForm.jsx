@@ -12,6 +12,8 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
   const [processActiveValue, setProcessActiveValue] = useState("");
   const [authorityCertificateFile, setAuthorityCertificateFile] = useState(null);
   const [authorityCertificateName, setAuthorityCertificateName] = useState("");
+  const [informationSheetFile, setInformationSheetFile] = useState(null);
+  const [informationSheetName, setInformationSheetName] = useState("");
   const [submittingFindStore, setSubmittingFindStore] = useState(false);
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
       setClusterValue(findStoreData.cluster_value || "");
       setProcessActiveValue(findStoreData.process_active_value || "");
       setAuthorityCertificateName(findStoreData.authority_certificate || "");
+      setInformationSheetName(findStoreData.information_sheet || "");
 
       if (findStoreData.store_photo) {
         try {
@@ -61,6 +64,9 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
     if (storePhotoFiles.length === 0 && existingPhotos.length === 0) {
       return toast.error("At least one Store Photo is required");
     }
+    if (!informationSheetFile && !informationSheetName) {
+      return toast.error("Franchise Agreement - Information Sheet is required");
+    }
 
     setSubmittingFindStore(true);
     try {
@@ -78,6 +84,10 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
 
       if (authorityCertificateFile) {
         fd.append("authorityCertificate", authorityCertificateFile);
+      }
+
+      if (informationSheetFile) {
+        fd.append("informationSheet", informationSheetFile);
       }
 
       const res = await submitFindStoreForm(franchiseId, fd);
@@ -279,6 +289,48 @@ export default function FindStoreForm({ franchiseId, findStoreData, findStoreSta
                 title={authorityCertificateName}
               >
                 View Certificate
+              </a>
+            </div>
+          )}
+        </div>
+
+        <div className="border border-violet-200 bg-violet-50/25 p-4 rounded-xl space-y-2.5 shadow-xs">
+          <div className="flex justify-between items-center">
+            <label className="block text-xs font-bold text-slate-800">
+              Franchise Agreement - Information Sheet * <span className="text-[9px] text-[#6804a1] font-bold uppercase tracking-wider bg-violet-100/80 px-1.5 py-0.5 rounded-sm ml-1.5">Required</span>
+            </label>
+            <a
+              href="/templates/franchise_agreement_info_sheet.pdf"
+              download="Franchise_Agreement_Information_Sheet.pdf"
+              className="text-[#6804a1] hover:underline text-xs font-bold flex items-center gap-1"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-3 h-3">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+              </svg>
+              Download Template
+            </a>
+          </div>
+          {findStoreStatus !== "approved" && (
+            <input
+              type="file"
+              accept="application/pdf,image/*"
+              onChange={(e) => setInformationSheetFile(e.target.files[0])}
+              className="w-full text-xs text-slate-500 file:mr-4 file:py-1.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#6804a1] file:text-white hover:file:bg-[#52037e] cursor-pointer"
+            />
+          )}
+          {informationSheetName && (
+            <div className="mt-2 flex items-center gap-2 bg-white p-2 rounded-lg border border-violet-100 w-fit shadow-xs">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+              <a
+                href={getFileUrl(informationSheetName)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#6804a1] hover:underline text-xs font-bold truncate max-w-xs"
+                title={informationSheetName}
+              >
+                View Uploaded Sheet
               </a>
             </div>
           )}
