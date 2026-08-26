@@ -126,7 +126,7 @@ const getAllInquiries = async (userId = null, userRole = null) => {
     let whereClause = "WHERE i.status = 'inquiry'";
     const params = [];
     
-    if (userRole !== 'admin' && userRole !== 'super admin') {
+    if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND i.added_by = ?";
         params.push(userId);
     }

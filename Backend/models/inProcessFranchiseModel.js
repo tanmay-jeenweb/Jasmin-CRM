@@ -80,7 +80,7 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
 const getAllInProcessFranchises = async (userId = null, userRole = null) => {
     let whereClause = "WHERE ipf.status = 'in_process'";
     const params = [];
-    if (userRole !== 'admin' && userRole !== 'super admin') {
+    if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
         params.push(userId);
     }
@@ -106,7 +106,7 @@ const getAllInProcessFranchises = async (userId = null, userRole = null) => {
 const getAllCompletedFranchises = async (userId = null, userRole = null) => {
     let whereClause = "WHERE ipf.status = 'completed'";
     const params = [];
-    if (userRole !== 'admin' && userRole !== 'super admin') {
+    if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
         params.push(userId);
     }

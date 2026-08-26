@@ -20,7 +20,7 @@ export default function Navbar() {
     const [prevNotificationIds, setPrevNotificationIds] = useState(new Set());
     const [hasUnseen, setHasUnseen] = useState(false);
     const { hasPermission } = usePermission();
-    const isAdmin = user.role === "admin" || user.role === "super admin";
+    const isAdmin = user.role === "admin" || user.role === "super admin" || user.role === "office staff";
 
 
     const fetchNotifications = async () => {
