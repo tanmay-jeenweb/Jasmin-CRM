@@ -3,7 +3,7 @@ const db = require('../config/db.js');
 const getAllFranchises = async (userId = null, userRole = null) => {
     let whereClause = "WHERE ipf.status = 'completed'";
     const params = [];
-    if (userRole !== 'admin' && userRole !== 'super admin') {
+    if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
         params.push(userId);
     }

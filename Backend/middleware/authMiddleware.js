@@ -43,7 +43,7 @@ const verifyToken = async (req, res, next) => {
 };
 
 const verifyAdmin = (req, res, next) => {
-    if (!req.user || (req.user.role !== "admin" && req.user.role !== "super admin")) {
+    if (!req.user || (req.user.role !== "admin" && req.user.role !== "super admin" && req.user.role !== "office staff")) {
         return res.status(403).json({
             success: false,
             message: "Access denied. Admin only."
@@ -62,7 +62,7 @@ const verifyPermission = (masterName, action) => {
                 });
             }
 
-            // Admins bypass all permission checks
+            // Admins and Super Admins bypass all permission checks
             if (req.user.role === "admin" || req.user.role === "super admin") {
                 return next();
             }
