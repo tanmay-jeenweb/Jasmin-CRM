@@ -3,7 +3,7 @@ const db = require('../config/db.js');
 const createMobileBrandsTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS mobile_brand_master (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT PRIMARY KEY,
             mobile_brand VARCHAR(255) NOT NULL UNIQUE,
             added_by INT NOT NULL,
             device_id VARCHAR(255),
@@ -26,13 +26,28 @@ const createMobileBrandsTable = async () => {
         console.error("Error migrating mobile_brand_master for_code column:", err);
     }
 
+    // Drop AUTO_INCREMENT if it exists
+    try {
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 0`);
+        await db.execute(`ALTER TABLE mobile_brand_master MODIFY COLUMN id INT NOT NULL`);
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
+        console.log("Removed AUTO_INCREMENT from mobile_brand_master table");
+    } catch (err) {
+        console.error("Error migrating mobile_brand_master id column:", err);
+    }
+
     console.log("Mobile brand master table ready");
 };
 
-const createMobileBrand = async (mobileBrand, addedBy, deviceId, forCode) => {
-    const query = `INSERT INTO mobile_brand_master (mobile_brand, added_by, device_id, for_code) VALUES (?, ?, ?, ?)`;
-    const [result] = await db.execute(query, [mobileBrand, addedBy, deviceId, forCode || 'No']);
-    return result;
+const createMobileBrand = async (mobileBrand, addedBy, deviceId, forCode, id = null) => {
+    let finalId = id;
+    if (!finalId) {
+        const [rows] = await db.execute('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM mobile_brand_master');
+        finalId = rows[0].nextId;
+    }
+    const query = `INSERT INTO mobile_brand_master (id, mobile_brand, added_by, device_id, for_code) VALUES (?, ?, ?, ?, ?)`;
+    const [result] = await db.execute(query, [finalId, mobileBrand, addedBy, deviceId, forCode || 'No']);
+    return { ...result, insertId: finalId };
 };
 
 const getAllMobileBrands = async () => {

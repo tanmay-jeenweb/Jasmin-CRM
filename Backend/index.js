@@ -27,6 +27,8 @@ const bankRoutes = require("./routes/bankRoutes.js");
 const financeMachineRoutes = require("./routes/financeMachineRoutes.js");
 const franchiseRoutes = require("./routes/franchiseRoutes.js");
 const branchFranchiseMappingRoutes = require("./routes/branchFranchiseMappingRoutes.js");
+const syncRoutes = require("./routes/syncRoutes.js");
+
 
 // Model Initializations
 const { initUserModel } = require("./models/userModel.js");
@@ -119,6 +121,8 @@ app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
 app.use(["/api/banks", "/banks"], bankRoutes);
 app.use(["/api/financemachines", "/financemachines"], financeMachineRoutes);
 app.use(["/api/branch-franchise-mappings", "/branch-franchise-mappings"], branchFranchiseMappingRoutes);
+app.use(["/api/sync", "/sync"], syncRoutes);
+
 
 
 // Global 404 handler
