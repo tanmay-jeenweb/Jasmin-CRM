@@ -6,6 +6,8 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
   const [partnerDate, setPartnerDate] = useState("");
   const [gstRegistrationDate, setGstRegistrationDate] = useState("");
   const [gstNumber, setGstNumber] = useState("");
+  const [additionalBusinessAddress, setAdditionalBusinessAddress] = useState("");
+  const [serialNumberGstForm, setSerialNumberGstForm] = useState("");
   const [agreementGstDocs, setAgreementGstDocs] = useState([]);
   const [submittingAgreementGst, setSubmittingAgreementGst] = useState(false);
 
@@ -25,6 +27,8 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
       setPartnerDate(getLocalDateString(agreementGstData.partner_date));
       setGstRegistrationDate(getLocalDateString(agreementGstData.gst_registration_date));
       setGstNumber(agreementGstData.gst_number || "");
+      setAdditionalBusinessAddress(agreementGstData.additional_business_address || "");
+      setSerialNumberGstForm(agreementGstData.serial_number_gst_form || "");
     }
 
     const savedDocs = agreementGstData?.documents || [];
@@ -113,6 +117,8 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
       fd.append("partnerDate", partnerDate);
       fd.append("gstRegistrationDate", gstRegistrationDate);
       fd.append("gstNumber", gstNumber.trim());
+      fd.append("additionalBusinessAddress", additionalBusinessAddress.trim());
+      fd.append("serialNumberGstForm", serialNumberGstForm.trim());
 
       const docsPayload = agreementGstDocs.map((doc) => {
         return {
@@ -173,6 +179,26 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
             value={gstNumber}
             onChange={(e) => setGstNumber(e.target.value)}
             placeholder="Enter GST Registration Number"
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1.5">Additional Business Address</label>
+          <input
+            type="text"
+            value={additionalBusinessAddress}
+            onChange={(e) => setAdditionalBusinessAddress(e.target.value)}
+            placeholder="Enter Additional Business Address"
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold text-slate-600 mb-1.5">Serial Number in GST Form for this address</label>
+          <input
+            type="text"
+            value={serialNumberGstForm}
+            onChange={(e) => setSerialNumberGstForm(e.target.value)}
+            placeholder="Enter Serial Number"
             className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
           />
         </div>

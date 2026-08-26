@@ -9,7 +9,7 @@ const { createAuditLog } = require('../models/auditLogModel.js');
 
 const addUserType = async (req, res) => {
     try {
-        const { typeName, permissions } = req.body;
+        const { typeName, permissions, showNotification } = req.body;
         const addedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -17,7 +17,13 @@ const addUserType = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Type name is required' });
         }
 
-        const userType = await createUserType(typeName, addedBy, deviceId, permissions || []);
+        const userType = await createUserType(
+            typeName,
+            addedBy,
+            deviceId,
+            permissions || [],
+            showNotification !== undefined ? showNotification : true
+        );
         await createAuditLog(
             addedBy,
             req.user?.name || req.user?.username || 'Unknown',
@@ -69,7 +75,7 @@ const getAllUserTypesController = async (req, res) => {
 const updateUserTypeController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { typeName, permissions } = req.body;
+        const { typeName, permissions, showNotification } = req.body;
 
         if (!typeName) {
             return res.status(400).json({ success: false, message: 'Type name is required' });
@@ -81,7 +87,12 @@ const updateUserTypeController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'User type not found' });
         }
 
-        await updateUserType(id, typeName, permissions || []);
+        await updateUserType(
+            id,
+            typeName,
+            permissions || [],
+            showNotification !== undefined ? showNotification : true
+        );
         await createAuditLog(
             req.user?.id,
             req.user?.name || req.user?.username || 'Unknown',

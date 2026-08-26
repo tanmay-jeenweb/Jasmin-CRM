@@ -1,3 +1,4 @@
+const db = require('../config/db.js');
 const {
     createReminder,
     getRemindersByInquiry,
@@ -87,6 +88,35 @@ const getUnreadRemindersController = async (req, res) => {
     try {
         const userId = req.user.id;
         const userRole = req.user.role;
+
+        // Check if user is admin or super admin; if not, enforce show_notification check
+        if (userRole !== "admin" && userRole !== "super admin") {
+            const [userRows] = await db.execute(
+                "SELECT user_type_id FROM users WHERE id = ?",
+                [userId]
+            );
+            if (userRows.length > 0 && userRows[0].user_type_id) {
+                const [userTypeRows] = await db.execute(
+                    "SELECT show_notification FROM user_types WHERE id = ?",
+                    [userRows[0].user_type_id]
+                );
+                const showNotification = userTypeRows.length > 0 ? !!userTypeRows[0].show_notification : false;
+                if (!showNotification) {
+                    return res.status(200).json({
+                        success: true,
+                        message: 'Unread reminders retrieved successfully (notifications disabled for role)',
+                        data: []
+                    });
+                }
+            } else {
+                // Default to empty array if user has no assigned type
+                return res.status(200).json({
+                    success: true,
+                    message: 'Unread reminders retrieved successfully (no user type assigned)',
+                    data: []
+                });
+            }
+        }
 
         const reminders = await getUnreadReminders(userId, userRole);
 

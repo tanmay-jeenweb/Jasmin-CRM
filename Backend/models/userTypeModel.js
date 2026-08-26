@@ -24,6 +24,7 @@ const MASTERS = [
     { key: 'reminder_master', label: 'Reminder Master' },
     { key: 'activity_report', label: 'Activity Report' },
     { key: 'closed_inquiry_report', label: 'Closed Inquiry Report' },
+    { key: 'branch_franchise_mapping', label: 'Branch Franchise Mapping Master' },
 ];
 
 // ─── Table creation ──────────────────────────────────────────────────────────
@@ -35,12 +36,24 @@ const createUserTypesTable = async () => {
             type_name VARCHAR(100) NOT NULL UNIQUE,
             added_by INT NOT NULL,
             device_id VARCHAR(255),
+            show_notification TINYINT(1) DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         )
     `;
 
     await db.execute(query);
+
+    try {
+        const [columns] = await db.execute("SHOW COLUMNS FROM user_types LIKE 'show_notification'");
+        if (columns.length === 0) {
+            await db.execute("ALTER TABLE user_types ADD COLUMN show_notification TINYINT(1) DEFAULT 1");
+            console.log("Added show_notification column to user_types table");
+        }
+    } catch (err) {
+        console.error("Failed to add show_notification column to user_types:", err.message);
+    }
+
     console.log("User types table ready");
 };
 
@@ -117,14 +130,14 @@ const getPermissionsByUserTypeId = async (userTypeId) => {
 
 // ─── User Type CRUD ──────────────────────────────────────────────────────────
 
-const createUserType = async (typeName, addedBy, deviceId, permissions) => {
+const createUserType = async (typeName, addedBy, deviceId, permissions, showNotification = 1) => {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
         const [result] = await conn.execute(
-            `INSERT INTO user_types (type_name, added_by, device_id) VALUES (?, ?, ?)`,
-            [typeName, addedBy, deviceId]
+            `INSERT INTO user_types (type_name, added_by, device_id, show_notification) VALUES (?, ?, ?, ?)`,
+            [typeName, addedBy, deviceId, showNotification ? 1 : 0]
         );
 
         const newId = result.insertId;
@@ -161,6 +174,7 @@ const getAllUserTypes = async () => {
         SELECT
             ut.id,
             ut.type_name,
+            ut.show_notification,
             COALESCE(u.name, 'Unknown') AS added_by_name,
             ut.device_id,
             ut.created_at
@@ -186,14 +200,14 @@ const getAllUserTypes = async () => {
     return results;
 };
 
-const updateUserType = async (id, typeName, permissions) => {
+const updateUserType = async (id, typeName, permissions, showNotification = 1) => {
     const conn = await db.getConnection();
     try {
         await conn.beginTransaction();
 
         await conn.execute(
-            `UPDATE user_types SET type_name = ? WHERE id = ?`,
-            [typeName, id]
+            `UPDATE user_types SET type_name = ?, show_notification = ? WHERE id = ?`,
+            [typeName, showNotification ? 1 : 0, id]
         );
 
         if (permissions && permissions.length > 0) {
@@ -230,7 +244,7 @@ const deleteUserType = async (id) => {
 
 const getUserTypeById = async (id) => {
     const [rows] = await db.execute(
-        `SELECT id, type_name, added_by, device_id, created_at, updated_at FROM user_types WHERE id = ?`,
+        `SELECT id, type_name, show_notification, added_by, device_id, created_at, updated_at FROM user_types WHERE id = ?`,
         [id]
     );
     if (!rows[0]) return null;

@@ -25,6 +25,8 @@ import CallOutcomeMaster from "./pages/admin/CallOutcomeMaster";
 import MobileBrandMaster from "./pages/admin/MobileBrandMaster";
 import BankMaster from "./pages/admin/BankMaster";
 import FinanceMachineMaster from "./pages/admin/FinanceMachineMaster";
+import BranchFranchiseMappingMaster from "./pages/admin/BranchFranchiseMappingMaster";
+import CreateBranchFranchiseMapping from "./pages/admin/CreateBranchFranchiseMapping";
 import Approval from "./pages/admin/Approval";
 import ActivityReport from "./pages/admin/ActivityReport";
 import ClosedInquiryReport from "./pages/admin/ClosedInquiryReport";
@@ -236,6 +238,20 @@ export default function AppRoutes() {
                 <Route
                     path="/admin/finance-machines"
                     element={<FinanceMachineMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="branch_franchise_mapping" requiredAction="read" />}>
+                <Route
+                    path="/admin/branch-franchise-mapping"
+                    element={<BranchFranchiseMappingMaster />}
+                />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRole="admin" requiredMaster="branch_franchise_mapping" requiredAction="write" />}>
+                <Route
+                    path="/admin/branch-franchise-mapping/create"
+                    element={<CreateBranchFranchiseMapping />}
                 />
             </Route>
 

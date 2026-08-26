@@ -55,14 +55,14 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
 
       const res = await submitDocPrepForm(franchiseId, fd);
       if (res.data?.success) {
-        toast.success("Document Preparation details saved successfully!");
+        toast.success("Agreement Status details saved successfully!");
         await reloadFranchiseData();
       } else {
         toast.error(res.data?.message || "Failed to save details");
       }
     } catch (err) {
-      console.error("Error saving Document Preparation details:", err);
-      toast.error(err?.response?.data?.message || "Failed to save Document Preparation details.");
+      console.error("Error saving Agreement Status details:", err);
+      toast.error(err?.response?.data?.message || "Failed to save Agreement Status details.");
     } finally {
       setSubmittingDocPrep(false);
     }
@@ -168,7 +168,7 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
           disabled={submittingDocPrep}
           className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
         >
-          {submittingDocPrep ? "Saving..." : "Save Document Preparation"}
+          {submittingDocPrep ? "Saving..." : "Save Agreement Status"}
         </button>
       </div>
     </form>

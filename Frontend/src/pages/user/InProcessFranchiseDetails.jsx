@@ -309,7 +309,8 @@ export default function InProcessFranchiseDetails() {
 
   const stages = [
     { id: "store-operations", name: "Store operations" },
-    { id: "teams-marketing", name: "Teams and marketing" },
+    { id: "mapping", name: "Mapping" },
+    { id: "marketing", name: "Marketing" },
     { id: "installation-training", name: "Installation and training" },
     { id: "finance-pricing", name: "Finance and pricing" },
     { id: "insurance", name: "Insurance" }
@@ -462,7 +463,7 @@ export default function InProcessFranchiseDetails() {
         </div>
 
         {/* Stages Tab Navigation */}
-        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-5 gap-1.5 shadow-sm">
+        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-6 gap-1.5 shadow-sm">
           {stages.map((stage) => {
             const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
             const isActive = activeStage === stage.id;
@@ -701,7 +702,7 @@ export default function InProcessFranchiseDetails() {
               </div>
             )}
 
-            {/* Accordion 3: Document Preparation */}
+            {/* Accordion 3: Agreement Status */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
                 <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
@@ -709,7 +710,7 @@ export default function InProcessFranchiseDetails() {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
-                    Document Preparation
+                    Agreement Status
                   </span>
                   <span className="flex items-center gap-3">
                     {franchise?.docPrep && (
@@ -719,7 +720,7 @@ export default function InProcessFranchiseDetails() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenAccordionLogs("Document Preparation", ["In Process Franchise Document Preparation"]);
+                        handleOpenAccordionLogs("Agreement Status", ["In Process Franchise Document Preparation"]);
                       }}
                       className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
                       title="View Accordion Activity History"
@@ -861,9 +862,65 @@ export default function InProcessFranchiseDetails() {
             )}
           </div>
         )}
+        {/* Tab Content: Marketing Stage */}
+        {activeStage === "marketing" && (
+          <div className="space-y-4">
+            {/* Accordion: Marketing */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "marketing" ? null : "marketing")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+                  </svg>
+                  Marketing
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseMarketing && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Marketing", ["In Process Franchise Marketing"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "marketing" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </div>
 
-        {/* Tab Content: Teams and Marketing Stage */}
-        {activeStage === "teams-marketing" && (
+              {openAccordion === "marketing" && (
+                <div className="p-6">
+                  <FranchiseMarketingForm
+                    franchiseId={id}
+                    franchiseMarketingData={franchise.franchiseMarketing}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Installation and Training Stage */}
+        {activeStage === "installation-training" && (
           <div className="space-y-4">
             {/* Accordion 1: Team */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
@@ -915,164 +972,7 @@ export default function InProcessFranchiseDetails() {
               )}
             </div>
 
-            {/* Accordion 2: Marketing */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <div role="button" onClick={() => setOpenAccordion(openAccordion === "marketing" ? null : "marketing")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
-                  </svg>
-                  Marketing
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.franchiseMarketing && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAccordionLogs("Marketing", ["In Process Franchise Marketing"]);
-                    }}
-                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                    title="View Accordion Activity History"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "marketing" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </div>
-
-              {openAccordion === "marketing" && (
-                <div className="p-6">
-                  <FranchiseMarketingForm
-                    franchiseId={id}
-                    franchiseMarketingData={franchise.franchiseMarketing}
-                    reloadFranchiseData={reloadFranchiseData}
-                    getFileUrl={getFileUrl}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Accordion 3: Mapping */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <div role="button" onClick={() => setOpenAccordion(openAccordion === "mapping" ? null : "mapping")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 8.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
-                  </svg>
-                  Branch Finance Mapping
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.franchiseMapping && franchise.franchiseMapping.length > 0 && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAccordionLogs("Branch Finance Mapping", ["In Process Franchise Mapping"]);
-                    }}
-                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                    title="View Accordion Activity History"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "mapping" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </div>
-
-              {openAccordion === "mapping" && (
-                <div className="p-6">
-                  <FranchiseMappingForm
-                    franchiseId={id}
-                    franchiseMappingData={franchise.franchiseMapping}
-                    reloadFranchiseData={reloadFranchiseData}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Accordion 4: Branch Finance Code */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <div role="button" onClick={() => setOpenAccordion(openAccordion === "branch-finance-code" ? null : "branch-finance-code")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 10.18 12 9 12 9c0-.29.414-.636.879-.97 1.171-.879 3.07-.879 4.242 0M12 6c-.465-.33-.879-.675-.879-.97m0 0a2.44 2.44 0 0 1 0-3.472M12 6a2.44 2.44 0 0 0 0-3.472M6 8.25h12M6 15.75h12" />
-                  </svg>
-                  Branch Finance Code
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.franchiseBranchFinanceCode && (franchise.franchiseBranchFinanceCode.brands?.some(b => b.brand_code) || franchise.franchiseBranchFinanceCode.machines?.some(m => m.tid || m.pos_id || m.serial_no) || franchise.franchiseBranchFinanceCode.companies?.some(c => c.company_code)) && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAccordionLogs("Branch Finance Code", ["In Process Franchise Branch Finance Code"]);
-                    }}
-                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                    title="View Accordion Activity History"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "branch-finance-code" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </div>
-
-              {openAccordion === "branch-finance-code" && (
-                <div className="p-6">
-                  <FranchiseBranchFinanceCodeForm
-                    franchiseId={id}
-                    franchiseBranchFinanceCodeData={franchise.franchiseBranchFinanceCode}
-                    reloadFranchiseData={reloadFranchiseData}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Tab Content: Installation and Training Stage */}
-        {activeStage === "installation-training" && (
-          <div className="space-y-4">
-            {/* Accordion 1: Installation */}
+            {/* Accordion 2: Installation */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
               <div role="button" onClick={() => setOpenAccordion(openAccordion === "installation" ? null : "installation")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                 <span className="flex items-center gap-2">
@@ -1116,56 +1016,6 @@ export default function InProcessFranchiseDetails() {
                   <FranchiseInstallationForm
                     franchiseId={id}
                     franchiseInstallationData={franchise.franchiseInstallation}
-                    reloadFranchiseData={reloadFranchiseData}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Accordion 2: Swip Machine */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-              <div role="button" onClick={() => setOpenAccordion(openAccordion === "swipe-machine" ? null : "swipe-machine")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                <span className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
-                  </svg>
-                  Swip Machine
-                </span>
-                <span className="flex items-center gap-3">
-                  {franchise?.franchiseSwipeMachine && (
-                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleOpenAccordionLogs("Swipe Machine", ["In Process Franchise Swipe Machine"]);
-                    }}
-                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                    title="View Accordion Activity History"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth={2.5}
-                    stroke="currentColor"
-                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "swipe-machine" ? "rotate-180" : ""}`}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                  </svg>
-                </span>
-              </div>
-
-              {openAccordion === "swipe-machine" && (
-                <div className="p-6">
-                  <FranchiseSwipeMachineForm
-                    franchiseId={id}
-                    franchiseSwipeMachineData={franchise.franchiseSwipeMachine}
                     reloadFranchiseData={reloadFranchiseData}
                   />
                 </div>
@@ -1216,6 +1066,161 @@ export default function InProcessFranchiseDetails() {
                   <FranchiseTrainingForm
                     franchiseId={id}
                     franchiseTrainingData={franchise.franchiseTraining}
+                    reloadFranchiseData={reloadFranchiseData}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Tab Content: Mapping Stage */}
+        {activeStage === "mapping" && (
+          <div className="space-y-4">
+            {/* Accordion 1: Branch Finance Mapping */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "mapping" ? null : "mapping")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 8.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+                  </svg>
+                  Branch Finance Mapping
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseMapping && franchise.franchiseMapping.length > 0 && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Branch Finance Mapping", ["In Process Franchise Mapping"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "mapping" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </div>
+
+              {openAccordion === "mapping" && (
+                <div className="p-6">
+                  <FranchiseMappingForm
+                    franchiseId={id}
+                    franchiseMappingData={franchise.franchiseMapping}
+                    reloadFranchiseData={reloadFranchiseData}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 2: Branch Code & Finance Code */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "branch-finance-code" ? null : "branch-finance-code")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 10.18 12 9 12 9c0-.29.414-.636.879-.97 1.171-.879 3.07-.879 4.242 0M12 6c-.465-.33-.879-.675-.879-.97m0 0a2.44 2.44 0 0 1 0-3.472M12 6a2.44 2.44 0 0 0 0-3.472M6 8.25h12M6 15.75h12" />
+                  </svg>
+                  Branch Code & Finance Code
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseBranchFinanceCode && (franchise.franchiseBranchFinanceCode.brands?.some(b => b.brand_code) || franchise.franchiseBranchFinanceCode.machines?.some(m => m.tid || m.pos_id || m.serial_no) || franchise.franchiseBranchFinanceCode.companies?.some(c => c.company_code)) && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Branch Code & Finance Code", ["In Process Franchise Branch Finance Code"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "branch-finance-code" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </div>
+
+              {openAccordion === "branch-finance-code" && (
+                <div className="p-6">
+                  <FranchiseBranchFinanceCodeForm
+                    franchiseId={id}
+                    franchiseBranchFinanceCodeData={franchise.franchiseBranchFinanceCode}
+                    reloadFranchiseData={reloadFranchiseData}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Accordion 3: Swipe Machine */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div role="button" onClick={() => setOpenAccordion(openAccordion === "swipe-machine" ? null : "swipe-machine")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+                  </svg>
+                  Swipe Machine
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.franchiseSwipeMachine && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Swipe Machine", ["In Process Franchise Swipe Machine"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "swipe-machine" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
+              </div>
+
+              {openAccordion === "swipe-machine" && (
+                <div className="p-6">
+                  <FranchiseSwipeMachineForm
+                    franchiseId={id}
+                    franchiseSwipeMachineData={franchise.franchiseSwipeMachine}
                     reloadFranchiseData={reloadFranchiseData}
                   />
                 </div>
@@ -1336,7 +1341,7 @@ export default function InProcessFranchiseDetails() {
         )}
 
         {/* Tab Content: Other Unlocked Stages */}
-        {activeStage !== "store-operations" && activeStage !== "teams-marketing" && activeStage !== "installation-training" && activeStage !== "finance-pricing" && activeStage !== "insurance" && (
+        {activeStage !== "store-operations" && activeStage !== "marketing" && activeStage !== "installation-training" && activeStage !== "mapping" && activeStage !== "finance-pricing" && activeStage !== "insurance" && (
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-8 text-center max-w-2xl mx-auto my-12">
             <div className="w-16 h-16 bg-[#f5f3ff] text-[#6804a1] rounded-full flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">

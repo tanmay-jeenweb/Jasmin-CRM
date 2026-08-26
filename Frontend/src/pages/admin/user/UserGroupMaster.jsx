@@ -48,6 +48,7 @@ const PERMISSION_SECTIONS = [
       { key: "mobile_brand_master", label: "Brand Master" },
       { key: "bank_master", label: "Finance Company Master" },
       { key: "finance_machine_master", label: "Finance Machine Master" },
+      { key: "branch_franchise_mapping", label: "Branch Franchise Mapping" },
     ]
   }
 ];
@@ -162,6 +163,7 @@ function PermBadges({ permissions }) {
 function EditForm({ row, onClose, onSave, saving }) {
   const [typeName, setTypeName] = useState(row.type_name || "");
   const [permissions, setPermissions] = useState(buildPermsFromApi(row.permissions));
+  const [showNotification, setShowNotification] = useState(row.show_notification !== false && row.show_notification !== 0);
 
   const togglePerm = (masterKey, perm) =>
     setPermissions((prev) => prev.map((p) => p.masterName === masterKey ? { ...p, [perm]: !p[perm] } : p));
@@ -253,21 +255,46 @@ function EditForm({ row, onClose, onSave, saving }) {
           </button>
         </div>
 
-        <form onSubmit={(e) => { e.preventDefault(); onSave(row.id, typeName, permissions); }}>
+        <form onSubmit={(e) => { e.preventDefault(); onSave(row.id, typeName, permissions, showNotification); }}>
 
           {/* Type Name Card */}
           <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-5 shadow-sm">
-            <label className="block text-[13px] font-semibold text-slate-600 mb-2 uppercase tracking-[0.05em]">
-              User Type Name <span className="text-rose-600">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Supervisor, Technician, Manager"
-              value={typeName}
-              onChange={(e) => setTypeName(e.target.value)}
-              required
-              className="w-full box-border border-[1.5px] border-slate-300 rounded-[9px] py-[11px] px-[14px] text-[15px] outline-none text-slate-800 transition-[border-color] duration-200 focus:border-purple-700"
-            />
+            <div className="mb-4">
+              <label className="block text-[13px] font-semibold text-slate-600 mb-2 uppercase tracking-[0.05em]">
+                User Type Name <span className="text-rose-600">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Supervisor, Technician, Manager"
+                value={typeName}
+                onChange={(e) => setTypeName(e.target.value)}
+                required
+                className="w-full box-border border-[1.5px] border-slate-300 rounded-[9px] py-[11px] px-[14px] text-[15px] outline-none text-slate-800 transition-[border-color] duration-200 focus:border-purple-700"
+              />
+            </div>
+
+            {/* Show Notification Checkbox */}
+            <div className="flex items-center gap-2.5 mt-4 pt-4 border-t border-slate-100">
+              <div
+                onClick={() => setShowNotification(!showNotification)}
+                className="w-[22px] h-[22px] rounded-[6px] flex items-center justify-center cursor-pointer transition-all duration-150 border-2"
+                style={{
+                  borderColor: showNotification ? "#6804a1" : "#cbd5e1",
+                  background: showNotification ? "#6804a1" : "#fff",
+                  boxShadow: showNotification ? `0 0 0 3px #f3e8ff` : "none"
+                }}
+              >
+                {showNotification && (
+                  <svg viewBox="0 0 12 10" className="w-[11px] h-[11px]">
+                    <polyline points="1,5 4.5,8.5 11,1" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              <div className="cursor-pointer" onClick={() => setShowNotification(!showNotification)}>
+                <span className="text-sm font-semibold text-slate-700">Allow Notifications</span>
+                <p className="text-xs text-slate-400 mt-0.5 mb-0">If checked, users of this type will see and receive system reminders and notifications.</p>
+              </div>
+            </div>
           </div>
 
           {/* Permissions Card */}
@@ -472,11 +499,11 @@ export default function UserGroupMaster() {
 
   useEffect(() => { loadUserTypes(); }, []);
 
-  const handleSave = async (id, typeName, permissions) => {
+  const handleSave = async (id, typeName, permissions, showNotification) => {
     if (!typeName.trim()) { toast.error("Name is required"); return; }
     setSaving(true);
     try {
-      await updateUserType(id, { typeName: typeName.trim(), permissions });
+      await updateUserType(id, { typeName: typeName.trim(), permissions, showNotification });
       toast.success("User type updated successfully");
       setEditingRow(null);
       await loadUserTypes();
@@ -511,6 +538,19 @@ export default function UserGroupMaster() {
       {
         key: "type_name", label: "User Type",
         render: (row) => <span style={{ fontWeight: 700 }}>{row.type_name}</span>
+      },
+      {
+        key: "show_notification", label: "Allow Notifications",
+        render: (row) => (
+          <span style={{
+            fontSize: 12, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
+            background: row.show_notification ? "#f0fdf4" : "#fff1f2",
+            color: row.show_notification ? "#15803d" : "#be123c",
+            border: `1px solid ${row.show_notification ? "#bbf7d0" : "#fecdd3"}`
+          }}>
+            {row.show_notification ? "Yes" : "No"}
+          </span>
+        )
       },
       {
         key: "permissions", label: "Permissions",
