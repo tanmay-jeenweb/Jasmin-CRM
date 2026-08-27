@@ -71,6 +71,7 @@ const {
     saveFranchiseBranchFinanceCodes
 } = require('../models/franchiseBranchFinanceCodeModel.js');
 const { getMappingByFranchiseId } = require('../models/branchFranchiseMappingModel.js');
+const { syncMappingsToErp, syncFinanceCodesToErp } = require('../utils/erpSync.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -1347,6 +1348,14 @@ const saveFranchiseMappingController = async (req, res) => {
             id
         );
 
+        // Outgoing Sync Trigger
+        const xSyncSource = req.headers['x-sync-source'];
+        if (xSyncSource !== 'JASMIN-ERP') {
+            syncMappingsToErp(id, mappingsData, 'JASMIN-CRM').catch(err =>
+                console.error('[SYNC] Background mappings sync error:', err)
+            );
+        }
+
         res.status(200).json({
             success: true,
             message: 'Franchise Brand/Bank Mapping saved successfully.',
@@ -1424,7 +1433,7 @@ const saveFranchiseInsuranceController = async (req, res) => {
 const saveFranchiseBranchFinanceCodeController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { brands, machines, companies } = req.body;
+        const { brands, machines, companies, details } = req.body;
         const submittedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -1436,7 +1445,7 @@ const saveFranchiseBranchFinanceCodeController = async (req, res) => {
 
         const existing = await getFranchiseBranchFinanceCodesByFranchiseId(id);
 
-        await saveFranchiseBranchFinanceCodes(id, { brands, machines, companies }, submittedBy);
+        await saveFranchiseBranchFinanceCodes(id, { brands, machines, companies, details }, submittedBy);
 
         const updated = await getFranchiseBranchFinanceCodesByFranchiseId(id);
 
@@ -1448,9 +1457,17 @@ const saveFranchiseBranchFinanceCodeController = async (req, res) => {
             'In Process Franchise Branch Finance Code',
             'updated',
             existing,
-            { brands, machines, companies },
+            { brands, machines, companies, details },
             id
         );
+
+        // Outgoing Sync Trigger
+        const xSyncSource = req.headers['x-sync-source'];
+        if (xSyncSource !== 'JASMIN-ERP') {
+            syncFinanceCodesToErp(id, { brands, machines, companies, details }, 'JASMIN-CRM').catch(err =>
+                console.error('[SYNC] Background finance codes sync error:', err)
+            );
+        }
 
         res.status(200).json({
             success: true,
