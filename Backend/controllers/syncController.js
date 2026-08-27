@@ -98,14 +98,18 @@ const syncMastersController = async (req, res) => {
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'External Sync';
 
         // 1. Fetch from external API
-        const apiUrl = 'https://interlink.jasminmobile.com/v1/api/external/master-data';
+        const externalBaseUrl = process.env.EXTERNAL_BRANCH_API_URL || 'http://localhost:5005';
+        const apiUrl = `${externalBaseUrl.replace(/\/$/, '')}/v1/api/external/master-data`;
+        const userid = process.env.EXTERNAL_BRANCH_API_USERID || 'WebSite';
+        const securitycode = process.env.EXTERNAL_BRANCH_API_SECURITY_CODE || '1151-8111-6444-4166';
+
         console.log(`Sync started. Fetching from external URL: ${apiUrl}`);
 
         const response = await fetch(apiUrl, {
             method: 'GET',
             headers: {
-                'userid': 'WebSite',
-                'Securitycode': '1151-8111-6444-4166',
+                'userid': userid,
+                'Securitycode': securitycode,
                 'Content-Type': 'application/json'
             }
         });

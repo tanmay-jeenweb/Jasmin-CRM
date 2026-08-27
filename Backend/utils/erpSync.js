@@ -8,9 +8,9 @@ const db = require('../config/db.js');
  */
 async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMIN-CRM') {
     try {
-        const erpUrl = process.env.ERP_API_URL;
-        const userid = process.env.ERP_SYNC_USERID;
-        const securitycode = process.env.ERP_SYNC_SECURITYCODE;
+        const erpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL;
+        const userid = process.env.ERP_SYNC_USERID || process.env.EXTERNAL_BRANCH_API_USERID;
+        const securitycode = process.env.ERP_SYNC_SECURITYCODE || process.env.EXTERNAL_BRANCH_API_SECURITY_CODE;
 
         if (!erpUrl || !userid || !securitycode) {
             console.warn('[SYNC] Outbound sync skipped: ERP API configuration missing in .env');
@@ -71,9 +71,9 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
  */
 async function syncFinanceCodesToErp(franchiseId, financeData, xSyncSource = 'JASMIN-CRM') {
     try {
-        const erpUrl = process.env.ERP_API_URL;
-        const userid = process.env.ERP_SYNC_USERID;
-        const securitycode = process.env.ERP_SYNC_SECURITYCODE;
+        const erpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL;
+        const userid = process.env.ERP_SYNC_USERID || process.env.EXTERNAL_BRANCH_API_USERID;
+        const securitycode = process.env.ERP_SYNC_SECURITYCODE || process.env.EXTERNAL_BRANCH_API_SECURITY_CODE;
 
         if (!erpUrl || !userid || !securitycode) {
             console.warn('[SYNC] Outbound sync skipped: ERP API configuration missing in .env');
