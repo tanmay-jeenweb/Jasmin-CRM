@@ -82,9 +82,16 @@ const createUserTypePermissionsTable = async () => {
         await db.execute("UPDATE IGNORE user_type_permissions SET master_name = 'worker_employee_type' WHERE master_name = 'operator_type'");
         await db.execute("DELETE FROM user_type_permissions WHERE master_name = 'operator_type'");
         
-        console.log("✅ Permission keys migrated to worker_employee and worker_employee_type.");
+        // Clear update/delete permissions for synced masters (as they are read/sync-only)
+        await db.execute(`
+            UPDATE user_type_permissions 
+            SET can_update = 0, can_delete = 0 
+            WHERE master_name IN ('mobile_brand_master', 'bank_master', 'finance_machine_master')
+        `);
+        
+        console.log("✅ Permission keys migrated and synced master update/delete permissions cleared.");
     } catch (err) {
-        console.error("Migration of user permissions failed:", err.message);
+        console.error("Migration/cleanup of user permissions failed:", err.message);
     }
 };
 

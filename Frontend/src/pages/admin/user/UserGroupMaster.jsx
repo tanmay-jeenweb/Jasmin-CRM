@@ -71,13 +71,14 @@ const buildPermsFromApi = (apiPerms) => {
   return MASTERS.map((m) => {
     const found = apiPerms.find((p) => p.masterName === m.key);
     const isApprovalRow = m.key.endsWith("_approval");
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(m.key);
     if (found) {
       return {
         masterName: m.key,
         canRead: !!found.canRead,
         canWrite: !!found.canWrite,
-        canUpdate: isApprovalRow ? false : !!found.canUpdate,
-        canDelete: isApprovalRow ? false : !!found.canDelete
+        canUpdate: (isApprovalRow || isSyncedMaster) ? false : !!found.canUpdate,
+        canDelete: (isApprovalRow || isSyncedMaster) ? false : !!found.canDelete
       };
     }
     return { masterName: m.key, canRead: false, canWrite: false, canUpdate: false, canDelete: false };
@@ -165,29 +166,44 @@ function EditForm({ row, onClose, onSave, saving }) {
   const [permissions, setPermissions] = useState(buildPermsFromApi(row.permissions));
   const [showNotification, setShowNotification] = useState(row.show_notification !== false && row.show_notification !== 0);
 
-  const togglePerm = (masterKey, perm) =>
+  const togglePerm = (masterKey, perm) => {
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
+    if (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete")) return;
     setPermissions((prev) => prev.map((p) => p.masterName === masterKey ? { ...p, [perm]: !p[perm] } : p));
+  };
 
   const toggleRow = (masterKey) => {
     const isApprovalRow = masterKey.endsWith("_approval");
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
     const r = permissions.find((p) => p.masterName === masterKey);
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     const all = applicablePerms.every((perm) => r[perm]);
     setPermissions((prev) => prev.map((p) => p.masterName === masterKey
       ? {
           ...p,
           canRead: !all,
           canWrite: !all,
-          canUpdate: isApprovalRow ? false : !all,
-          canDelete: isApprovalRow ? false : !all
+          canUpdate: (isApprovalRow || isSyncedMaster) ? false : !all,
+          canDelete: (isApprovalRow || isSyncedMaster) ? false : !all
         } : p));
   };
 
   const toggleColumn = (perm) => {
-    const all = permissions.every((p) => p[perm]);
-    setPermissions((prev) => prev.map((p) => {
+    const all = permissions.every((p) => {
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      if (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete")) {
+        return true;
+      }
       const isApprovalRow = p.masterName.endsWith("_approval");
       if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+        return true;
+      }
+      return p[perm];
+    });
+    setPermissions((prev) => prev.map((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      if ((isApprovalRow || isSyncedMaster) && (perm === "canUpdate" || perm === "canDelete")) {
         return { ...p, [perm]: false };
       }
       return { ...p, [perm]: !all };
@@ -197,31 +213,35 @@ function EditForm({ row, onClose, onSave, saving }) {
   const toggleAll = () => {
     const all = permissions.every((p) => {
       const isApprovalRow = p.masterName.endsWith("_approval");
-      const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
       return applicablePerms.every((perm) => p[perm]);
     });
     setPermissions((prev) => prev.map((p) => {
       const isApprovalRow = p.masterName.endsWith("_approval");
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
       return {
         ...p,
         canRead: !all,
         canWrite: !all,
-        canUpdate: isApprovalRow ? false : !all,
-        canDelete: isApprovalRow ? false : !all
+        canUpdate: (isApprovalRow || isSyncedMaster) ? false : !all,
+        canDelete: (isApprovalRow || isSyncedMaster) ? false : !all
       };
     }));
   };
 
   const isRowAll = (masterKey) => {
     const isApprovalRow = masterKey.endsWith("_approval");
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
     const r = permissions.find((p) => p.masterName === masterKey);
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     return applicablePerms.every((perm) => r[perm]);
   };
 
   const isColAll = (perm) => permissions.every((p) => {
     const isApprovalRow = p.masterName.endsWith("_approval");
-    if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+    if ((isApprovalRow || isSyncedMaster) && (perm === "canUpdate" || perm === "canDelete")) {
       return true;
     }
     return p[perm];
@@ -229,7 +249,8 @@ function EditForm({ row, onClose, onSave, saving }) {
 
   const isAllAll = () => permissions.every((p) => {
     const isApprovalRow = p.masterName.endsWith("_approval");
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     return applicablePerms.every((perm) => p[perm]);
   });
 
@@ -384,9 +405,11 @@ function EditForm({ row, onClose, onSave, saving }) {
                             {PERMS.map((perm) => {
                               const c = PERM_COLORS[perm];
                               const checked = rowData[perm];
+                              const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(master.key);
                               if (
                                 (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) ||
-                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete"))
+                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete")) ||
+                                (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete"))
                               ) {
                                 return (
                                   <td key={perm} className="text-center py-3 px-2 border-b border-slate-50 text-slate-400">

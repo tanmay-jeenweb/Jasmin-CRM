@@ -81,6 +81,8 @@ export default function CreateUserType() {
 
   // Toggle a single checkbox
   const togglePerm = (masterKey, perm) => {
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
+    if (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete")) return;
     setPermissions((prev) =>
       prev.map((p) =>
         p.masterName === masterKey ? { ...p, [perm]: !p[perm] } : p
@@ -91,8 +93,9 @@ export default function CreateUserType() {
   // Toggle entire row (all perms for one master)
   const toggleRow = (masterKey) => {
     const isApprovalRow = masterKey.endsWith("_approval");
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
     const row = permissions.find((p) => p.masterName === masterKey);
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     const allChecked = applicablePerms.every((perm) => row[perm]);
     setPermissions((prev) =>
       prev.map((p) =>
@@ -101,8 +104,8 @@ export default function CreateUserType() {
               ...p,
               canRead: !allChecked,
               canWrite: !allChecked,
-              canUpdate: isApprovalRow ? false : !allChecked,
-              canDelete: isApprovalRow ? false : !allChecked,
+              canUpdate: (isApprovalRow || isSyncedMaster) ? false : !allChecked,
+              canDelete: (isApprovalRow || isSyncedMaster) ? false : !allChecked,
             }
           : p
       )
@@ -111,10 +114,21 @@ export default function CreateUserType() {
 
   // Toggle entire column (one perm across all masters)
   const toggleColumn = (perm) => {
-    const allChecked = permissions.every((p) => p[perm]);
-    setPermissions((prev) => prev.map((p) => {
+    const allChecked = permissions.every((p) => {
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      if (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete")) {
+        return true;
+      }
       const isApprovalRow = p.masterName.endsWith("_approval");
       if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+        return true;
+      }
+      return p[perm];
+    });
+    setPermissions((prev) => prev.map((p) => {
+      const isApprovalRow = p.masterName.endsWith("_approval");
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      if ((isApprovalRow || isSyncedMaster) && (perm === "canUpdate" || perm === "canDelete")) {
         return { ...p, [perm]: false };
       }
       return { ...p, [perm]: !allChecked };
@@ -125,18 +139,20 @@ export default function CreateUserType() {
   const toggleAll = () => {
     const allChecked = permissions.every((p) => {
       const isApprovalRow = p.masterName.endsWith("_approval");
-      const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+      const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+      const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
       return applicablePerms.every((perm) => p[perm]);
     });
     setPermissions((prev) =>
       prev.map((p) => {
         const isApprovalRow = p.masterName.endsWith("_approval");
+        const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
         return {
           ...p,
           canRead: !allChecked,
           canWrite: !allChecked,
-          canUpdate: isApprovalRow ? false : !allChecked,
-          canDelete: isApprovalRow ? false : !allChecked,
+          canUpdate: (isApprovalRow || isSyncedMaster) ? false : !allChecked,
+          canDelete: (isApprovalRow || isSyncedMaster) ? false : !allChecked,
         };
       })
     );
@@ -144,14 +160,16 @@ export default function CreateUserType() {
 
   const isRowAll = (masterKey) => {
     const isApprovalRow = masterKey.endsWith("_approval");
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(masterKey);
     const row = permissions.find((p) => p.masterName === masterKey);
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     return applicablePerms.every((perm) => row[perm]);
   };
 
   const isColAll = (perm) => permissions.every((p) => {
     const isApprovalRow = p.masterName.endsWith("_approval");
-    if (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) {
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+    if ((isApprovalRow || isSyncedMaster) && (perm === "canUpdate" || perm === "canDelete")) {
       return true; // treat as matched so it doesn't block "all"
     }
     return p[perm];
@@ -159,7 +177,8 @@ export default function CreateUserType() {
   
   const isAllAll = () => permissions.every((p) => {
     const isApprovalRow = p.masterName.endsWith("_approval");
-    const applicablePerms = isApprovalRow ? ["canRead", "canWrite"] : PERMS;
+    const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(p.masterName);
+    const applicablePerms = (isApprovalRow || isSyncedMaster) ? ["canRead", "canWrite"] : PERMS;
     return applicablePerms.every((perm) => p[perm]);
   });
 
@@ -368,9 +387,11 @@ export default function CreateUserType() {
                               const checked = row[perm];
                               const isApprovalRow = master.key.endsWith("_approval");
                               const isReportRow = master.key === "activity_report" || master.key === "closed_inquiry_report";
+                              const isSyncedMaster = ["mobile_brand_master", "bank_master", "finance_machine_master"].includes(master.key);
                               if (
                                 (isApprovalRow && (perm === "canUpdate" || perm === "canDelete")) ||
-                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete"))
+                                (isReportRow && (perm === "canWrite" || perm === "canUpdate" || perm === "canDelete")) ||
+                                (isSyncedMaster && (perm === "canUpdate" || perm === "canDelete"))
                               ) {
                                 return (
                                   <td key={perm} style={{ textAlign: "center", padding: "12px 8px", borderBottom: "1px solid #f1f5f9", color: "#94a3b8" }}>
