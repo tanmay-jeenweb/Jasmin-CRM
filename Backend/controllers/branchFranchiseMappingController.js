@@ -12,7 +12,7 @@ const { createAuditLog } = require('../models/auditLogModel.js');
 
 const fetchBranchesFromApi = () => {
     return new Promise((resolve, reject) => {
-        const url = process.env.EXTERNAL_BRANCH_API_URL || 'https://apxwapi.jasminmobile.com:81/api/apxapi/GetBranchInfo?CompanyCode=JITPL&Status=ALL';
+        const url = process.env.EXTERNAL_BRANCH_API_URL ;
         const userid = process.env.EXTERNAL_BRANCH_API_USERID || 'WebSite';
         const securitycode = process.env.EXTERNAL_BRANCH_API_SECURITY_CODE || '1151-8111-6444-4166';
 
