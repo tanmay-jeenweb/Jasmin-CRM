@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo } from "react";
 import Navbar from "../../components/Navbar";
 import { getBanks, createBank, updateBank, deleteBank } from "../../api/bankApi";
 import DataTable from "../../components/DataTable";
+import { syncMasterData } from "../../api/syncApi";
+
 import toast from "react-hot-toast";
 import { usePermission } from "../../context/PermissionContext";
 
@@ -99,8 +101,31 @@ export default function BankMaster() {
   const [selectedRow, setSelectedRow] = useState(null);
 
   const { hasPermission } = usePermission();
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    const toastId = toast.loading("Syncing finance company data from external API...");
+    try {
+      const response = await syncMasterData({ syncBrands: false, syncCompanies: true, syncMachines: false });
+      if (response.data?.success) {
+        const addedCount = response.data.data?.financeCompanies?.added || 0;
+        const skippedCount = response.data.data?.financeCompanies?.skipped || 0;
+        toast.success(`Sync complete! Added: ${addedCount}, Skipped: ${skippedCount}`, { id: toastId });
+        await loadBanks();
+      } else {
+        toast.error(response.data?.message || "Sync failed", { id: toastId });
+      }
+    } catch (err) {
+      console.error("Failed to sync finance company data", err);
+      toast.error(err?.response?.data?.message || "Unable to sync finance company data. Please try again.", { id: toastId });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const loadBanks = async () => {
+
     setLoading(true);
     setError("");
     try {
@@ -236,18 +261,30 @@ export default function BankMaster() {
           searchPlaceholder="Search finance companies..."
           actionButton={
             hasPermission("bank_master", "write") ? (
-              <button
-                onClick={() => {
-                  setSelectedRow(null);
-                  setIsModalOpen(true);
-                }}
-                style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
-                title="Create Finance Company"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  onClick={handleSync}
+                  disabled={syncing || loading}
+                  style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "#f1f5f9", color: "#475569", border: "1.5px solid #cbd5e1", cursor: (syncing || loading) ? "not-allowed" : "pointer", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+                  title="Sync Finance Company Data"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={syncing ? "animate-spin" : ""} style={{ width: 18, height: 18 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedRow(null);
+                    setIsModalOpen(true);
+                  }}
+                  style={{ display: "flex", width: 40, height: 40, alignItems: "center", justifyContent: "center", borderRadius: 9, background: "linear-gradient(135deg,#6804a1,#52037e)", color: "#fff", border: "none", cursor: "pointer", boxShadow: "0 2px 8px rgba(104,4,161,0.35)" }}
+                  title="Create Finance Company"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" style={{ width: 18, height: 18 }}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                </button>
+              </div>
             ) : null
           }
         />

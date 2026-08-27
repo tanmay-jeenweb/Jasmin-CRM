@@ -3,7 +3,7 @@ const db = require('../config/db.js');
 const createFinanceMachineTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS finance_machine_master (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT PRIMARY KEY,
             machine_name VARCHAR(255) NOT NULL UNIQUE,
             added_by INT NOT NULL,
             device_id VARCHAR(255),
@@ -25,13 +25,28 @@ const createFinanceMachineTable = async () => {
         console.error("Error migrating finance_machine_master drop for_code column:", err);
     }
 
+    // Drop AUTO_INCREMENT if it exists
+    try {
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 0`);
+        await db.execute(`ALTER TABLE finance_machine_master MODIFY COLUMN id INT NOT NULL`);
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
+        console.log("Removed AUTO_INCREMENT from finance_machine_master table");
+    } catch (err) {
+        console.error("Error migrating finance_machine_master id column:", err);
+    }
+
     console.log("Finance Machine master table ready");
 };
 
-const createFinanceMachine = async (machineName, addedBy, deviceId) => {
-    const query = `INSERT INTO finance_machine_master (machine_name, added_by, device_id) VALUES (?, ?, ?)`;
-    const [result] = await db.execute(query, [machineName, addedBy, deviceId]);
-    return result;
+const createFinanceMachine = async (machineName, addedBy, deviceId, id = null) => {
+    let finalId = id;
+    if (!finalId) {
+        const [rows] = await db.execute('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM finance_machine_master');
+        finalId = rows[0].nextId;
+    }
+    const query = `INSERT INTO finance_machine_master (id, machine_name, added_by, device_id) VALUES (?, ?, ?, ?)`;
+    const [result] = await db.execute(query, [finalId, machineName, addedBy, deviceId]);
+    return { ...result, insertId: finalId };
 };
 
 const getAllFinanceMachines = async () => {

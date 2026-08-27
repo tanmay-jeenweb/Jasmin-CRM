@@ -36,16 +36,27 @@ const createFindStoreTable = async () => {
     } catch (err) {
         console.log("Note on altering store_photo column:", err.message);
     }
+
+    try {
+        const [columns] = await db.execute(`SHOW COLUMNS FROM in_process_franchise_find_stores LIKE 'information_sheet'`);
+        if (columns.length === 0) {
+            await db.execute(`ALTER TABLE in_process_franchise_find_stores ADD COLUMN information_sheet VARCHAR(255) NULL`);
+            console.log("Added 'information_sheet' column to 'in_process_franchise_find_stores' table");
+        }
+    } catch (err) {
+        console.error("Error migrating in_process_franchise_find_stores information_sheet column:", err);
+    }
 };
 
 const upsertFindStore = async (data) => {
-    const checkQuery = `SELECT store_photo, authority_certificate FROM in_process_franchise_find_stores WHERE in_process_franchise_id = ?`;
+    const checkQuery = `SELECT store_photo, authority_certificate, information_sheet FROM in_process_franchise_find_stores WHERE in_process_franchise_id = ?`;
     const [rows] = await db.execute(checkQuery, [data.inProcessFranchiseId]);
 
     if (rows.length > 0) {
         // Use existing files if no new ones are provided
         const finalStorePhoto = data.storePhoto !== undefined && data.storePhoto !== null ? data.storePhoto : rows[0].store_photo;
         const finalAuthCert = data.authorityCertificate !== undefined && data.authorityCertificate !== null ? data.authorityCertificate : rows[0].authority_certificate;
+        const finalInfoSheet = data.informationSheet !== undefined && data.informationSheet !== null ? data.informationSheet : rows[0].information_sheet;
 
         const updateQuery = `
             UPDATE in_process_franchise_find_stores SET
@@ -56,6 +67,7 @@ const upsertFindStore = async (data) => {
                 cluster_value = ?,
                 process_active_value = ?,
                 authority_certificate = ?,
+                information_sheet = ?,
                 status = 'pending',
                 rejection_reason = NULL,
                 submitted_by = ?
@@ -69,6 +81,7 @@ const upsertFindStore = async (data) => {
             data.clusterValue || null,
             data.processActiveValue || null,
             finalAuthCert || null,
+            finalInfoSheet || null,
             data.submittedBy,
             data.inProcessFranchiseId
         ]);
@@ -78,8 +91,8 @@ const upsertFindStore = async (data) => {
             INSERT INTO in_process_franchise_find_stores (
                 in_process_franchise_id, store_location, store_map_link, store_photo,
                 business_area, cluster_value, process_active_value, authority_certificate,
-                status, submitted_by
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                information_sheet, status, submitted_by
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
         `;
         const [result] = await db.execute(insertQuery, [
             data.inProcessFranchiseId,
@@ -90,6 +103,7 @@ const upsertFindStore = async (data) => {
             data.clusterValue || null,
             data.processActiveValue || null,
             data.authorityCertificate || null,
+            data.informationSheet || null,
             data.submittedBy
         ]);
         return { action: 'created', result };

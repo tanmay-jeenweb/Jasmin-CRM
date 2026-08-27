@@ -21,7 +21,7 @@ const createBranchFranchiseMappingTables = async () => {
         CREATE TABLE IF NOT EXISTS branch_franchise_mappings (
             id INT AUTO_INCREMENT PRIMARY KEY,
             franchise_id INT NOT NULL UNIQUE,
-            branch_code VARCHAR(50) NOT NULL,
+            branch_code VARCHAR(50) NOT NULL UNIQUE,
             submitted_by INT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -32,6 +32,20 @@ const createBranchFranchiseMappingTables = async () => {
     `;
     await db.execute(createMappingsTableQuery);
     console.log("Branch franchise mappings table ready");
+
+    // Enforce UNIQUE key constraint on branch_code for existing tables (1-to-1 mapping)
+    try {
+        const addUniqueConstraintQuery = `
+            ALTER TABLE branch_franchise_mappings 
+            ADD CONSTRAINT unique_branch_code UNIQUE (branch_code)
+        `;
+        await db.execute(addUniqueConstraintQuery);
+        console.log("Added UNIQUE constraint on branch_code to branch_franchise_mappings table");
+    } catch (err) {
+        if (err.code !== 'ER_DUP_KEYNAME') {
+            console.warn("Could not add unique constraint on branch_code: ", err.message);
+        }
+    }
 };
 
 const syncBranches = async (branches) => {
@@ -161,6 +175,23 @@ const deleteMapping = async (id) => {
     return result;
 };
 
+const getMappingByFranchiseId = async (franchiseId) => {
+    const query = `
+        SELECT 
+            bfm.id,
+            bfm.branch_code,
+            eb.branch_name,
+            eb.branch_city,
+            eb.branch_state,
+            bfm.created_at
+        FROM branch_franchise_mappings bfm
+        JOIN external_branches eb ON bfm.branch_code = eb.branch_code
+        WHERE bfm.franchise_id = ?
+    `;
+    const [rows] = await db.execute(query, [franchiseId]);
+    return rows[0] || null;
+};
+
 module.exports = {
     createBranchFranchiseMappingTables,
     syncBranches,
@@ -169,5 +200,6 @@ module.exports = {
     getAllMappings,
     getMappingById,
     createMapping,
-    deleteMapping
+    deleteMapping,
+    getMappingByFranchiseId
 };

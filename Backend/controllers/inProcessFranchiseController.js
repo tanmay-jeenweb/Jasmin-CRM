@@ -70,6 +70,7 @@ const {
     getFranchiseBranchFinanceCodesByFranchiseId,
     saveFranchiseBranchFinanceCodes
 } = require('../models/franchiseBranchFinanceCodeModel.js');
+const { getMappingByFranchiseId } = require('../models/branchFranchiseMappingModel.js');
 
 const addInProcessFranchiseController = async (req, res) => {
     try {
@@ -288,6 +289,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const franchiseMapping = isApproved ? await getFranchiseMappingsByFranchiseId(id) : [];
         const franchiseInsurance = isApproved ? await getFranchiseInsuranceByFranchiseId(id) : null;
         const franchiseBranchFinanceCode = isApproved ? await getFranchiseBranchFinanceCodesByFranchiseId(id) : null;
+        const branchMapping = isApproved ? await getMappingByFranchiseId(id) : null;
 
         res.status(200).json({
             success: true,
@@ -307,7 +309,8 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 franchiseDepositStock,
                 franchiseMapping,
                 franchiseInsurance,
-                franchiseBranchFinanceCode
+                franchiseBranchFinanceCode,
+                branchMapping
             }
         });
     } catch (error) {
@@ -346,8 +349,13 @@ const upsertFindStoreController = async (req, res) => {
         // Get files
         const storePhotoFiles = req.files && req.files['storePhoto'] ? req.files['storePhoto'] : [];
         const authorityCertificateFile = req.files && req.files['authorityCertificate'] ? req.files['authorityCertificate'][0] : null;
+        const informationSheetFile = req.files && req.files['informationSheet'] ? req.files['informationSheet'][0] : null;
 
         const existing = await getFindStoreByFranchiseId(id);
+
+        if (!informationSheetFile && (!existing || !existing.information_sheet)) {
+            return res.status(400).json({ success: false, message: 'Franchise Agreement - Information Sheet is required' });
+        }
 
         // Retrieve existing photos that were kept by the user, if provided
         let existingPhotos = [];
@@ -381,9 +389,14 @@ const upsertFindStoreController = async (req, res) => {
 
         const storePhotoPath = JSON.stringify(allPhotos);
         let authorityCertificatePath = undefined;
+        let informationSheetPath = undefined;
 
         if (authorityCertificateFile) {
             authorityCertificatePath = authorityCertificateFile.filename;
+        }
+
+        if (informationSheetFile) {
+            informationSheetPath = informationSheetFile.filename;
         }
 
         const data = {
@@ -395,6 +408,7 @@ const upsertFindStoreController = async (req, res) => {
             clusterValue: clusterValue ? clusterValue.trim() : null,
             processActiveValue: processActiveValue ? processActiveValue.trim() : null,
             authorityCertificate: authorityCertificatePath,
+            informationSheet: informationSheetPath,
             submittedBy
         };
 

@@ -3,7 +3,7 @@ const db = require('../config/db.js');
 const createCompanyBrandsTable = async () => {
     const query = `
         CREATE TABLE IF NOT EXISTS company_brand_master (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id INT PRIMARY KEY,
             brand_name VARCHAR(255) NOT NULL UNIQUE,
             added_by INT NOT NULL,
             device_id VARCHAR(255),
@@ -12,13 +12,29 @@ const createCompanyBrandsTable = async () => {
         )
     `;
     await db.execute(query);
+
+    // Drop AUTO_INCREMENT if it exists
+    try {
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 0`);
+        await db.execute(`ALTER TABLE company_brand_master MODIFY COLUMN id INT NOT NULL`);
+        await db.execute(`SET FOREIGN_KEY_CHECKS = 1`);
+        console.log("Removed AUTO_INCREMENT from company_brand_master table");
+    } catch (err) {
+        console.error("Error migrating company_brand_master id column:", err);
+    }
+
     console.log("Company brand master table ready");
 };
 
-const createCompanyBrand = async (brandName, addedBy, deviceId) => {
-    const query = `INSERT INTO company_brand_master (brand_name, added_by, device_id) VALUES (?, ?, ?)`;
-    const [result] = await db.execute(query, [brandName, addedBy, deviceId]);
-    return result;
+const createCompanyBrand = async (brandName, addedBy, deviceId, id = null) => {
+    let finalId = id;
+    if (!finalId) {
+        const [rows] = await db.execute('SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM company_brand_master');
+        finalId = rows[0].nextId;
+    }
+    const query = `INSERT INTO company_brand_master (id, brand_name, added_by, device_id) VALUES (?, ?, ?, ?)`;
+    const [result] = await db.execute(query, [finalId, brandName, addedBy, deviceId]);
+    return { ...result, insertId: finalId };
 };
 
 const getAllCompanyBrands = async () => {

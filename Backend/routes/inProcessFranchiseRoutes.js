@@ -46,7 +46,8 @@ router.delete('/delete/:id', verifyToken, verifyPermission('in_process_franchise
 // Find Store stage routes
 router.post('/:id/find-store', verifyToken, verifyPermission('in_process_franchise', 'update'), upload.fields([
     { name: 'storePhoto', maxCount: 20 },
-    { name: 'authorityCertificate', maxCount: 1 }
+    { name: 'authorityCertificate', maxCount: 1 },
+    { name: 'informationSheet', maxCount: 1 }
 ]), upsertFindStoreController);
 
 router.post('/:id/find-store/approve', verifyToken, verifyPermission('store_details_approval', 'write'), approveFindStoreController);
