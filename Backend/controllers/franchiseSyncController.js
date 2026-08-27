@@ -75,7 +75,7 @@ const syncMappingsController = async (req, res) => {
         }
 
         const { branchId } = req.params;
-        const { mappings } = req.body;
+        const relations = req.body.relations || req.body.mappings;
 
         // 2. Resolve franchise ID
         const franchiseId = await resolveFranchiseId(branchId);
@@ -86,7 +86,7 @@ const syncMappingsController = async (req, res) => {
             });
         }
 
-        const mappingsData = Array.isArray(mappings) ? mappings : [];
+        const mappingsData = Array.isArray(relations) ? relations : [];
         
         // Map brand_id/company_id from ERP schema to internal mobile_brand_id/bank_id format
         const formattedMappings = mappingsData.map(m => ({
@@ -195,3 +195,4 @@ module.exports = {
     syncMappingsController,
     syncFinanceCodesController
 };
+

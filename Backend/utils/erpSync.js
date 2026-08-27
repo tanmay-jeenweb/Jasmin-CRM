@@ -29,11 +29,11 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
         }
 
         const branchCode = mappingRows[0].branch_code;
-        const targetUrl = `${erpUrl}/v1/api/external/sync/brand-finance-mapping/${encodeURIComponent(branchCode)}`;
+        const targetUrl = `${erpUrl}/v1/api/external/sync/brand-finance-relations/${encodeURIComponent(branchCode)}`;
 
         // Map internal structure to ERP expectation
         const payload = {
-            mappings: mappingsData.map(m => ({
+            relations: mappingsData.map(m => ({
                 brand_id: m.mobile_brand_id || m.brand_id,
                 company_id: m.bank_id || m.company_id
             }))
@@ -47,7 +47,8 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
                 'Content-Type': 'application/json',
                 'userid': userid,
                 'securitycode': securitycode,
-                'x-sync-source': xSyncSource
+                'x-sync-source': xSyncSource,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
             body: JSON.stringify(payload)
         });
@@ -121,7 +122,8 @@ async function syncFinanceCodesToErp(franchiseId, financeData, xSyncSource = 'JA
                 'Content-Type': 'application/json',
                 'userid': userid,
                 'securitycode': securitycode,
-                'x-sync-source': xSyncSource
+                'x-sync-source': xSyncSource,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
             body: JSON.stringify(payload)
         });
@@ -141,3 +143,7 @@ module.exports = {
     syncMappingsToErp,
     syncFinanceCodesToErp
 };
+
+
+
+

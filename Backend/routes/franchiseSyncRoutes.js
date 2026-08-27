@@ -7,9 +7,10 @@ const {
 const router = express.Router();
 
 // Route for Endpoint A: Sync Mappings
-router.post('/sync-mappings/:branchId', syncMappingsController);
+router.post('/sync-relations/:branchId', syncMappingsController);
 
 // Route for Endpoint B: Sync Finance Codes
 router.post('/sync-finance-codes/:branchId', syncFinanceCodesController);
 
 module.exports = router;
+
