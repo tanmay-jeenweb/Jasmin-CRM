@@ -56,6 +56,22 @@ const createFranchiseBranchFinanceCodeTables = async () => {
         )
     `;
     await db.execute(companiesQuery);
+
+    // 4. Details table (qr_code_id_password and remarks)
+    const detailsQuery = `
+        CREATE TABLE IF NOT EXISTS in_process_franchise_branch_finance_details (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            in_process_franchise_id INT NOT NULL UNIQUE,
+            qr_code_id_password VARCHAR(255) DEFAULT '',
+            remarks TEXT,
+            submitted_by INT NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (in_process_franchise_id) REFERENCES in_process_franchises(id) ON DELETE CASCADE,
+            FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE CASCADE
+        )
+    `;
+    await db.execute(detailsQuery);
     console.log("In Process Franchise Branch Finance Code tables ready");
 };
 
@@ -101,7 +117,16 @@ const getFranchiseBranchFinanceCodesByFranchiseId = async (franchiseId) => {
     `;
     const [companies] = await db.execute(companiesQuery, [franchiseId]);
 
-    return { brands, machines, companies };
+    // 4. Fetch details
+    const detailsQuery = `
+        SELECT qr_code_id_password, remarks
+        FROM in_process_franchise_branch_finance_details
+        WHERE in_process_franchise_id = ?
+    `;
+    const [detailsRows] = await db.execute(detailsQuery, [franchiseId]);
+    const details = detailsRows[0] || { qr_code_id_password: '', remarks: '' };
+
+    return { brands, machines, companies, details };
 };
 
 const saveFranchiseBranchFinanceCodes = async (franchiseId, data, submittedBy) => {
@@ -156,6 +181,21 @@ const saveFranchiseBranchFinanceCodes = async (franchiseId, data, submittedBy) =
                     await connection.execute(insertCompanyQuery, [franchiseId, c.company_id, c.company_code.trim(), submittedBy]);
                 }
             }
+        }
+
+        // 4. Save Details (Delete first then Insert if not empty)
+        await connection.execute(`DELETE FROM in_process_franchise_branch_finance_details WHERE in_process_franchise_id = ?`, [franchiseId]);
+        if (data.details) {
+            const insertDetailsQuery = `
+                INSERT INTO in_process_franchise_branch_finance_details (in_process_franchise_id, qr_code_id_password, remarks, submitted_by)
+                VALUES (?, ?, ?, ?)
+            `;
+            await connection.execute(insertDetailsQuery, [
+                franchiseId,
+                data.details.qr_code_id_password || '',
+                data.details.remarks || '',
+                submittedBy
+            ]);
         }
 
         await connection.commit();
