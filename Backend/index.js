@@ -123,7 +123,7 @@ app.use(["/api/banks", "/banks"], bankRoutes);
 app.use(["/api/financemachines", "/financemachines"], financeMachineRoutes);
 app.use(["/api/branch-franchise-mappings", "/branch-franchise-mappings"], branchFranchiseMappingRoutes);
 app.use(["/api/sync", "/sync"], syncRoutes);
-app.use("/v1/api/franchise", franchiseSyncRoutes);
+app.use(["/api/v1/api/franchise", "/api/franchise", "/v1/api/franchise"], franchiseSyncRoutes);
 
 
 
@@ -191,4 +191,4 @@ const startServer = async () => {
     }
 };
 
-startServer();
+startServer();
