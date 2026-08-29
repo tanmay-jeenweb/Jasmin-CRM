@@ -8,7 +8,8 @@ const db = require('../config/db.js');
  */
 async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMIN-CRM') {
     try {
-        const erpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL;
+        const rawErpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL || '';
+        const erpUrl = rawErpUrl.replace(/\/$/, '');
         const userid = process.env.ERP_SYNC_USERID || process.env.EXTERNAL_BRANCH_API_USERID;
         const securitycode = process.env.ERP_SYNC_SECURITYCODE || process.env.EXTERNAL_BRANCH_API_SECURITY_CODE;
 
@@ -29,7 +30,7 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
         }
 
         const branchCode = mappingRows[0].branch_code;
-        const targetUrl = `${erpUrl}/v1/api/external/sync/brand-finance-mapping/${encodeURIComponent(branchCode)}`;
+        const targetUrl = `${erpUrl}/v1/api/external/sync/brand-finance-relations/${encodeURIComponent(branchCode)}`;
 
         // Map internal structure to ERP expectation
         const payload = {
@@ -47,7 +48,8 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
                 'Content-Type': 'application/json',
                 'userid': userid,
                 'securitycode': securitycode,
-                'x-sync-source': xSyncSource
+                'x-sync-source': xSyncSource,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
             body: JSON.stringify(payload)
         });
@@ -71,7 +73,8 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
  */
 async function syncFinanceCodesToErp(franchiseId, financeData, xSyncSource = 'JASMIN-CRM') {
     try {
-        const erpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL;
+        const rawErpUrl = process.env.ERP_API_URL || process.env.EXTERNAL_BRANCH_API_URL || '';
+        const erpUrl = rawErpUrl.replace(/\/$/, '');
         const userid = process.env.ERP_SYNC_USERID || process.env.EXTERNAL_BRANCH_API_USERID;
         const securitycode = process.env.ERP_SYNC_SECURITYCODE || process.env.EXTERNAL_BRANCH_API_SECURITY_CODE;
 
@@ -121,7 +124,8 @@ async function syncFinanceCodesToErp(franchiseId, financeData, xSyncSource = 'JA
                 'Content-Type': 'application/json',
                 'userid': userid,
                 'securitycode': securitycode,
-                'x-sync-source': xSyncSource
+                'x-sync-source': xSyncSource,
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             },
             body: JSON.stringify(payload)
         });
