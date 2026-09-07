@@ -243,6 +243,24 @@ export default function Navbar() {
             color: "bg-violet-50 text-violet-600 border border-violet-100/50",
             activeColor: "bg-violet-100 text-violet-700",
             desc: "Manage finance machines"
+        },
+        {
+            name: "Store Brand Master",
+            path: "/admin/store-brands",
+            masterKey: "store_brand_master",
+            icon: "fa-solid fa-store",
+            color: "bg-amber-50 text-amber-600 border border-amber-100/50",
+            activeColor: "bg-amber-100 text-amber-700",
+            desc: "Manage store brands"
+        },
+        {
+            name: "Branch Franchise Mapping",
+            path: "/admin/branch-franchise-mapping",
+            masterKey: "branch_franchise_mapping",
+            icon: "fa-solid fa-network-wired",
+            color: "bg-sky-50 text-sky-600 border border-sky-100/50",
+            activeColor: "bg-sky-100 text-sky-700",
+            desc: "Manage branch franchise mapping"
         }
     ];
 

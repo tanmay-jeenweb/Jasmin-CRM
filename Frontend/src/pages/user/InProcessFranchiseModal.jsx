@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { getActiveUsers } from "../../api/inProcessFranchiseApi";
-import { getCompanyBrands } from "../../api/companyBrandApi";
+import { getStoreBrands } from "../../api/storeBrandApi";
 import toast from "react-hot-toast";
 
 export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, onClose, onSave, saving }) {
@@ -18,7 +18,7 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
   const [storeName, setStoreName] = useState("JASMIN");
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
-  const [companyBrands, setCompanyBrands] = useState([]);
+  const [storeBrands, setStoreBrands] = useState([]);
   const [loadingBrands, setLoadingBrands] = useState(false);
 
   const isEdit = !!franchise;
@@ -40,15 +40,19 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
         }
       };
 
-      // Fetch company brands
+      // Fetch store brands
       const fetchBrands = async () => {
         setLoadingBrands(true);
         try {
-          const res = await getCompanyBrands();
-          setCompanyBrands(res.data.data || []);
+          const res = await getStoreBrands();
+          const brands = res.data.data || [];
+          setStoreBrands(brands);
+          if (!franchise && !inquiry && brands.length > 0) {
+            setStoreName(brands[0].name);
+          }
         } catch (err) {
-          console.error("Failed to fetch company brands:", err);
-          toast.error("Failed to load company brands.");
+          console.error("Failed to fetch store brands:", err);
+          toast.error("Failed to load store brands.");
         } finally {
           setLoadingBrands(false);
         }
@@ -311,23 +315,23 @@ export default function InProcessFranchiseModal({ isOpen, inquiry, franchise, on
               <div style={{ gridColumn: "span 2" }}>
                 <label style={labelStyle}>Store Name *</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 8 }}>
-                  {companyBrands.length > 0 ? (
-                    companyBrands.map((brand) => (
+                  {storeBrands.length > 0 ? (
+                    storeBrands.map((brand) => (
                       <label key={brand.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", fontSize: 14, fontWeight: 600, color: "#334155" }}>
                         <input
                           type="radio"
                           name="storeName"
-                          value={brand.brand_name}
-                          checked={storeName === brand.brand_name}
+                          value={brand.name}
+                          checked={storeName === brand.name}
                           onChange={(e) => setStoreName(e.target.value)}
                           style={{ accentColor: "#6804a1", width: 16, height: 16 }}
                         />
-                        {brand.brand_name}
+                        {brand.name}
                       </label>
                     ))
                   ) : (
                     <span style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic" }}>
-                      No brands available in Company Brand Master
+                      No brands available in Store Brand Master
                     </span>
                   )}
                 </div>

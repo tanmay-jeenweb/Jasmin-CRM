@@ -27,6 +27,7 @@ const bankRoutes = require("./routes/bankRoutes.js");
 const financeMachineRoutes = require("./routes/financeMachineRoutes.js");
 const franchiseRoutes = require("./routes/franchiseRoutes.js");
 const branchFranchiseMappingRoutes = require("./routes/branchFranchiseMappingRoutes.js");
+const storeBrandRoutes = require("./routes/storeBrandRoutes.js");
 const syncRoutes = require("./routes/syncRoutes.js");
 const franchiseSyncRoutes = require("./routes/franchiseSyncRoutes.js");
 
@@ -65,6 +66,7 @@ const { createFranchiseInsuranceTable } = require("./models/franchiseInsuranceMo
 const { createFinanceMachineTable } = require("./models/financeMachineModel.js");
 const { createFranchiseBranchFinanceCodeTables } = require("./models/franchiseBranchFinanceCodeModel.js");
 const { createBranchFranchiseMappingTables } = require("./models/branchFranchiseMappingModel.js");
+const { createStoreBrandsTable } = require("./models/storeBrandModel.js");
 
 
 const app = express();
@@ -122,6 +124,7 @@ app.use(["/api/mobilebrands", "/mobilebrands"], mobileBrandRoutes);
 app.use(["/api/banks", "/banks"], bankRoutes);
 app.use(["/api/financemachines", "/financemachines"], financeMachineRoutes);
 app.use(["/api/branch-franchise-mappings", "/branch-franchise-mappings"], branchFranchiseMappingRoutes);
+app.use(["/api/storebrands", "/storebrands", "/api/store-brands", "/store-brands"], storeBrandRoutes);
 app.use(["/api/sync", "/sync"], syncRoutes);
 app.use(["/api/v1/api/franchise", "/api/franchise", "/v1/api/franchise"], franchiseSyncRoutes);
 
@@ -178,6 +181,7 @@ const startServer = async () => {
         await createFranchiseInsuranceTable();
         await createFranchiseBranchFinanceCodeTables();
         await createBranchFranchiseMappingTables();
+        await createStoreBrandsTable();
 
         console.log("All database tables are initialized and ready.");
 

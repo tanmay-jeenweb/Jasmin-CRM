@@ -12,7 +12,7 @@ import {
   updateFranchise
 } from "../../api/franchiseApi";
 import { getDocuments } from "../../api/documentApi";
-import { getCompanyBrands } from "../../api/companyBrandApi";
+import { getStoreBrands } from "../../api/storeBrandApi";
 import toast from "react-hot-toast";
 
 import FindStoreForm from "./components/FindStoreForm";
@@ -43,7 +43,7 @@ export default function FranchiseDetails() {
 
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
-  const [companyBrands, setCompanyBrands] = useState([]);
+  const [storeBrands, setStoreBrands] = useState([]);
 
   // States for Accordion Activity Reports
   const [activityLogs, setActivityLogs] = useState([]);
@@ -110,7 +110,7 @@ export default function FranchiseDetails() {
           getFranchiseById(id),
           getActiveUsers(),
           getDocuments().catch(() => ({ data: { success: false, data: [] } })),
-          getCompanyBrands().catch(() => ({ data: { success: false, data: [] } })),
+          getStoreBrands().catch(() => ({ data: { success: false, data: [] } })),
           getFranchiseActivityLogs(id).catch(() => ({ data: { success: false, logs: [] } }))
         ]);
 
@@ -138,7 +138,7 @@ export default function FranchiseDetails() {
         }
 
         if (brandsRes.data?.success) {
-          setCompanyBrands(brandsRes.data.data || []);
+          setStoreBrands(brandsRes.data.data || []);
         }
 
         if (logsRes && logsRes.data?.success) {
@@ -1317,11 +1317,11 @@ export default function FranchiseDetails() {
               <div>
                 <label className="block text-xs font-bold text-slate-600 mb-2">Store Name</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {companyBrands.length > 0 ? (
-                    companyBrands.map((brand) => (
+                  {storeBrands.length > 0 ? (
+                    storeBrands.map((brand) => (
                       <label
                         key={brand.id}
-                        className={`flex items-center gap-3 cursor-pointer font-bold text-xs uppercase border rounded-xl p-3 transition-all ${storeName === brand.brand_name
+                        className={`flex items-center gap-3 cursor-pointer font-bold text-xs uppercase border rounded-xl p-3 transition-all ${storeName === brand.name
                           ? "border-[#6804a1] bg-[#f5f3ff] text-[#6804a1]"
                           : "border-slate-200 text-slate-500 hover:bg-slate-50"
                           }`}
@@ -1329,16 +1329,16 @@ export default function FranchiseDetails() {
                         <input
                           type="radio"
                           name="modalStoreName"
-                          value={brand.brand_name}
-                          checked={storeName === brand.brand_name}
+                          value={brand.name}
+                          checked={storeName === brand.name}
                           onChange={(e) => setStoreName(e.target.value)}
                           className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1] accent-[#6804a1]"
                         />
-                        {brand.brand_name}
+                        {brand.name}
                       </label>
                     ))
                   ) : (
-                    <span className="text-xs text-slate-400 italic">No brands available</span>
+                    <span className="text-xs text-slate-400 italic">No brands available in Store Brand Master</span>
                   )}
                 </div>
               </div>
