@@ -4,7 +4,8 @@ const db = require("../config/db.js");
 const {
     createUser,
     getUserById,
-    toggleUserActive
+    toggleUserActive,
+    updateUserByAdmin
 } = require("../models/userModel.js");
 
 const {
@@ -24,8 +25,9 @@ const fetchUsers = async (req, res) => {
         const query = `
             SELECT 
                 u.id, u.name, u.username, u.email, u.mob_no, u.role,
+                u.user_type_id,
                 d.status AS device_status, ut.type_name,
-                d.device_id, device_verification_required, u.active
+                d.device_id, u.device_verification_required, u.active
             FROM users u
             LEFT JOIN user_devices d ON d.user_id = u.id AND d.closed_at IS NULL
             LEFT JOIN user_types ut ON u.user_type_id = ut.id
@@ -265,6 +267,117 @@ const toggleUserActiveController = async (req, res) => {
     }
 };
 
+const updateUserController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            name,
+            username,
+            email,
+            password,
+            userTypeId,
+            mobNo,
+            deviceVerificationRequired,
+            role,
+            active
+        } = req.body;
+
+        if (!name || !username || !email) {
+            return res.status(400).json({ success: false, message: "Name, username, and email are required." });
+        }
+
+        const existingUser = await getUserById(id);
+        if (!existingUser) {
+            return res.status(404).json({ success: false, message: "User not found." });
+        }
+
+        // Check if username or email is already in use by another user
+        const [duplicateUsers] = await db.execute(
+            "SELECT id, username, email FROM users WHERE (username = ? OR email = ?) AND id != ?",
+            [username.trim(), email.trim(), id]
+        );
+
+        if (duplicateUsers.length > 0) {
+            if (duplicateUsers.some(u => u.username?.toLowerCase() === username.trim().toLowerCase())) {
+                return res.status(400).json({ success: false, message: "Username is already in use by another user." });
+            }
+            if (duplicateUsers.some(u => u.email?.toLowerCase() === email.trim().toLowerCase())) {
+                return res.status(400).json({ success: false, message: "Email is already in use by another user." });
+            }
+        }
+
+        let hashedPassword = null;
+        if (password && typeof password === 'string' && password.trim().length > 0) {
+            if (password.trim().length < 6) {
+                return res.status(400).json({ success: false, message: "Password must be at least 6 characters long." });
+            }
+            hashedPassword = await bcrypt.hash(password.trim(), 10);
+        }
+
+        const parsedUserTypeId = userTypeId ? parseInt(userTypeId, 10) : null;
+        const isDeviceVerificationRequired = typeof deviceVerificationRequired === 'boolean' 
+            ? deviceVerificationRequired 
+            : (deviceVerificationRequired !== undefined ? Boolean(deviceVerificationRequired) : true);
+        const isActive = typeof active === 'boolean' 
+            ? active 
+            : (active !== undefined ? Boolean(active) : true);
+        const userRole = role || existingUser.role || 'user';
+
+        await updateUserByAdmin(
+            id,
+            name.trim(),
+            username.trim(),
+            email.trim(),
+            parsedUserTypeId,
+            mobNo ? mobNo.trim() : null,
+            isDeviceVerificationRequired,
+            isActive,
+            userRole,
+            hashedPassword
+        );
+
+        const adminDeviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+        await createAuditLog(
+            req.user?.id,
+            req.user?.name || req.user?.username || 'Unknown',
+            adminDeviceId,
+            'User Master',
+            'updated',
+            {
+                id: existingUser.id,
+                name: existingUser.name,
+                username: existingUser.username,
+                email: existingUser.email,
+                mob_no: existingUser.mob_no,
+                role: existingUser.role,
+                user_type_id: existingUser.user_type_id,
+                device_verification_required: existingUser.device_verification_required,
+                active: existingUser.active
+            },
+            {
+                id: existingUser.id,
+                name: name.trim(),
+                username: username.trim(),
+                email: email.trim(),
+                mob_no: mobNo ? mobNo.trim() : null,
+                role: userRole,
+                user_type_id: parsedUserTypeId,
+                device_verification_required: isDeviceVerificationRequired,
+                active: isActive,
+                password_changed: !!hashedPassword
+            }
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "User settings updated successfully."
+        });
+    } catch (error) {
+        console.error("Update User Error:", error);
+        return res.status(500).json({ success: false, message: "Server Error" });
+    }
+};
+
 module.exports = {
     fetchUsers,
     createUserByAdmin,
@@ -274,5 +387,6 @@ module.exports = {
     fetchUserAuditLogs,
     fetchActivityLogs,
     fetchPendingDevices,
-    toggleUserActiveController
+    toggleUserActiveController,
+    updateUserController
 };

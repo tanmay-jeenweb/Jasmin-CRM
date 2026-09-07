@@ -15,6 +15,36 @@ const {
     createPendingDevice
 } = require("../models/deviceModel.js");
 
+// Helper to record login and logout audit activities
+const logAuthActivity = async (req, user, changeType, deviceId) => {
+    try {
+        const rawIp = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || null;
+        const ipAddress = typeof rawIp === 'string' ? rawIp.split(',')[0].trim() : null;
+        const userAgent = req.headers['user-agent'] || null;
+
+        await createAuditLog(
+            user.id,
+            user.name || user.username || 'Unknown',
+            deviceId || null,
+            'Authentication',
+            changeType,
+            null,
+            {
+                user_id: user.id,
+                username: user.username,
+                name: user.name,
+                role: user.role,
+                device_id: deviceId || null,
+                ip_address: ipAddress,
+                user_agent: userAgent
+            }
+        );
+        console.log(`[AUTH] User "${user.username}" (${user.name || 'N/A'}) ${changeType === 'login' ? 'logged in' : 'logged out'} successfully [Role: ${user.role || 'N/A'}, Device: ${deviceId || 'N/A'}]`);
+    } catch (err) {
+        console.error(`Failed to log auth activity (${changeType}):`, err);
+    }
+};
+
 // ================= LOGIN =================
 
 const login = async (req, res) => {
@@ -66,6 +96,8 @@ const login = async (req, res) => {
                 { expiresIn: "1d" }
             );
 
+            await logAuthActivity(req, user, "login", deviceId);
+
             return res.status(200).json({
                 success: true,
                 message: "Admin login successful",
@@ -89,6 +121,8 @@ const login = async (req, res) => {
                 process.env.JWT_SECRET,
                 { expiresIn: "1d" }
             );
+
+            await logAuthActivity(req, user, "login", deviceId);
 
             return res.status(200).json({
                 success: true,
@@ -116,6 +150,8 @@ const login = async (req, res) => {
                     process.env.JWT_SECRET,
                     { expiresIn: "1d" }
                 );
+
+                await logAuthActivity(req, user, "login", deviceId);
 
                 return res.status(200).json({
                     success: true,
@@ -239,6 +275,33 @@ const requestDeviceRegistration = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
+        const authHeader = req.headers.authorization;
+        let token = null;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+            token = authHeader.split(" ")[1];
+        }
+
+        const deviceId = req.headers["x-device-id"] || req.headers["device-id"] || req.body?.deviceId || null;
+
+        let user = null;
+        if (token) {
+            try {
+                user = jwt.verify(token, process.env.JWT_SECRET);
+            } catch (err) {
+                // Decode payload even if token has expired
+                user = jwt.decode(token);
+            }
+        }
+
+        // If user not in token, fallback to body user payload
+        if (!user && req.body?.user) {
+            user = req.body.user;
+        }
+
+        if (user && user.id) {
+            await logAuthActivity(req, user, "logout", deviceId);
+        }
+
         return res.status(200).json({
             success: true,
             message: "Logged out successfully"

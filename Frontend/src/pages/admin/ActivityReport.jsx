@@ -70,6 +70,8 @@ function DetailModal({ isOpen, row, onClose }) {
               <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase" }}>Action Type</span>
               <p style={{ margin: "2px 0 0" }}>
                 <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                  row.change_type === 'login' ? 'bg-emerald-100 text-emerald-800' :
+                  row.change_type === 'logout' ? 'bg-blue-100 text-blue-800' :
                   row.change_type === 'created' || row.change_type === 'approved' ? 'bg-green-100 text-green-800' :
                   row.change_type === 'updated' ? 'bg-amber-100 text-amber-800' :
                   row.change_type === 'deleted' || row.change_type === 'rejected' ? 'bg-rose-100 text-rose-800' :
@@ -204,6 +206,8 @@ export default function ActivityReport() {
         const displayAction = isClosedInquiry ? 'closed' : row.change_type;
         return (
           <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold tracking-wide ${
+            displayAction === 'login' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+            displayAction === 'logout' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
             displayAction === 'created' || displayAction === 'approved' ? 'bg-green-50 text-green-700 border border-green-200' :
             displayAction === 'updated' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
             displayAction === 'deleted' || displayAction === 'rejected' || displayAction === 'closed' ? 'bg-rose-50 text-rose-700 border border-rose-200' :

@@ -84,33 +84,41 @@ const verifyPermission = (masterName, action) => {
 
             const userTypeId = userRows[0].user_type_id;
 
-            // Query permission table
-            let column = "";
-            if (action === "read") column = "can_read";
-            else if (action === "write") column = "can_write";
-            else if (action === "update") column = "can_update";
-            else if (action === "delete") column = "can_delete";
-            else {
+            const masters = Array.isArray(masterName) ? masterName : [masterName];
+            const actions = Array.isArray(action) ? action : [action];
+
+            const actionColumns = {
+                read: "can_read",
+                write: "can_write",
+                update: "can_update",
+                delete: "can_delete"
+            };
+
+            const columns = actions.map(act => actionColumns[act]).filter(Boolean);
+            if (columns.length === 0) {
                 return res.status(500).json({
                     success: false,
                     message: "Invalid permission action."
                 });
             }
 
-            const query = `
-                SELECT ${column} AS permitted 
-                FROM user_type_permissions 
-                WHERE user_type_id = ? AND master_name = ?
-            `;
-            const [permRows] = await db.execute(query, [userTypeId, masterName]);
+            const masterPlaceholders = masters.map(() => '?').join(', ');
+            const orClause = columns.map(c => `${c} = 1`).join(" OR ");
 
-            if (permRows.length > 0 && permRows[0].permitted === 1) {
+            const query = `
+                SELECT 1 
+                FROM user_type_permissions 
+                WHERE user_type_id = ? AND master_name IN (${masterPlaceholders}) AND (${orClause})
+            `;
+            const [permRows] = await db.execute(query, [userTypeId, ...masters]);
+
+            if (permRows.length > 0) {
                 return next();
             }
 
             return res.status(403).json({
                 success: false,
-                message: `Access Denied. Insufficient permissions for ${masterName} (${action}).`
+                message: `Access Denied. Insufficient permissions for ${masters.join('/')} (${actions.join('/')}).`
             });
 
         } catch (error) {

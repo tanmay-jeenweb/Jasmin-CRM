@@ -179,6 +179,52 @@ const toggleUserActive = async (id, active) => {
     return result;
 };
 
+const updateUserByAdmin = async (
+    id,
+    name,
+    username,
+    email,
+    userTypeId = null,
+    mobNo = null,
+    deviceVerificationRequired = true,
+    active = true,
+    role = 'user',
+    hashedPassword = null
+) => {
+    let query = `
+        UPDATE users
+        SET name = ?,
+            username = ?,
+            email = ?,
+            user_type_id = ?,
+            mob_no = ?,
+            device_verification_required = ?,
+            active = ?,
+            role = ?
+    `;
+    const params = [
+        name,
+        username,
+        email,
+        userTypeId,
+        mobNo,
+        deviceVerificationRequired ? 1 : 0,
+        active ? 1 : 0,
+        role
+    ];
+
+    if (hashedPassword) {
+        query += `, password = ?`;
+        params.push(hashedPassword);
+    }
+
+    query += ` WHERE id = ?`;
+    params.push(id);
+
+    const [result] = await db.execute(query, params);
+    return result;
+};
+
 module.exports = {
     initUserModel,
     createUsersTable,
@@ -188,5 +234,6 @@ module.exports = {
     getAllUsers,
     updateUserProfile,
     getUserById,
-    toggleUserActive
+    toggleUserActive,
+    updateUserByAdmin
 };

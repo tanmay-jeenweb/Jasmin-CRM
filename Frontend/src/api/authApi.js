@@ -43,7 +43,11 @@ export const requestDeviceRegistration = async (data) => {
 };
 
 export const logoutUser = async () => {
-    return apiClient.post("/auth/logout");
+    let userData = null;
+    try {
+        userData = JSON.parse(localStorage.getItem("user") || "null");
+    } catch (e) {}
+    return apiClient.post("/auth/logout", { user: userData });
 };
 
 export const getAllUsers = async (includeInactive = false) => {
@@ -69,6 +73,10 @@ export const revokeDevice = async (userId) => {
 
 export const createUserByAdmin = async (data) => {
     return apiClient.post("/admin/create-user", data);
+};
+
+export const updateUserByAdmin = async (id, data) => {
+    return apiClient.put(`/admin/user/${id}`, data);
 };
 
 export const fetchAuditLogs = async (userId = null) => {
