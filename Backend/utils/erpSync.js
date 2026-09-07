@@ -34,7 +34,7 @@ async function syncMappingsToErp(franchiseId, mappingsData, xSyncSource = 'JASMI
 
         // Map internal structure to ERP expectation
         const payload = {
-            mappings: mappingsData.map(m => ({
+            relations: mappingsData.map(m => ({
                 brand_id: m.mobile_brand_id || m.brand_id,
                 company_id: m.bank_id || m.company_id
             }))

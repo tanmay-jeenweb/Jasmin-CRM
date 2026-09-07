@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import { createInProcessFranchise, getActiveUsers } from "../../api/inProcessFranchiseApi";
-import { getCompanyBrands } from "../../api/companyBrandApi";
+import { getStoreBrands } from "../../api/storeBrandApi";
 import { toast } from "react-hot-toast";
 
 export default function CreateInProcessFranchise() {
@@ -10,7 +10,7 @@ export default function CreateInProcessFranchise() {
     const [users, setUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [companyBrands, setCompanyBrands] = useState([]);
+    const [storeBrands, setStoreBrands] = useState([]);
 
     // Form states
     const [formData, setFormData] = useState({
@@ -47,11 +47,18 @@ export default function CreateInProcessFranchise() {
         };
         const fetchBrands = async () => {
             try {
-                const response = await getCompanyBrands();
-                setCompanyBrands(response.data.data || []);
+                const response = await getStoreBrands();
+                const brands = response.data.data || [];
+                setStoreBrands(brands);
+                if (brands.length > 0) {
+                    setFormData(prev => ({
+                        ...prev,
+                        storeName: prev.storeName && brands.some(b => b.name === prev.storeName) ? prev.storeName : brands[0].name
+                    }));
+                }
             } catch (err) {
-                console.error("Failed to load company brands:", err);
-                toast.error("Failed to load company brands.");
+                console.error("Failed to load store brands:", err);
+                toast.error("Failed to load store brands.");
             }
         };
         fetchUsers();
@@ -344,22 +351,22 @@ export default function CreateInProcessFranchise() {
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 mb-2.5">Store Name *</label>
                                 <div className="flex flex-wrap gap-6 mt-1">
-                                    {companyBrands.length > 0 ? (
-                                        companyBrands.map((brand) => (
+                                    {storeBrands.length > 0 ? (
+                                        storeBrands.map((brand) => (
                                             <label key={brand.id} className="flex items-center gap-2 cursor-pointer font-semibold text-sm text-slate-700">
                                                 <input
                                                     type="radio"
                                                     name="storeName"
-                                                    value={brand.brand_name}
-                                                    checked={formData.storeName === brand.brand_name}
+                                                    value={brand.name}
+                                                    checked={formData.storeName === brand.name}
                                                     onChange={handleChange}
                                                     className="w-4 h-4 text-[#6804a1] focus:ring-[#6804a1]"
                                                 />
-                                                {brand.brand_name}
+                                                {brand.name}
                                             </label>
                                         ))
                                     ) : (
-                                        <span className="text-xs text-slate-400 italic">No brands available in Company Brand Master</span>
+                                        <span className="text-xs text-slate-400 italic">No brands available in Store Brand Master</span>
                                     )}
                                 </div>
                             </div>

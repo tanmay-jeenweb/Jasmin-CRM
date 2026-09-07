@@ -98,10 +98,10 @@ const syncMastersController = async (req, res) => {
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'External Sync';
 
         // 1. Fetch from external API
-        const externalBaseUrl = process.env.EXTERNAL_BRANCH_API_URL || 'http://localhost:5005';
-        const apiUrl = `${externalBaseUrl.replace(/\/$/, '')}/v1/api/external/master-data`;
-        const userid = process.env.EXTERNAL_BRANCH_API_USERID || 'WebSite';
-        const securitycode = process.env.EXTERNAL_BRANCH_API_SECURITY_CODE || '1151-8111-6444-4166';
+        const erpUrl = process.env.ERP_API_URL || 'http://localhost:5005';
+        const apiUrl = `${erpUrl.replace(/\/$/, '')}/v1/api/external/master-data`;
+        const userid = process.env.ERP_SYNC_USERID || 'WebSite';
+        const securitycode = process.env.ERP_SYNC_SECURITYCODE || '1151-8111-6444-4166';
 
         console.log(`Sync started. Fetching from external URL: ${apiUrl}`);
 
