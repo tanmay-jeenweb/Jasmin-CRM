@@ -8,10 +8,12 @@ import {
     fetchAuditLogs,
     toggleUserActive
 } from "../../api/authApi";
+import { getUserTypes } from "../../api/userTypeMasterApi";
 import Navbar from "../../components/Navbar";
 import DataTable from "../../components/DataTable";
 import { useNavigate } from "react-router-dom";
 import { usePermission } from "../../context/PermissionContext";
+import EditUserModal from "./user/EditUserModal";
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -30,6 +32,9 @@ export default function AdminDashboard() {
 
     const [showInactive, setShowInactive] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+    const [userTypes, setUserTypes] = useState([]);
 
     const fetchData = async () => {
         if (permissionLoading) return;
@@ -78,11 +83,30 @@ export default function AdminDashboard() {
         }
     }, [permissionLoading, canReadUsers, canReadDevices]);
 
+    const loadUserTypes = async () => {
+        try {
+            const res = await getUserTypes();
+            setUserTypes(res.data?.data || []);
+        } catch (err) {
+            console.error("Error fetching user types:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (canReadUsers) {
+            loadUserTypes();
+        }
+    }, [canReadUsers]);
+
     useEffect(() => {
         fetchData();
     }, [showInactive, permissionLoading, canReadUsers, canReadDevices]);
 
     // Handlers
+    const handleOpenEditUser = (row) => {
+        setSelectedUserForEdit(row);
+        setIsEditModalOpen(true);
+    };
     const handleRevokeDevice = async (userId) => {
         if (!window.confirm("Are you sure you want to revoke this user's active device?")) return;
         try {
@@ -207,22 +231,25 @@ export default function AdminDashboard() {
             render: (row) => {
                 const canRevoke = hasPermission("device_approval", "write") || user.role === "admin";
                 const canToggle = hasPermission("user_master", "update") || user.role === "admin";
+                const canEdit = hasPermission("user_master", "update") || hasPermission("user_master", "write") || user.role === "admin";
                 return (
-                    <div className="flex items-center gap-3">
-                        {canRevoke && (
+                    <div className="flex items-center gap-2">
+                        {canEdit && (
                             <button
-                                onClick={() => handleRevokeDevice(row.id)}
-                                disabled={!row.device_status}
-                                className="text-red-600 hover:text-red-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium"
+                                onClick={() => handleOpenEditUser(row)}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-purple-200 bg-purple-50 text-[#6804a1] hover:bg-purple-100 transition-colors cursor-pointer shadow-xs"
+                                title="Edit User Settings"
                             >
-                                Revoke Device
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" className="w-4 h-4">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
                             </button>
                         )}
                         {canToggle && (
                             <button
                                 onClick={() => handleToggleUserActive(row.id, !!row.active)}
                                 disabled={saving}
-                                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${row.active
+                                className={`flex h-8 w-8 items-center justify-center rounded-lg border transition-colors cursor-pointer ${row.active
                                     ? "border-amber-200 bg-amber-50 text-amber-600 hover:bg-amber-100"
                                     : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                                     }`}
@@ -242,6 +269,15 @@ export default function AdminDashboard() {
                                         d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"
                                     />
                                 </svg>
+                            </button>
+                        )}
+                        {canRevoke && (
+                            <button
+                                onClick={() => handleRevokeDevice(row.id)}
+                                disabled={!row.device_status}
+                                className="text-red-600 hover:text-red-900 disabled:opacity-30 disabled:cursor-not-allowed text-xs font-medium ml-1 cursor-pointer"
+                            >
+                                Revoke Device
                             </button>
                         )}
                     </div>
@@ -476,6 +512,17 @@ export default function AdminDashboard() {
                     </div>
                 )}
             </main>
+
+            <EditUserModal
+                isOpen={isEditModalOpen}
+                onClose={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedUserForEdit(null);
+                }}
+                user={selectedUserForEdit}
+                userTypes={userTypes}
+                onUserUpdated={fetchData}
+            />
 
         </div>
     );
