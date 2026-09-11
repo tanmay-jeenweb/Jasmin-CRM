@@ -35,7 +35,7 @@ const createAgreementGstTables = async () => {
             id INT AUTO_INCREMENT PRIMARY KEY,
             in_process_franchise_id INT NOT NULL,
             doc_type VARCHAR(255) NOT NULL,
-            document_path VARCHAR(255) NOT NULL,
+            document_path VARCHAR(255) NULL,
             expiry_date DATE NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -43,6 +43,11 @@ const createAgreementGstTables = async () => {
         )
     `;
     await db.execute(query2);
+
+    // Alter table to ensure document_path is nullable
+    try {
+        await db.execute(`ALTER TABLE in_process_franchise_documents MODIFY COLUMN document_path VARCHAR(255) NULL`);
+    } catch (e) {}
     console.log("In Process Franchise Documents table ready");
 
     // 3. Document expiry notifications read tracking table
@@ -135,7 +140,8 @@ const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate,
         `;
         for (const doc of documents) {
             const expDateVal = doc.expiry_date || null;
-            await db.execute(insertDocQuery, [franchiseId, doc.doc_type, doc.document_path, expDateVal]);
+            const docPathVal = doc.document_path || null;
+            await db.execute(insertDocQuery, [franchiseId, doc.doc_type, docPathVal, expDateVal]);
         }
     }
 };
