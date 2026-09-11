@@ -106,9 +106,6 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
       if (!doc.doc_type.trim()) {
         return toast.error("Document type is required for all documents.");
       }
-      if (!doc.document_path && !doc.file) {
-        return toast.error(`Please upload a document file for ${doc.doc_type}`);
-      }
     }
 
     setSubmittingAgreementGst(true);
@@ -240,7 +237,7 @@ export default function AgreementGstForm({ franchiseId, agreementGstData, master
 
                 <div className="flex-1">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Document File {!doc.document_path && <span className="text-red-500">*</span>}
+                    Document File
                   </label>
                   <input
                     type="file"

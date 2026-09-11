@@ -569,21 +569,13 @@ const saveAgreementGstController = async (req, res) => {
                 return res.status(400).json({ success: false, message: 'Document type is required for all items' });
             }
 
-            let documentPath = doc.document_path;
+            let documentPath = doc.document_path || null;
 
             // Check if there is a new uploaded file for this index
             const fileKey = `file_${i}`;
             const uploadedFile = req.files && req.files.find(f => f.fieldname === fileKey);
             if (uploadedFile) {
                 documentPath = uploadedFile.filename;
-            }
-
-            // A document file is required. If we don't have documentPath, error out!
-            if (!documentPath) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: `File is required for document type: ${doc.doc_type}` 
-                });
             }
 
             finalDocs.push({
