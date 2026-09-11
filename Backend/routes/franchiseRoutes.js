@@ -3,7 +3,8 @@ const {
     getAllFranchisesController,
     getFranchiseByIdController,
     updateFranchiseController,
-    deleteFranchiseController
+    deleteFranchiseController,
+    restoreFranchiseController
 } = require('../controllers/franchiseController.js');
 const { verifyToken, verifyPermission } = require('../middleware/authMiddleware.js');
 
@@ -13,5 +14,6 @@ router.get('/all', verifyToken, verifyPermission('franchise_master', 'read'), ge
 router.get('/:id', verifyToken, verifyPermission('franchise_master', 'read'), getFranchiseByIdController);
 router.put('/update/:id', verifyToken, verifyPermission('franchise_master', 'update'), updateFranchiseController);
 router.delete('/delete/:id', verifyToken, verifyPermission('franchise_master', 'delete'), deleteFranchiseController);
+router.put('/restore/:id', verifyToken, verifyPermission('franchise_master', 'delete'), restoreFranchiseController);
 
 module.exports = router;
