@@ -2,7 +2,9 @@ const {
     getAllFranchises,
     getFranchiseById,
     updateFranchise,
-    deleteFranchise
+    deleteFranchise,
+    softDeleteFranchise,
+    restoreFranchise
 } = require('../models/franchiseModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
 const { getFindStoreByFranchiseId } = require('../models/findStoreModel.js');
@@ -22,7 +24,8 @@ const { getFranchiseBranchFinanceCodesByFranchiseId } = require('../models/franc
 
 const getAllFranchisesController = async (req, res) => {
     try {
-        const franchises = await getAllFranchises(req.user.id, req.user.role);
+        const isDeleted = req.query.deleted === 'true';
+        const franchises = await getAllFranchises(req.user.id, req.user.role, isDeleted);
         res.status(200).json({
             success: true,
             message: 'Franchises retrieved successfully',
@@ -173,25 +176,64 @@ const deleteFranchiseController = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
         }
 
-        await deleteFranchise(id);
+        await softDeleteFranchise(id, req.user?.id);
 
         await createAuditLog(
             req.user?.id,
             req.user?.name || req.user?.username || 'Unknown',
             deviceId,
             'Franchise',
-            'deleted',
+            'soft_deleted',
             beforeData,
-            null,
+            { id, is_deleted: 1, deleted_at: new Date(), deleted_by: req.user?.id },
             id
         );
 
         res.status(200).json({
             success: true,
-            message: 'Franchise deleted successfully'
+            message: 'Franchise soft deleted successfully'
         });
     } catch (error) {
         console.error('Error deleting franchise:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const restoreFranchiseController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const beforeData = await getFranchiseById(id);
+        if (!beforeData) {
+            return res.status(404).json({ success: false, message: 'Franchise not found' });
+        }
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && beforeData.added_by !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        }
+
+        await restoreFranchise(id);
+
+        await createAuditLog(
+            req.user?.id,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'Franchise',
+            'restored',
+            beforeData,
+            { id, is_deleted: 0 },
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Franchise restored successfully'
+        });
+    } catch (error) {
+        console.error('Error restoring franchise:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -203,5 +245,6 @@ module.exports = {
     getAllFranchisesController,
     getFranchiseByIdController,
     updateFranchiseController,
-    deleteFranchiseController
+    deleteFranchiseController,
+    restoreFranchiseController
 };

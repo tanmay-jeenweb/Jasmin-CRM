@@ -39,6 +39,19 @@ const createInProcessFranchiseTable = async () => {
     try {
         await db.execute(`ALTER TABLE in_process_franchises MODIFY COLUMN tentative_opening_date DATE NULL`);
     } catch (e) {}
+
+    // Migration to add soft delete columns
+    try {
+        await db.execute(`ALTER TABLE in_process_franchises ADD COLUMN is_deleted TINYINT(1) DEFAULT 0`);
+    } catch (e) {}
+
+    try {
+        await db.execute(`ALTER TABLE in_process_franchises ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL`);
+    } catch (e) {}
+
+    try {
+        await db.execute(`ALTER TABLE in_process_franchises ADD COLUMN deleted_by INT NULL`);
+    } catch (e) {}
 };
 
 const createInProcessFranchise = async (data, addedBy, deviceId) => {
@@ -78,7 +91,7 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
 };
 
 const getAllInProcessFranchises = async (userId = null, userRole = null) => {
-    let whereClause = "WHERE ipf.status = 'in_process'";
+    let whereClause = "WHERE ipf.status = 'in_process' AND (ipf.is_deleted = 0 OR ipf.is_deleted IS NULL)";
     const params = [];
     if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
@@ -104,7 +117,7 @@ const getAllInProcessFranchises = async (userId = null, userRole = null) => {
 };
 
 const getAllCompletedFranchises = async (userId = null, userRole = null) => {
-    let whereClause = "WHERE ipf.status = 'completed'";
+    let whereClause = "WHERE ipf.status = 'completed' AND (ipf.is_deleted = 0 OR ipf.is_deleted IS NULL)";
     const params = [];
     if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
