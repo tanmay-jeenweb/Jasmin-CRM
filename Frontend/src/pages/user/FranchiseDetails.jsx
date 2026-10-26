@@ -589,7 +589,7 @@ export default function FranchiseDetails() {
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
-                    Document Preparation
+                    Agreement Status
                   </span>
                   <span className="flex items-center gap-3">
                     {franchise?.docPrep && (
@@ -599,7 +599,7 @@ export default function FranchiseDetails() {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenAccordionLogs("Document Preparation", ["In Process Franchise Document Preparation"]);
+                        handleOpenAccordionLogs("Agreement Status", ["In Process Franchise Document Preparation"]);
                       }}
                       className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
                       title="View Accordion Activity History"

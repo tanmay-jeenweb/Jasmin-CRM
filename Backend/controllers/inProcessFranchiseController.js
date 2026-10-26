@@ -622,7 +622,20 @@ const saveAgreementGstController = async (req, res) => {
 const saveDocPrepController = async (req, res) => {
     try {
         const { id } = req.params;
-        const { dispatchDate, dispatchName, receiverDate, receiverName } = req.body;
+        const {
+            hoAgreementCompleted,
+            hoAgreementCompletionDate,
+            dispatchDate,
+            dispatchName,
+            receiverDate,
+            receiverName,
+            franchiseAgreementCompleted,
+            franchiseAgreementCompletionDate,
+            franchiseDispatchDate,
+            franchiseDispatchName,
+            hoReceiverDate,
+            hoReceiverName
+        } = req.body;
         const submittedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
@@ -633,28 +646,48 @@ const saveDocPrepController = async (req, res) => {
         }
 
         // Get files
+        const hoAgreementFile = req.files && req.files.find(f => f.fieldname === 'hoAgreementFile');
         const dispatchFile = req.files && req.files.find(f => f.fieldname === 'dispatchFile');
         const receiverFile = req.files && req.files.find(f => f.fieldname === 'receiverFile');
+        const franchiseAgreementFile = req.files && req.files.find(f => f.fieldname === 'franchiseAgreementFile');
+        const franchiseDispatchFile = req.files && req.files.find(f => f.fieldname === 'franchiseDispatchFile');
+        const hoReceiverFile = req.files && req.files.find(f => f.fieldname === 'hoReceiverFile');
 
         const existing = await getDocPrepByFranchiseId(id);
 
+        let hoAgreementFilePath = undefined;
         let dispatchFilePath = undefined;
         let receiverFilePath = undefined;
+        let franchiseAgreementFilePath = undefined;
+        let franchiseDispatchFilePath = undefined;
+        let hoReceiverFilePath = undefined;
 
-        if (dispatchFile) {
-            dispatchFilePath = dispatchFile.filename;
-        }
-        if (receiverFile) {
-            receiverFilePath = receiverFile.filename;
-        }
+        if (hoAgreementFile) hoAgreementFilePath = hoAgreementFile.filename;
+        if (dispatchFile) dispatchFilePath = dispatchFile.filename;
+        if (receiverFile) receiverFilePath = receiverFile.filename;
+        if (franchiseAgreementFile) franchiseAgreementFilePath = franchiseAgreementFile.filename;
+        if (franchiseDispatchFile) franchiseDispatchFilePath = franchiseDispatchFile.filename;
+        if (hoReceiverFile) hoReceiverFilePath = hoReceiverFile.filename;
 
         const data = {
+            hoAgreementCompleted: hoAgreementCompleted || null,
+            hoAgreementCompletionDate: hoAgreementCompletionDate || null,
+            hoAgreementFile: hoAgreementFilePath,
             dispatchDate: dispatchDate || null,
             dispatchName: dispatchName || null,
             dispatchFile: dispatchFilePath,
             receiverDate: receiverDate || null,
             receiverName: receiverName || null,
             receiverFile: receiverFilePath,
+            franchiseAgreementCompleted: franchiseAgreementCompleted || null,
+            franchiseAgreementCompletionDate: franchiseAgreementCompletionDate || null,
+            franchiseAgreementFile: franchiseAgreementFilePath,
+            franchiseDispatchDate: franchiseDispatchDate || null,
+            franchiseDispatchName: franchiseDispatchName || null,
+            franchiseDispatchFile: franchiseDispatchFilePath,
+            hoReceiverDate: hoReceiverDate || null,
+            hoReceiverName: hoReceiverName || null,
+            hoReceiverFile: hoReceiverFilePath,
             submittedBy
         };
 
@@ -676,7 +709,7 @@ const saveDocPrepController = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: 'Document Preparation details saved successfully.',
+            message: 'Agreement Status details saved successfully.',
             data: updated
         });
     } catch (error) {
