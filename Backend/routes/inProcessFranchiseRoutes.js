@@ -15,7 +15,11 @@ const {
     saveSingleDocumentController,
     freezeAgreementGstController,
     saveDocPrepController,
+    lockDocPrepController,
     saveInternalAgreementController,
+    lockInternalAgreementController,
+    adminUnlockAccordionController,
+    getAdminLockedAccordionsController,
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,
@@ -44,6 +48,7 @@ router.get('/all', verifyToken, verifyPermission('in_process_franchise', 'read')
 router.get('/completed/all', verifyToken, verifyPermission('in_process_franchise', 'read'), getAllCompletedFranchisesController);
 router.get('/find-stores/all', verifyToken, verifyPermission('store_details_approval', 'read'), getAllFindStoresController);
 router.get('/deposit-stocks/all', verifyToken, verifyPermission('deposit_stock_approval', 'read'), getAllDepositStocksController);
+router.get('/admin/locked-accordions', verifyToken, verifyAdmin, getAdminLockedAccordionsController);
 router.get('/:id', verifyToken, verifyPermission('in_process_franchise', 'read'), getInProcessFranchiseByIdController);
 router.put('/update/:id', verifyToken, verifyPermission('in_process_franchise', 'update'), updateInProcessFranchiseController);
 router.delete('/delete/:id', verifyToken, verifyPermission('in_process_franchise', 'delete'), deleteInProcessFranchiseController);
@@ -69,9 +74,14 @@ router.post('/:id/agreement-gst/freeze', verifyToken, verifyPermission('in_proce
 
 // Document Preparation route
 router.post('/:id/doc-prep', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveDocPrepController);
+router.post('/:id/doc-prep/lock', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, lockDocPrepController);
 
 // Internal Agreement route
 router.post('/:id/internal-agreement', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveInternalAgreementController);
+router.post('/:id/internal-agreement/lock', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, lockInternalAgreementController);
+
+// Admin Accordion Unlock route
+router.post('/:id/unlock-accordion', verifyToken, verifyAdmin, adminUnlockAccordionController);
 
 // Store Planning route
 router.post('/:id/store-planning', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveStorePlanningController);

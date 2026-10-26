@@ -9,7 +9,9 @@ import {
   rejectFindStoreForm,
   getAllDepositStocks,
   approveDepositStockForm,
-  rejectDepositStockForm
+  rejectDepositStockForm,
+  getAdminLockedAccordions,
+  adminUnlockAccordion
 } from "../../api/inProcessFranchiseApi";
 
 // ==========================================
@@ -665,39 +667,457 @@ function DepositStockApprovalContent() {
 }
 
 // ==========================================
-// 3. Main Approval Page Component
+// 3. Accordion Unlock Component (Admin only)
+// ==========================================
+function AccordionUnlockContent() {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState("all");
+
+  const [selectedFranchise, setSelectedFranchise] = useState(null);
+  const [selectedAccordionKey, setSelectedAccordionKey] = useState("");
+  const [selectedAccordionTitle, setSelectedAccordionTitle] = useState("");
+  const [unlockReason, setUnlockReason] = useState("");
+  const [unlocking, setUnlocking] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = await getAdminLockedAccordions();
+      if (res.data?.success) {
+        setData(res.data.data || []);
+      } else {
+        toast.error("Failed to load locked accordions.");
+      }
+    } catch (err) {
+      console.error("Error loading locked accordions:", err);
+      toast.error("Failed to fetch locked accordions list.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleOpenUnlockModal = (franchise, accordionKey, accordionTitle) => {
+    setSelectedFranchise(franchise);
+    setSelectedAccordionKey(accordionKey);
+    setSelectedAccordionTitle(accordionTitle);
+    setUnlockReason("");
+  };
+
+  const handleConfirmUnlock = async (e) => {
+    e.preventDefault();
+    if (!unlockReason.trim()) {
+      toast.error("Please enter a reason for unlocking.");
+      return;
+    }
+
+    setUnlocking(true);
+    try {
+      const res = await adminUnlockAccordion(
+        selectedFranchise.id,
+        selectedAccordionKey,
+        unlockReason.trim()
+      );
+      if (res.data?.success) {
+        toast.success(res.data.message || `${selectedAccordionTitle} unlocked successfully!`);
+        setSelectedFranchise(null);
+        setSelectedAccordionKey("");
+        setSelectedAccordionTitle("");
+        setUnlockReason("");
+        await loadData();
+      } else {
+        toast.error(res.data?.message || "Failed to unlock section.");
+      }
+    } catch (err) {
+      console.error("Error unlocking accordion:", err);
+      toast.error(err?.response?.data?.message || "Failed to unlock section.");
+    } finally {
+      setUnlocking(false);
+    }
+  };
+
+  const filteredData = data.filter((item) => {
+    const isDocPrepLocked = Boolean(item.doc_prep_locked);
+    const isAgreementGstLocked = Boolean(item.agreement_gst_frozen);
+    const isInternalAgreementLocked = Boolean(item.internal_agreement_locked);
+    const anyLocked = isDocPrepLocked || isAgreementGstLocked || isInternalAgreementLocked;
+    const allLocked = isDocPrepLocked && isAgreementGstLocked && isInternalAgreementLocked;
+
+    if (filterType === "any_locked" && !anyLocked) return false;
+    if (filterType === "all_locked" && !allLocked) return false;
+    if (filterType === "unlocked" && anyLocked) return false;
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      const matchName = item.partner_name?.toLowerCase().includes(q);
+      const matchStore = item.store_name?.toLowerCase().includes(q);
+      const matchCity = item.city?.toLowerCase().includes(q);
+      const matchMobile = item.partner_mobile?.toLowerCase().includes(q);
+      if (!matchName && !matchStore && !matchCity && !matchMobile) return false;
+    }
+    return true;
+  });
+
+  return (
+    <>
+      {/* Search & Filters */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="w-full sm:w-80 relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by partner, store, mobile, city..."
+            className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-4 h-4 text-slate-400 absolute left-3 top-2.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {[
+            { id: "all", label: "All Franchises" },
+            { id: "any_locked", label: "Any Section Locked" },
+            { id: "all_locked", label: "Fully Locked" },
+            { id: "unlocked", label: "None Locked" }
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              onClick={() => setFilterType(chip.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                filterType === chip.id
+                  ? "bg-[#6804a1] text-white"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {chip.label}
+            </button>
+          ))}
+          <button
+            onClick={loadData}
+            title="Refresh"
+            className="p-1.5 text-slate-500 hover:text-[#6804a1] hover:bg-purple-50 rounded-lg transition-colors cursor-pointer border border-slate-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center text-slate-400 text-xs">
+            <div className="w-8 h-8 border-3 border-indigo-200 border-t-[#6804a1] rounded-full animate-spin mx-auto mb-3"></div>
+            Loading locked accordions...
+          </div>
+        ) : filteredData.length === 0 ? (
+          <div className="p-12 text-center text-slate-400 text-xs">
+            No matching franchise records found.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase font-bold tracking-wider text-[11px]">
+                  <th className="py-3.5 px-4">Franchise / Partner</th>
+                  <th className="py-3.5 px-4">Location</th>
+                  <th className="py-3.5 px-4">Find Store</th>
+                  <th className="py-3.5 px-4">Checklist</th>
+                  <th className="py-3.5 px-4">Agreement Status</th>
+                  <th className="py-3.5 px-4">Agreement & GST</th>
+                  <th className="py-3.5 px-4">Internal Agreement</th>
+                  <th className="py-3.5 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {filteredData.map((item) => {
+                  const isDocPrepLocked = Boolean(item.doc_prep_locked);
+                  const isAgreementGstLocked = Boolean(item.agreement_gst_frozen);
+                  const isInternalAgreementLocked = Boolean(item.internal_agreement_locked);
+
+                  return (
+                    <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                      {/* Partner Name & Store */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-800">{item.partner_name || "N/A"}</div>
+                        <div className="text-[11px] text-slate-500">{item.partner_mobile || "No Mobile"}</div>
+                        {item.store_name && (
+                          <div className="text-[10px] text-purple-700 font-semibold">{item.store_name}</div>
+                        )}
+                      </td>
+
+                      {/* Location */}
+                      <td className="py-3.5 px-4">
+                        <div className="text-slate-700 font-medium">{item.city || "N/A"}</div>
+                        <div className="text-[10px] text-slate-400">{item.district || ""}</div>
+                      </td>
+
+                      {/* Find Store Status */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            item.find_store_status === "approved"
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : item.find_store_status === "rejected"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200"
+                              : item.find_store_status === "pending"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200"
+                              : "bg-slate-100 text-slate-600 border border-slate-200"
+                          }`}
+                        >
+                          {item.find_store_status || "not-submitted"}
+                        </span>
+                      </td>
+
+                      {/* Checklist */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            item.checklist_count > 0
+                              ? "bg-purple-50 text-[#6804a1] border border-purple-200"
+                              : "bg-slate-100 text-slate-500 border border-slate-200"
+                          }`}
+                        >
+                          {item.checklist_count > 0 ? `${item.checklist_count} Docs` : "None"}
+                        </span>
+                      </td>
+
+                      {/* Agreement Status */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              isDocPrepLocked
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}
+                          >
+                            {isDocPrepLocked ? "Locked" : "Unlocked"}
+                          </span>
+                          {isDocPrepLocked && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenUnlockModal(item, "doc-prep", "Agreement Status")
+                              }
+                              className="text-[11px] font-bold text-[#6804a1] hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                              </svg>
+                              Unlock
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Agreement & GST */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              isAgreementGstLocked
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}
+                          >
+                            {isAgreementGstLocked ? "Locked" : "Unlocked"}
+                          </span>
+                          {isAgreementGstLocked && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenUnlockModal(item, "agreement-gst", "Agreement and GST")
+                              }
+                              className="text-[11px] font-bold text-[#6804a1] hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                              </svg>
+                              Unlock
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Internal Agreement */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              isInternalAgreementLocked
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}
+                          >
+                            {isInternalAgreementLocked ? "Locked" : "Unlocked"}
+                          </span>
+                          {isInternalAgreementLocked && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenUnlockModal(item, "internal-agreement", "Internal Agreement Status")
+                              }
+                              className="text-[11px] font-bold text-[#6804a1] hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                              </svg>
+                              Unlock
+                            </button>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Link to Franchise */}
+                      <td className="py-3.5 px-4 text-right">
+                        <a
+                          href={`/user/in-process-franchises/${item.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                        >
+                          View Details
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                          </svg>
+                        </a>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Unlock Reason Confirmation Modal */}
+      {selectedFranchise && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-slate-800">
+                  Unlock {selectedAccordionTitle}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Franchise: <span className="font-semibold text-slate-700">{selectedFranchise.partner_name}</span> ({selectedFranchise.city || "N/A"})
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-3.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+              <span className="font-bold">Notice:</span> Unlocking this accordion will reopen it for modifications by users. Until all agreement accordions are re-locked, downstream stage tabs will remain locked.
+            </div>
+
+            <form onSubmit={handleConfirmUnlock} className="mt-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Reason for Unlocking <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  value={unlockReason}
+                  onChange={(e) => setUnlockReason(e.target.value)}
+                  rows={3}
+                  required
+                  placeholder="Explain why this accordion is being unlocked (e.g. Document correction needed, wrong file uploaded)..."
+                  className="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 focus:outline-hidden focus:ring-1 focus:ring-[#6804a1]"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFranchise(null);
+                    setUnlockReason("");
+                  }}
+                  disabled={unlocking}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={unlocking}
+                  className="px-5 py-2 rounded-xl bg-[#6804a1] hover:bg-[#52037e] text-white text-xs font-bold transition-colors cursor-pointer shadow-sm hover:shadow flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {unlocking ? "Unlocking..." : "Confirm & Unlock"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ==========================================
+// 4. Main Approval Page Component
 // ==========================================
 export default function Approval() {
-  const { hasPermission } = usePermission();
+  const { hasPermission, isAdmin } = usePermission();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const canReadStore = hasPermission("store_details_approval", "read");
   const canReadDeposit = hasPermission("deposit_stock_approval", "read");
+  const canReadUnlocks = Boolean(isAdmin);
 
   // Determine standard default tab based on permission
-  const defaultTab = canReadStore ? "store" : (canReadDeposit ? "deposit" : "");
+  const defaultTab = canReadStore
+    ? "store"
+    : canReadDeposit
+    ? "deposit"
+    : canReadUnlocks
+    ? "unlocks"
+    : "";
   const currentTab = searchParams.get("tab") || defaultTab;
 
   useEffect(() => {
-    // If current tab is set to something we don't have access to, or not set, set it to the defaultTab.
-    if (currentTab === "store" && !canReadStore && canReadDeposit) {
-      setSearchParams({ tab: "deposit" }, { replace: true });
-    } else if (currentTab === "deposit" && !canReadDeposit && canReadStore) {
-      setSearchParams({ tab: "store" }, { replace: true });
+    if (currentTab === "store" && !canReadStore) {
+      if (canReadDeposit) setSearchParams({ tab: "deposit" }, { replace: true });
+      else if (canReadUnlocks) setSearchParams({ tab: "unlocks" }, { replace: true });
+    } else if (currentTab === "deposit" && !canReadDeposit) {
+      if (canReadStore) setSearchParams({ tab: "store" }, { replace: true });
+      else if (canReadUnlocks) setSearchParams({ tab: "unlocks" }, { replace: true });
+    } else if (currentTab === "unlocks" && !canReadUnlocks) {
+      if (canReadStore) setSearchParams({ tab: "store" }, { replace: true });
+      else if (canReadDeposit) setSearchParams({ tab: "deposit" }, { replace: true });
     } else if (!searchParams.get("tab") && defaultTab) {
       setSearchParams({ tab: defaultTab }, { replace: true });
     }
-  }, [currentTab, canReadStore, canReadDeposit, defaultTab, setSearchParams]);
+  }, [currentTab, canReadStore, canReadDeposit, canReadUnlocks, defaultTab, setSearchParams]);
 
   const handleTabChange = (tabName) => {
     setSearchParams({ tab: tabName });
   };
 
-  const showTabs = canReadStore && canReadDeposit;
+  const showTabs = [canReadStore, canReadDeposit, canReadUnlocks].filter(Boolean).length > 1;
 
   // Header Title and Description based on active view
   let pageTitle = "Approval";
-  let pageDescription = "Manage and review franchise onboarding approvals.";
+  let pageDescription = "Manage and review franchise onboarding approvals and accordion locks.";
 
   if (!showTabs) {
     if (canReadStore) {
@@ -706,6 +1126,9 @@ export default function Approval() {
     } else if (canReadDeposit) {
       pageTitle = "Deposit & Stock Approval";
       pageDescription = "Review and approve POs, stock checklists, and APX stock receipt status before migrating to completed franchises.";
+    } else if (canReadUnlocks) {
+      pageTitle = "Accordion Unlocks";
+      pageDescription = "Review and selectively unlock agreement accordions for franchises with audit tracking.";
     }
   }
 
@@ -720,30 +1143,49 @@ export default function Approval() {
           <p className="text-slate-500 text-xs mt-1">{pageDescription}</p>
         </div>
 
-        {/* Tab Buttons (Only visible if access to both is granted) */}
+        {/* Tab Buttons (Visible if multiple tabs accessible) */}
         {showTabs && (
           <div className="border-b border-slate-200 mb-6">
             <nav className="-mb-px flex space-x-8">
-              <button
-                onClick={() => handleTabChange("store")}
-                className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
-                  currentTab === "store"
-                    ? "border-[#6804a1] text-[#6804a1]"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                Store Details Approval
-              </button>
-              <button
-                onClick={() => handleTabChange("deposit")}
-                className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
-                  currentTab === "deposit"
-                    ? "border-[#6804a1] text-[#6804a1]"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                Deposit & Stock Approval
-              </button>
+              {canReadStore && (
+                <button
+                  onClick={() => handleTabChange("store")}
+                  className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    currentTab === "store"
+                      ? "border-[#6804a1] text-[#6804a1]"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  Store Details Approval
+                </button>
+              )}
+              {canReadDeposit && (
+                <button
+                  onClick={() => handleTabChange("deposit")}
+                  className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    currentTab === "deposit"
+                      ? "border-[#6804a1] text-[#6804a1]"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  Deposit & Stock Approval
+                </button>
+              )}
+              {canReadUnlocks && (
+                <button
+                  onClick={() => handleTabChange("unlocks")}
+                  className={`whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer flex items-center gap-2 ${
+                    currentTab === "unlocks"
+                      ? "border-[#6804a1] text-[#6804a1]"
+                      : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                  }`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                  </svg>
+                  Accordion Unlocks
+                </button>
+              )}
             </nav>
           </div>
         )}
@@ -754,6 +1196,9 @@ export default function Approval() {
         )}
         {currentTab === "deposit" && canReadDeposit && (
           <DepositStockApprovalContent />
+        )}
+        {currentTab === "unlocks" && canReadUnlocks && (
+          <AccordionUnlockContent />
         )}
       </main>
     </div>

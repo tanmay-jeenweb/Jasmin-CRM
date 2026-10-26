@@ -80,12 +80,28 @@ export const submitDocPrepForm = async (id, formData) => {
     });
 };
 
+export const lockDocPrepForm = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/doc-prep/lock`);
+};
+
 export const submitInternalAgreementForm = async (id, formData) => {
     return apiClient.post(`/in-process-franchises/${id}/internal-agreement`, formData, {
         headers: {
             "Content-Type": "multipart/form-data"
         }
     });
+};
+
+export const lockInternalAgreementForm = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/internal-agreement/lock`);
+};
+
+export const adminUnlockAccordion = async (id, accordionKey, reason) => {
+    return apiClient.post(`/in-process-franchises/${id}/unlock-accordion`, { accordionKey, reason });
+};
+
+export const getAdminLockedAccordions = async () => {
+    return apiClient.get('/in-process-franchises/admin/locked-accordions');
 };
 
 export const submitStorePlanningForm = async (id, formData) => {

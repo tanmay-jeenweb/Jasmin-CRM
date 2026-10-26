@@ -23,6 +23,9 @@ const createDocPrepTable = async () => {
             ho_receiver_date DATE NULL,
             ho_receiver_name VARCHAR(255) NULL,
             ho_receiver_file VARCHAR(255) NULL,
+            is_locked TINYINT(1) DEFAULT 0,
+            locked_at TIMESTAMP NULL,
+            locked_by INT NULL,
             submitted_by INT NOT NULL,
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -45,7 +48,10 @@ const createDocPrepTable = async () => {
         "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN franchise_dispatch_file VARCHAR(255) NULL",
         "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN ho_receiver_date DATE NULL",
         "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN ho_receiver_name VARCHAR(255) NULL",
-        "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN ho_receiver_file VARCHAR(255) NULL"
+        "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN ho_receiver_file VARCHAR(255) NULL",
+        "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN is_locked TINYINT(1) DEFAULT 0",
+        "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN locked_at TIMESTAMP NULL",
+        "ALTER TABLE in_process_franchise_doc_prep ADD COLUMN locked_by INT NULL"
     ];
 
     for (const alterSql of alterColumns) {
@@ -63,9 +69,11 @@ const getDocPrepByFranchiseId = async (franchiseId) => {
     const query = `
         SELECT 
             dp.*,
-            u.name AS submitted_by_name
+            u.name AS submitted_by_name,
+            u_l.name AS locked_by_name
         FROM in_process_franchise_doc_prep dp
         LEFT JOIN users u ON dp.submitted_by = u.id
+        LEFT JOIN users u_l ON dp.locked_by = u_l.id
         WHERE dp.in_process_franchise_id = ?
     `;
     const [rows] = await db.execute(query, [franchiseId]);
@@ -73,8 +81,12 @@ const getDocPrepByFranchiseId = async (franchiseId) => {
 };
 
 const upsertDocPrep = async (franchiseId, data) => {
-    const checkQuery = `SELECT id FROM in_process_franchise_doc_prep WHERE in_process_franchise_id = ?`;
+    const checkQuery = `SELECT id, is_locked FROM in_process_franchise_doc_prep WHERE in_process_franchise_id = ?`;
     const [rows] = await db.execute(checkQuery, [franchiseId]);
+
+    if (rows.length > 0 && rows[0].is_locked) {
+        throw new Error("Agreement Status is locked and cannot be modified.");
+    }
 
     const hoAgreementCompleted = data.hoAgreementCompleted || null;
     const hoAgreementCompletionDate = data.hoAgreementCompletionDate || null;
@@ -182,8 +194,33 @@ const upsertDocPrep = async (franchiseId, data) => {
     }
 };
 
+const lockDocPrep = async (franchiseId, userId) => {
+    const checkQuery = `SELECT id FROM in_process_franchise_doc_prep WHERE in_process_franchise_id = ?`;
+    const [rows] = await db.execute(checkQuery, [franchiseId]);
+    if (rows.length > 0) {
+        await db.execute(
+            `UPDATE in_process_franchise_doc_prep SET is_locked = 1, locked_at = CURRENT_TIMESTAMP, locked_by = ? WHERE in_process_franchise_id = ?`,
+            [userId, franchiseId]
+        );
+    } else {
+        await db.execute(
+            `INSERT INTO in_process_franchise_doc_prep (in_process_franchise_id, is_locked, locked_at, locked_by, submitted_by) VALUES (?, 1, CURRENT_TIMESTAMP, ?, ?)`,
+            [franchiseId, userId, userId]
+        );
+    }
+};
+
+const unlockDocPrep = async (franchiseId) => {
+    await db.execute(
+        `UPDATE in_process_franchise_doc_prep SET is_locked = 0, locked_at = NULL, locked_by = NULL WHERE in_process_franchise_id = ?`,
+        [franchiseId]
+    );
+};
+
 module.exports = {
     createDocPrepTable,
     getDocPrepByFranchiseId,
-    upsertDocPrep
+    upsertDocPrep,
+    lockDocPrep,
+    unlockDocPrep
 };

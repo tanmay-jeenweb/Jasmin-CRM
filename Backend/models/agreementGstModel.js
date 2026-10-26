@@ -277,6 +277,13 @@ const upsertAgreementGst = async (franchiseId, partnerDate, gstRegistrationDate,
     }
 };
 
+const unlockAgreementGst = async (franchiseId) => {
+    await db.execute(
+        `UPDATE in_process_franchise_agreement_gst SET is_frozen = 0, frozen_at = NULL, frozen_by = NULL WHERE in_process_franchise_id = ?`,
+        [franchiseId]
+    );
+};
+
 module.exports = {
     createAgreementGstTables,
     getAgreementGstByFranchiseId,
@@ -284,5 +291,6 @@ module.exports = {
     saveDocChecklist,
     saveSingleDocument,
     freezeAgreementGst,
+    unlockAgreementGst,
     upsertAgreementGst
 };

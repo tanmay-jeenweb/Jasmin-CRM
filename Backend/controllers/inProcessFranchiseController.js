@@ -15,21 +15,27 @@ const {
     rejectFindStore,
     getAllFindStores
 } = require('../models/findStoreModel.js');
+const db = require('../config/db.js');
 const {
     getAgreementGstByFranchiseId,
     getDocChecklistByFranchiseId,
     saveDocChecklist,
     saveSingleDocument,
     freezeAgreementGst,
+    unlockAgreementGst,
     upsertAgreementGst
 } = require('../models/agreementGstModel.js');
 const {
     getDocPrepByFranchiseId,
-    upsertDocPrep
+    upsertDocPrep,
+    lockDocPrep,
+    unlockDocPrep
 } = require('../models/docPrepModel.js');
 const {
     getInternalAgreementByFranchiseId,
-    upsertInternalAgreement
+    upsertInternalAgreement,
+    lockInternalAgreement,
+    unlockInternalAgreement
 } = require('../models/internalAgreementModel.js');
 const {
     getStorePlanningByFranchiseId,
@@ -843,6 +849,12 @@ const saveDocPrepController = async (req, res) => {
         const hoReceiverFile = req.files && req.files.find(f => f.fieldname === 'hoReceiverFile');
 
         const existing = await getDocPrepByFranchiseId(id);
+        if (existing && existing.is_locked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Agreement Status is locked and cannot be modified.'
+            });
+        }
 
         let hoAgreementFilePath = undefined;
         let dispatchFilePath = undefined;
@@ -925,6 +937,12 @@ const saveInternalAgreementController = async (req, res) => {
         // Get file
         const internalAgreementFile = req.files && req.files.find(f => f.fieldname === 'internalAgreementFile');
         const existing = await getInternalAgreementByFranchiseId(id);
+        if (existing && existing.is_locked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Internal Agreement is locked and cannot be modified.'
+            });
+        }
 
         let internalAgreementFilePath = undefined;
         if (internalAgreementFile) {
@@ -970,6 +988,181 @@ const saveInternalAgreementController = async (req, res) => {
             success: false,
             message: 'Internal server error'
         });
+    }
+};
+
+const lockDocPrepController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existing = await getDocPrepByFranchiseId(id);
+        if (existing && existing.is_locked) {
+            return res.status(400).json({ success: false, message: 'Agreement Status is already locked.' });
+        }
+
+        await lockDocPrep(id, submittedBy);
+        const updated = await getDocPrepByFranchiseId(id);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Document Preparation Lock',
+            'locked',
+            existing,
+            updated,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Agreement Status locked successfully. No further modifications can be made.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error locking Agreement Status:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const lockInternalAgreementController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existing = await getInternalAgreementByFranchiseId(id);
+        if (existing && existing.is_locked) {
+            return res.status(400).json({ success: false, message: 'Internal Agreement is already locked.' });
+        }
+
+        if (!existing?.internal_agreement_file) {
+            return res.status(400).json({ success: false, message: 'Please upload internal agreement document before locking.' });
+        }
+
+        await lockInternalAgreement(id, submittedBy);
+        const updated = await getInternalAgreementByFranchiseId(id);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Internal Agreement Lock',
+            'locked',
+            existing,
+            updated,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Internal Agreement locked successfully. No further modifications can be made.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error locking Internal Agreement:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const adminUnlockAccordionController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { accordionKey, reason } = req.body;
+        const adminId = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin') {
+            return res.status(403).json({ success: false, message: 'Access denied. Only Admins can unlock accordions.' });
+        }
+
+        if (!accordionKey) {
+            return res.status(400).json({ success: false, message: 'Accordion key is required.' });
+        }
+
+        let sectionName = '';
+        if (accordionKey === 'doc-prep') {
+            await unlockDocPrep(id);
+            sectionName = 'Agreement Status';
+        } else if (accordionKey === 'agreement-gst') {
+            await unlockAgreementGst(id);
+            sectionName = 'Agreement and GST';
+        } else if (accordionKey === 'internal-agreement') {
+            await unlockInternalAgreement(id);
+            sectionName = 'Internal Agreement Status';
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid accordion key.' });
+        }
+
+        await createAuditLog(
+            adminId,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            `Accordion Unlock: ${sectionName}`,
+            'unlocked',
+            null,
+            { franchiseId: id, accordionKey, reason: reason || 'Admin override unlock' },
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `${sectionName} has been unlocked successfully.`
+        });
+    } catch (error) {
+        console.error('Error unlocking accordion:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+};
+
+const getAdminLockedAccordionsController = async (req, res) => {
+    try {
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin') {
+            return res.status(403).json({ success: false, message: 'Access denied. Only Admins can view this report.' });
+        }
+
+        const query = `
+            SELECT 
+                ipf.id,
+                ipf.partner_name,
+                ipf.partner_mobile,
+                ipf.store_name,
+                ipf.city,
+                ipf.district,
+                ipf.timestamp,
+                fs.status AS find_store_status,
+                (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) AS checklist_count,
+                dp.is_locked AS doc_prep_locked,
+                dp.locked_at AS doc_prep_locked_at,
+                u_dp.name AS doc_prep_locked_by_name,
+                ag.is_frozen AS agreement_gst_frozen,
+                ag.frozen_at AS agreement_gst_frozen_at,
+                u_ag.name AS agreement_gst_frozen_by_name,
+                ia.is_locked AS internal_agreement_locked,
+                ia.locked_at AS internal_agreement_locked_at,
+                u_ia.name AS internal_agreement_locked_by_name
+            FROM in_process_franchises ipf
+            LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+            LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
+            LEFT JOIN users u_dp ON dp.locked_by = u_dp.id
+            LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
+            LEFT JOIN users u_ag ON ag.frozen_by = u_ag.id
+            LEFT JOIN in_process_franchise_internal_agreement ia ON ipf.id = ia.in_process_franchise_id
+            LEFT JOIN users u_ia ON ia.locked_by = u_ia.id
+            WHERE (ipf.is_deleted = 0 OR ipf.is_deleted IS NULL)
+            ORDER BY ipf.timestamp DESC
+        `;
+        const [rows] = await db.execute(query);
+
+        res.status(200).json({
+            success: true,
+            data: rows
+        });
+    } catch (error) {
+        console.error('Error fetching locked accordions list:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
@@ -1838,7 +2031,11 @@ module.exports = {
     saveSingleDocumentController,
     freezeAgreementGstController,
     saveDocPrepController,
+    lockDocPrepController,
     saveInternalAgreementController,
+    lockInternalAgreementController,
+    adminUnlockAccordionController,
+    getAdminLockedAccordionsController,
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,

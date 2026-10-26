@@ -3,8 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import {
   getActiveUsers,
-  approveFindStoreForm,
-  rejectFindStoreForm,
   getFranchiseActivityLogs
 } from "../../api/inProcessFranchiseApi";
 import {
@@ -38,10 +36,8 @@ export default function FranchiseDetails() {
   const [franchise, setFranchise] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Stages and user checks
+  // Stages
   const [activeStage, setActiveStage] = useState("store-operations");
-  const currentUser = JSON.parse(localStorage.getItem("user") || "null");
-  const isAdmin = currentUser?.role === "admin";
 
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -67,11 +63,6 @@ export default function FranchiseDetails() {
   const [bdmArea, setBdmArea] = useState("");
   const [inquiryManagerId, setInquiryManagerId] = useState("");
   const [storeName, setStoreName] = useState("");
-
-  // Admin approval states
-  const [rejectionReason, setRejectionReason] = useState("");
-  const [showRejectForm, setShowRejectForm] = useState(false);
-  const [processingAdminAction, setProcessingAdminAction] = useState(false);
 
   // Modal and edit states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -99,7 +90,7 @@ export default function FranchiseDetails() {
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return "";
       return d.toISOString().split('T')[0];
-    } catch (e) {
+    } catch {
       return "";
     }
   };
@@ -232,45 +223,7 @@ export default function FranchiseDetails() {
     }
   };
 
-  const handleApprove = async () => {
-    if (!window.confirm("Are you sure you want to approve this store location submission?")) return;
-    setProcessingAdminAction(true);
-    try {
-      const res = await approveFindStoreForm(id);
-      if (res.data?.success) {
-        toast.success("Find Store details approved!");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to approve store details");
-      }
-    } catch (err) {
-      console.error("Error approving store details:", err);
-      toast.error(err?.response?.data?.message || "Failed to approve store details.");
-    } finally {
-      setProcessingAdminAction(false);
-    }
-  };
 
-  const handleReject = async () => {
-    if (!rejectionReason.trim()) return toast.error("Rejection reason is required");
-    setProcessingAdminAction(true);
-    try {
-      const res = await rejectFindStoreForm(id, rejectionReason.trim());
-      if (res.data?.success) {
-        toast.success("Find Store details rejected.");
-        setShowRejectForm(false);
-        setRejectionReason("");
-        await reloadFranchiseData();
-      } else {
-        toast.error(res.data?.message || "Failed to reject store details");
-      }
-    } catch (err) {
-      console.error("Error rejecting store details:", err);
-      toast.error(err?.response?.data?.message || "Failed to reject store details.");
-    } finally {
-      setProcessingAdminAction(false);
-    }
-  };
 
   const stages = [
     { id: "store-operations", name: "Agreements and Approvals" },
@@ -283,7 +236,25 @@ export default function FranchiseDetails() {
   ];
 
   const findStoreStatus = franchise?.findStore?.status || "not-submitted";
-  const isUnlocked = franchise?.findStore?.status === "approved";
+  const isFindStoreApproved = franchise?.findStore?.status === "approved";
+  const isChecklistSaved =
+    Array.isArray(franchise?.docChecklist) &&
+    franchise.docChecklist.length > 0 &&
+    franchise.docChecklist.some(
+      (d) => Number(d.is_customized) === 1 || Boolean(d.is_customized)
+    );
+  const isDocPrepLocked = Boolean(franchise?.docPrep?.is_locked);
+  const isAgreementGstLocked = Boolean(franchise?.agreementGst?.is_frozen);
+  const isInternalAgreementLocked = Boolean(franchise?.internalAgreement?.is_locked);
+
+  const isAllAgreementsLocked =
+    isFindStoreApproved &&
+    isChecklistSaved &&
+    isDocPrepLocked &&
+    isAgreementGstLocked &&
+    isInternalAgreementLocked;
+
+  const isUnlocked = isAllAgreementsLocked;
 
   const handleStageClick = (stageId) => {
     if (stageId === "store-operations") {
@@ -292,8 +263,24 @@ export default function FranchiseDetails() {
       return;
     }
 
-    if (!isUnlocked) {
-      toast.error("Please complete and get approval for 'Find Store' in Agreements and Approvals to unlock this stage.");
+    if (!isFindStoreApproved) {
+      toast.error("Please complete and get approval for 'Find Store Details' first.");
+      return;
+    }
+
+    if (!isChecklistSaved) {
+      toast.error("Please configure and save the 'Required Documents Checklist' first.");
+      return;
+    }
+
+    if (!isDocPrepLocked || !isAgreementGstLocked || !isInternalAgreementLocked) {
+      const pendingLocks = [];
+      if (!isDocPrepLocked) pendingLocks.push("Agreement Status");
+      if (!isAgreementGstLocked) pendingLocks.push("Agreement and GST");
+      if (!isInternalAgreementLocked) pendingLocks.push("Internal Agreement");
+      toast.error(
+        `Please finalize and lock all agreement sections to proceed. Pending: ${pendingLocks.join(", ")}`
+      );
       return;
     }
 
@@ -529,20 +516,110 @@ export default function FranchiseDetails() {
                 </div>
               )}
             </div>
+            {/* Accordion 2: Required Documents Checklist */}
+            {!isFindStoreApproved ? (
+              <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-600 block">Required Documents Checklist</span>
+                    <span className="text-[11px] text-slate-400">Locked until Find Store Details is approved by Admin</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-checklist" ? null : "doc-checklist")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Required Documents Checklist
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {isAgreementGstLocked ? (
+                      <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
+                    ) : isChecklistSaved ? (
+                      <span className="text-[10px] bg-purple-50 text-[#6804a1] border border-purple-100 px-2 py-0.5 rounded-full font-bold uppercase">Configured</span>
+                    ) : (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold uppercase">Pending Setup</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Required Documents Checklist", ["In Process Franchise Document Checklist"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-checklist" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </div>
 
-            {/* Accordion 2: Agreement Status */}
-            {isUnlocked && (
+                {openAccordion === "doc-checklist" && (
+                  <div className="p-6">
+                    <DocumentChecklistForm
+                      franchiseId={id}
+                      docChecklistData={franchise.docChecklist}
+                      isFrozen={isAgreementGstLocked}
+                      reloadFranchiseData={reloadFranchiseData}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Accordion 3: Agreement Status */}
+            {!isChecklistSaved ? (
+              <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-600 block">Agreement Status</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
+              </div>
+            ) : (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
                 <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
                     Agreement Status
                   </span>
                   <span className="flex items-center gap-3">
-                    {franchise?.docPrep && (
+                    {isDocPrepLocked ? (
+                      <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
+                    ) : franchise?.docPrep ? (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    ) : (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold uppercase">Not Started</span>
                     )}
                     <button
                       type="button"
@@ -583,63 +660,23 @@ export default function FranchiseDetails() {
               </div>
             )}
 
-            {/* Accordion 3: Required Documents Checklist */}
-            {isUnlocked && (
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-checklist" ? null : "doc-checklist")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                  <span className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Required Documents Checklist
-                  </span>
-                  <span className="flex items-center gap-3">
-                    {franchise?.agreementGst?.is_frozen ? (
-                      <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
-                    ) : franchise?.docChecklist?.some(i => i.is_customized) ? (
-                      <span className="text-[10px] bg-purple-50 text-[#6804a1] border border-purple-100 px-2 py-0.5 rounded-full font-bold uppercase">Configured</span>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAccordionLogs("Required Documents Checklist", ["In Process Franchise Document Checklist"]);
-                      }}
-                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                      title="View Accordion Activity History"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                      stroke="currentColor"
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-checklist" ? "rotate-180" : ""}`}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </span>
-                </div>
-
-                {openAccordion === "doc-checklist" && (
-                  <div className="p-6">
-                    <DocumentChecklistForm
-                      franchiseId={id}
-                      docChecklistData={franchise.docChecklist}
-                      isFrozen={Boolean(franchise?.agreementGst?.is_frozen)}
-                      reloadFranchiseData={reloadFranchiseData}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Accordion 4: Agreement and GST */}
-            {isUnlocked && (
+            {!isChecklistSaved ? (
+              <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-600 block">Agreement and GST</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
+              </div>
+            ) : (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
                 <div role="button" onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
@@ -649,11 +686,13 @@ export default function FranchiseDetails() {
                     Agreement and GST
                   </span>
                   <span className="flex items-center gap-3">
-                    {franchise?.agreementGst?.is_frozen ? (
-                      <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-full font-bold uppercase">Finalized</span>
+                    {isAgreementGstLocked ? (
+                      <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
                     ) : franchise?.agreementGst ? (
                       <span className="text-[10px] bg-purple-50 text-[#6804a1] border border-purple-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                    ) : null}
+                    ) : (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold uppercase">Pending</span>
+                    )}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -695,8 +734,23 @@ export default function FranchiseDetails() {
               </div>
             )}
 
-            {/* Accordion 4: Internal Agreement Status */}
-            {isUnlocked && (
+            {/* Accordion 5: Internal Agreement Status */}
+            {!isChecklistSaved ? (
+              <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-slate-600 block">Internal Agreement Status</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
+              </div>
+            ) : (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
                 <div role="button" onClick={() => setOpenAccordion(openAccordion === "internal-agreement" ? null : "internal-agreement")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
@@ -706,8 +760,12 @@ export default function FranchiseDetails() {
                     Internal Agreement Status
                   </span>
                   <span className="flex items-center gap-3">
-                    {franchise?.internalAgreement?.internal_agreement_file && (
+                    {isInternalAgreementLocked ? (
+                      <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
+                    ) : franchise?.internalAgreement?.internal_agreement_file ? (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    ) : (
+                      <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold uppercase">Not Started</span>
                     )}
                     <button
                       type="button"

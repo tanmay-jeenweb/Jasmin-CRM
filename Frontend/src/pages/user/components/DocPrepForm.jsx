@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { submitDocPrepForm } from "../../../api/inProcessFranchiseApi";
+import { useState, useEffect } from "react";
+import { submitDocPrepForm, lockDocPrepForm } from "../../../api/inProcessFranchiseApi";
+import LockConfirmationModal from "./LockConfirmationModal";
 import toast from "react-hot-toast";
 
 export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseData, getFileUrl }) {
@@ -36,6 +37,10 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
   const [hoReceiverFileName, setHoReceiverFileName] = useState("");
 
   const [submittingDocPrep, setSubmittingDocPrep] = useState(false);
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [locking, setLocking] = useState(false);
+
+  const isLocked = Boolean(docPrepData?.is_locked);
 
   const getLocalDateString = (dateStr) => {
     if (!dateStr) return "";
@@ -43,7 +48,7 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return "";
       return d.toISOString().split("T")[0];
-    } catch (e) {
+    } catch {
       return "";
     }
   };
@@ -136,11 +141,58 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
     }
   };
 
+  const handleLockConfirm = async () => {
+    setLocking(true);
+    try {
+      const res = await lockDocPrepForm(franchiseId);
+      if (res.data?.success) {
+        toast.success("Agreement Status locked successfully!");
+        setIsLockModalOpen(false);
+        if (reloadFranchiseData) {
+          await reloadFranchiseData();
+        }
+      } else {
+        toast.error(res.data?.message || "Failed to lock section");
+      }
+    } catch (err) {
+      console.error("Error locking Agreement Status:", err);
+      toast.error(err?.response?.data?.message || "Failed to lock Agreement Status.");
+    } finally {
+      setLocking(false);
+    }
+  };
+
   return (
     <form onSubmit={handleDocPrepSubmit} className="space-y-8">
-      {/* SECTION 1: HO -> FRANCHISEE */}
-      <div className="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
-        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200/80">
+      {/* Locked Status Banner */}
+      {isLocked && (
+        <div className="bg-slate-100 border-2 border-slate-300 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+          <div className="w-9 h-9 bg-slate-200 rounded-full flex items-center justify-center text-slate-700 shrink-0 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              Agreement Status Locked
+              <span className="text-[10px] bg-slate-200 text-slate-700 uppercase font-extrabold px-2 py-0.5 rounded-full">
+                Locked
+              </span>
+            </h4>
+            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+              This section is finalized and locked
+              {docPrepData?.locked_by_name ? ` by ${docPrepData.locked_by_name}` : ""}
+              {docPrepData?.locked_at ? ` on ${new Date(docPrepData.locked_at).toLocaleDateString()}` : ""}.
+              Modifications are disabled unless unlocked by an Administrator in Approvals.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <fieldset disabled={isLocked} className="space-y-8 disabled:opacity-85">
+        {/* SECTION 1: HO -> FRANCHISEE */}
+        <div className="bg-slate-50/70 p-6 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
+          <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200/80">
           <div className="w-2.5 h-2.5 rounded-full bg-[#6804a1]"></div>
           <h4 className="text-xs font-bold uppercase tracking-wider text-[#6804a1]">
             Agreement Status: Head Office (HO) to Franchisee
@@ -515,17 +567,52 @@ export default function DocPrepForm({ franchiseId, docPrepData, reloadFranchiseD
           </div>
         </div>
       </div>
+    </fieldset>
 
-      {/* SUBMIT BUTTON */}
-      <div className="pt-2 flex justify-end">
-        <button
-          type="submit"
-          disabled={submittingDocPrep}
-          className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-        >
-          {submittingDocPrep ? "Saving..." : "Save Agreement Status"}
-        </button>
-      </div>
+      {/* ACTION BUTTONS */}
+      {!isLocked ? (
+        <div className="pt-2 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="submit"
+            disabled={submittingDocPrep}
+            className="bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-5 rounded-xl border border-slate-300 transition-all shadow-xs cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+          >
+            {submittingDocPrep ? "Saving..." : "Save Agreement Status"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsLockModalOpen(true)}
+            disabled={submittingDocPrep}
+            className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-2 disabled:opacity-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>Submit & Lock Agreement Status</span>
+          </button>
+        </div>
+      ) : (
+        <div className="pt-2 flex justify-end">
+          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 border border-slate-300 text-slate-600 text-xs font-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Section Locked
+          </span>
+        </div>
+      )}
+
+      {/* Double Check Lock Confirmation Modal */}
+      <LockConfirmationModal
+        isOpen={isLockModalOpen}
+        onClose={() => setIsLockModalOpen(false)}
+        onConfirm={handleLockConfirm}
+        loading={locking}
+        title="Lock Agreement Status"
+        subtitle="This action will freeze all Head Office & Franchisee agreement dispatch and reception data."
+        warningText="Once locked, all form fields, file uploads, and tracking entries will be strictly read-only. You will not be able to edit or upload new documents unless an Administrator grants an unlock in the Approvals section."
+        confirmButtonText="Confirm & Lock Status"
+      />
     </form>
   );
 }

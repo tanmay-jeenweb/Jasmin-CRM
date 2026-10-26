@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { submitAgreementGstForm, submitSingleDocument, freezeAgreementGst } from "../../../api/inProcessFranchiseApi";
 import FreezeConfirmationModal from "./FreezeConfirmationModal";
 import toast from "react-hot-toast";
