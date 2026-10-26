@@ -44,12 +44,32 @@ export const getAllFindStores = async () => {
     return apiClient.get("/in-process-franchises/find-stores/all");
 };
 
+export const getDocChecklist = async (id) => {
+    return apiClient.get(`/in-process-franchises/${id}/doc-checklist`);
+};
+
+export const saveDocChecklist = async (id, checklist) => {
+    return apiClient.post(`/in-process-franchises/${id}/doc-checklist`, { checklist });
+};
+
 export const submitAgreementGstForm = async (id, formData) => {
     return apiClient.post(`/in-process-franchises/${id}/agreement-gst`, formData, {
         headers: {
             "Content-Type": "multipart/form-data"
         }
     });
+};
+
+export const submitSingleDocument = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/agreement-gst/document`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
+export const freezeAgreementGst = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/agreement-gst/freeze`);
 };
 
 export const submitDocPrepForm = async (id, formData) => {

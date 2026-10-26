@@ -10,6 +10,10 @@ const {
     rejectFindStoreController,
     getAllFindStoresController,
     saveAgreementGstController,
+    getDocChecklistController,
+    saveDocChecklistController,
+    saveSingleDocumentController,
+    freezeAgreementGstController,
     saveDocPrepController,
     saveInternalAgreementController,
     saveStorePlanningController,
@@ -54,8 +58,14 @@ router.post('/:id/find-store', verifyToken, verifyPermission('in_process_franchi
 router.post('/:id/find-store/approve', verifyToken, verifyPermission('store_details_approval', 'write'), approveFindStoreController);
 router.post('/:id/find-store/reject', verifyToken, verifyPermission('store_details_approval', 'write'), rejectFindStoreController);
 
-// Agreement & GST route
+// Document Checklist routes
+router.get('/:id/doc-checklist', verifyToken, verifyPermission('in_process_franchise', 'read'), verifyFindStoreApproved, getDocChecklistController);
+router.post('/:id/doc-checklist', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, saveDocChecklistController);
+
+// Agreement & GST routes
 router.post('/:id/agreement-gst', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveAgreementGstController);
+router.post('/:id/agreement-gst/document', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.single('file'), saveSingleDocumentController);
+router.post('/:id/agreement-gst/freeze', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, freezeAgreementGstController);
 
 // Document Preparation route
 router.post('/:id/doc-prep', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveDocPrepController);

@@ -17,6 +17,10 @@ const {
 } = require('../models/findStoreModel.js');
 const {
     getAgreementGstByFranchiseId,
+    getDocChecklistByFranchiseId,
+    saveDocChecklist,
+    saveSingleDocument,
+    freezeAgreementGst,
     upsertAgreementGst
 } = require('../models/agreementGstModel.js');
 const {
@@ -282,6 +286,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         const isApproved = findStore && findStore.status === 'approved';
 
         const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
+        const docChecklist = isApproved ? await getDocChecklistByFranchiseId(id) : [];
         const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
         const internalAgreement = isApproved ? await getInternalAgreementByFranchiseId(id) : null;
         const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
@@ -304,6 +309,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 ...franchise,
                 findStore,
                 agreementGst,
+                docChecklist,
                 docPrep,
                 internalAgreement,
                 storePlanning,
@@ -592,6 +598,12 @@ const saveAgreementGstController = async (req, res) => {
         }
 
         const existing = await getAgreementGstByFranchiseId(id);
+        if (existing && existing.is_frozen) {
+            return res.status(403).json({
+                success: false,
+                message: 'Agreement & GST is finalized and frozen. Modifications are not allowed.'
+            });
+        }
 
         await upsertAgreementGst(id, partnerDate, gstRegistrationDate, gstNumber, additionalBusinessAddress, serialNumberGstForm, submittedBy, finalDocs);
 
@@ -618,6 +630,177 @@ const saveAgreementGstController = async (req, res) => {
 
     } catch (error) {
         console.error('Error saving Agreement & GST details:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Internal server error'
+        });
+    }
+};
+
+const getDocChecklistController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const checklist = await getDocChecklistByFranchiseId(id);
+        res.status(200).json({
+            success: true,
+            message: 'Document checklist retrieved successfully',
+            data: checklist
+        });
+    } catch (error) {
+        console.error('Error retrieving document checklist:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveDocChecklistController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { checklist } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existingGst = await getAgreementGstByFranchiseId(id);
+        if (existingGst && existingGst.is_frozen) {
+            return res.status(403).json({
+                success: false,
+                message: 'Agreement & GST is finalized and frozen. Document checklist cannot be modified.'
+            });
+        }
+
+        const beforeChecklist = await getDocChecklistByFranchiseId(id);
+
+        await saveDocChecklist(id, checklist, submittedBy);
+
+        const updatedChecklist = await getDocChecklistByFranchiseId(id);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Document Checklist',
+            'updated',
+            beforeChecklist,
+            updatedChecklist,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Document checklist saved successfully',
+            data: updatedChecklist
+        });
+    } catch (error) {
+        console.error('Error saving document checklist:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveSingleDocumentController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { docType, expiryDate } = req.body;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        if (!docType || !docType.trim()) {
+            return res.status(400).json({ success: false, message: 'Document type is required' });
+        }
+
+        const existingGst = await getAgreementGstByFranchiseId(id);
+        if (existingGst && existingGst.is_frozen) {
+            return res.status(403).json({
+                success: false,
+                message: 'Agreement & GST is finalized and frozen. Document cannot be modified.'
+            });
+        }
+
+        let documentPath = null;
+        if (req.file) {
+            documentPath = req.file.filename;
+        }
+
+        const docRecord = await saveSingleDocument(id, docType.trim(), documentPath, expiryDate, submittedBy);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Document Upload',
+            'updated',
+            null,
+            { docType, expiryDate, document_path: docRecord.document_path },
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `${docType} saved successfully`,
+            data: docRecord
+        });
+    } catch (error) {
+        console.error('Error saving single document:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const freezeAgreementGstController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existingGst = await getAgreementGstByFranchiseId(id);
+        if (existingGst && existingGst.is_frozen) {
+            return res.status(400).json({
+                success: false,
+                message: 'Agreement & GST is already finalized and frozen.'
+            });
+        }
+
+        // Verify that all required documents from checklist have been uploaded
+        const checklist = await getDocChecklistByFranchiseId(id);
+        const requiredDocs = checklist.filter(item => item.is_required === 1 || item.is_required === true);
+
+        const missingDocs = requiredDocs.filter(item => !item.document_path || item.document_path.trim() === '');
+        if (missingDocs.length > 0) {
+            const missingNames = missingDocs.map(d => d.doc_type).join(', ');
+            return res.status(400).json({
+                success: false,
+                message: `Cannot finalize: The following required documents have not been submitted: ${missingNames}`
+            });
+        }
+
+        await freezeAgreementGst(id, submittedBy);
+
+        const updated = await getAgreementGstByFranchiseId(id);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Agreement & GST Freeze',
+            'frozen',
+            existingGst,
+            updated,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Agreement & GST finalized and frozen successfully. No further modifications can be made.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error freezing Agreement & GST:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -1650,6 +1833,10 @@ module.exports = {
     rejectFindStoreController,
     getAllFindStoresController,
     saveAgreementGstController,
+    getDocChecklistController,
+    saveDocChecklistController,
+    saveSingleDocumentController,
+    freezeAgreementGstController,
     saveDocPrepController,
     saveInternalAgreementController,
     saveStorePlanningController,

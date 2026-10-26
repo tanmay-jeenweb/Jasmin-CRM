@@ -8,7 +8,7 @@ const {
 } = require('../models/franchiseModel.js');
 const { createAuditLog } = require('../models/auditLogModel.js');
 const { getFindStoreByFranchiseId } = require('../models/findStoreModel.js');
-const { getAgreementGstByFranchiseId } = require('../models/agreementGstModel.js');
+const { getAgreementGstByFranchiseId, getDocChecklistByFranchiseId } = require('../models/agreementGstModel.js');
 const { getDocPrepByFranchiseId } = require('../models/docPrepModel.js');
 const { getInternalAgreementByFranchiseId } = require('../models/internalAgreementModel.js');
 const { getStorePlanningByFranchiseId } = require('../models/storePlanningModel.js');
@@ -55,6 +55,7 @@ const getFranchiseByIdController = async (req, res) => {
         const isApproved = findStore && findStore.status === 'approved';
 
         const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
+        const docChecklist = isApproved ? await getDocChecklistByFranchiseId(id) : [];
         const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
         const internalAgreement = isApproved ? await getInternalAgreementByFranchiseId(id) : null;
         const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
@@ -76,6 +77,7 @@ const getFranchiseByIdController = async (req, res) => {
                 ...franchise,
                 findStore,
                 agreementGst,
+                docChecklist,
                 docPrep,
                 internalAgreement,
                 storePlanning,
