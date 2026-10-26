@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import FindStoreForm from "./components/FindStoreForm";
 import AgreementGstForm from "./components/AgreementGstForm";
 import DocPrepForm from "./components/DocPrepForm";
+import InternalAgreementForm from "./components/InternalAgreementForm";
 import StorePlanningForm from "./components/StorePlanningForm";
 import StoreAmbianceForm from "./components/StoreAmbianceForm";
 import FranchiseTeamForm from "./components/FranchiseTeamForm";
@@ -311,7 +312,8 @@ export default function InProcessFranchiseDetails() {
   };
 
   const stages = [
-    { id: "store-operations", name: "Store operations" },
+    { id: "store-operations", name: "Agreements and Approvals" },
+    { id: "planning", name: "Planning" },
     { id: "mapping", name: "Mapping" },
     { id: "marketing", name: "Marketing" },
     { id: "installation-training", name: "Installation and training" },
@@ -330,7 +332,7 @@ export default function InProcessFranchiseDetails() {
     }
 
     if (!isUnlocked) {
-      toast.error("Please complete and get approval for 'Find Store' in Store operations to unlock this stage.");
+      toast.error("Please complete and get approval for 'Find Store' in Agreements and Approvals to unlock this stage.");
       return;
     }
 
@@ -466,7 +468,7 @@ export default function InProcessFranchiseDetails() {
         </div>
 
         {/* Stages Tab Navigation */}
-        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-1 md:grid-cols-6 gap-1.5 shadow-sm">
+        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 shadow-sm">
           {stages.map((stage) => {
             const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
             const isActive = activeStage === stage.id;
@@ -492,7 +494,7 @@ export default function InProcessFranchiseDetails() {
           })}
         </div>
 
-        {/* Tab Content: Store Operations */}
+        {/* Tab Content: Agreements and Approvals */}
         {activeStage === "store-operations" && (
           <div className="space-y-6">
             {/* Status Banner */}
@@ -651,7 +653,60 @@ export default function InProcessFranchiseDetails() {
               )}
             </div>
 
-            {/* Accordion 2: Agreement and GST */}
+            {/* Accordion 2: Agreement Status */}
+            {isUnlocked && (
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                  <span className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Agreement Status
+                  </span>
+                  <span className="flex items-center gap-3">
+                    {franchise?.docPrep && (
+                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenAccordionLogs("Agreement Status", ["In Process Franchise Document Preparation"]);
+                      }}
+                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                      title="View Accordion Activity History"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-prep" ? "rotate-180" : ""}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                    </svg>
+                  </span>
+                </div>
+
+                {openAccordion === "doc-prep" && (
+                  <div className="p-6">
+                    <DocPrepForm
+                      franchiseId={id}
+                      docPrepData={franchise.docPrep}
+                      reloadFranchiseData={reloadFranchiseData}
+                      getFileUrl={getFileUrl}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Accordion 3: Agreement and GST */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
                 <div role="button" onClick={() => setOpenAccordion(openAccordion === "agreement-gst" ? null : "agreement-gst")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
@@ -705,25 +760,25 @@ export default function InProcessFranchiseDetails() {
               </div>
             )}
 
-            {/* Accordion 3: Agreement Status */}
+            {/* Accordion 4: Internal Agreement Status */}
             {isUnlocked && (
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <div role="button" onClick={() => setOpenAccordion(openAccordion === "doc-prep" ? null : "doc-prep")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
+                <div role="button" onClick={() => setOpenAccordion(openAccordion === "internal-agreement" ? null : "internal-agreement")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
                   <span className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                     </svg>
-                    Agreement Status
+                    Internal Agreement Status
                   </span>
                   <span className="flex items-center gap-3">
-                    {franchise?.docPrep && (
+                    {franchise?.internalAgreement?.internal_agreement_file && (
                       <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
                     )}
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenAccordionLogs("Agreement Status", ["In Process Franchise Document Preparation"]);
+                        handleOpenAccordionLogs("Internal Agreement Status", ["In Process Franchise Internal Agreement"]);
                       }}
                       className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
                       title="View Accordion Activity History"
@@ -738,18 +793,18 @@ export default function InProcessFranchiseDetails() {
                       viewBox="0 0 24 24"
                       strokeWidth={2.5}
                       stroke="currentColor"
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "doc-prep" ? "rotate-180" : ""}`}
+                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "internal-agreement" ? "rotate-180" : ""}`}
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
                   </span>
                 </div>
 
-                {openAccordion === "doc-prep" && (
+                {openAccordion === "internal-agreement" && (
                   <div className="p-6">
-                    <DocPrepForm
+                    <InternalAgreementForm
                       franchiseId={id}
-                      docPrepData={franchise.docPrep}
+                      internalAgreementData={franchise.internalAgreement}
                       reloadFranchiseData={reloadFranchiseData}
                       getFileUrl={getFileUrl}
                     />
@@ -757,112 +812,121 @@ export default function InProcessFranchiseDetails() {
                 )}
               </div>
             )}
+          </div>
+        )}
 
-            {/* Accordion 4: Store Planning */}
-            {isUnlocked && (
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <div role="button" onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                  <span className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        {/* Tab Content: Planning Stage */}
+        {activeStage === "planning" && (
+          <div className="space-y-4">
+            {/* Accordion 1: Store Planning */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div
+                role="button"
+                onClick={() => setOpenAccordion(openAccordion === "store-planning" ? null : "store-planning")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Store Planning
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.storePlanning && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Store Planning", ["In Process Franchise Store Planning"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Store Planning
-                  </span>
-                  <span className="flex items-center gap-3">
-                    {franchise?.storePlanning && (
-                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAccordionLogs("Store Planning", ["In Process Franchise Store Planning"]);
-                      }}
-                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                      title="View Accordion Activity History"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                      stroke="currentColor"
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-planning" ? "rotate-180" : ""}`}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </span>
-                </div>
-
-                {openAccordion === "store-planning" && (
-                  <div className="p-6">
-                    <StorePlanningForm
-                      franchiseId={id}
-                      storePlanningData={franchise.storePlanning}
-                      reloadFranchiseData={reloadFranchiseData}
-                      getFileUrl={getFileUrl}
-                    />
-                  </div>
-                )}
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-planning" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
               </div>
-            )}
 
-            {/* Accordion 5: Store ambiance */}
-            {isUnlocked && (
-              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
-                <div role="button" onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")} className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer">
-                  <span className="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                    Store ambiance
-                  </span>
-                  <span className="flex items-center gap-3">
-                    {franchise?.storeAmbiance && (
-                      <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenAccordionLogs("Store Ambiance", ["In Process Franchise Store Ambiance"]);
-                      }}
-                      className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
-                      title="View Accordion Activity History"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2.5}
-                      stroke="currentColor"
-                      className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-ambiance" ? "rotate-180" : ""}`}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
-                  </span>
+              {openAccordion === "store-planning" && (
+                <div className="p-6">
+                  <StorePlanningForm
+                    franchiseId={id}
+                    storePlanningData={franchise.storePlanning}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
                 </div>
+              )}
+            </div>
 
-                {openAccordion === "store-ambiance" && (
-                  <div className="p-6">
-                    <StoreAmbianceForm
-                      franchiseId={id}
-                      storeAmbianceData={franchise.storeAmbiance}
-                      reloadFranchiseData={reloadFranchiseData}
-                      getFileUrl={getFileUrl}
-                    />
-                  </div>
-                )}
+            {/* Accordion 2: Store Ambiance */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md overflow-hidden">
+              <div
+                role="button"
+                onClick={() => setOpenAccordion(openAccordion === "store-ambiance" ? null : "store-ambiance")}
+                className="w-full flex justify-between items-center px-6 py-4 bg-slate-50/50 hover:bg-slate-50 transition-all border-b border-slate-100 text-left font-bold text-slate-800 text-sm cursor-pointer"
+              >
+                <span className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.3} stroke="currentColor" className="w-4 h-4 text-[#6804a1]">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                  Store Ambiance
+                </span>
+                <span className="flex items-center gap-3">
+                  {franchise?.storeAmbiance && (
+                    <span className="text-[10px] bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-0.5 rounded-full font-bold uppercase">Saved</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenAccordionLogs("Store Ambiance", ["In Process Franchise Store Ambiance"]);
+                    }}
+                    className="p-1 text-slate-400 hover:text-[#6804a1] hover:bg-purple-50 rounded transition-colors cursor-pointer"
+                    title="View Accordion Activity History"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                    stroke="currentColor"
+                    className={`w-4 h-4 text-slate-500 transition-transform duration-200 ${openAccordion === "store-ambiance" ? "rotate-180" : ""}`}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </span>
               </div>
-            )}
+
+              {openAccordion === "store-ambiance" && (
+                <div className="p-6">
+                  <StoreAmbianceForm
+                    franchiseId={id}
+                    storeAmbianceData={franchise.storeAmbiance}
+                    reloadFranchiseData={reloadFranchiseData}
+                    getFileUrl={getFileUrl}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         )}
         {/* Tab Content: Marketing Stage */}
@@ -1384,7 +1448,7 @@ export default function InProcessFranchiseDetails() {
         )}
 
         {/* Tab Content: Other Unlocked Stages */}
-        {activeStage !== "store-operations" && activeStage !== "marketing" && activeStage !== "installation-training" && activeStage !== "mapping" && activeStage !== "finance-pricing" && activeStage !== "insurance" && (
+        {activeStage !== "store-operations" && activeStage !== "planning" && activeStage !== "marketing" && activeStage !== "installation-training" && activeStage !== "mapping" && activeStage !== "finance-pricing" && activeStage !== "insurance" && (
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-8 text-center max-w-2xl mx-auto my-12">
             <div className="w-16 h-16 bg-[#f5f3ff] text-[#6804a1] rounded-full flex items-center justify-center mx-auto mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">

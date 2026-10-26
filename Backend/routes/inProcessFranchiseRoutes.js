@@ -11,6 +11,7 @@ const {
     getAllFindStoresController,
     saveAgreementGstController,
     saveDocPrepController,
+    saveInternalAgreementController,
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,
@@ -58,6 +59,9 @@ router.post('/:id/agreement-gst', verifyToken, verifyPermission('in_process_fran
 
 // Document Preparation route
 router.post('/:id/doc-prep', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveDocPrepController);
+
+// Internal Agreement route
+router.post('/:id/internal-agreement', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveInternalAgreementController);
 
 // Store Planning route
 router.post('/:id/store-planning', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveStorePlanningController);

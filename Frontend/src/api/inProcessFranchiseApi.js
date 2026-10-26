@@ -60,6 +60,14 @@ export const submitDocPrepForm = async (id, formData) => {
     });
 };
 
+export const submitInternalAgreementForm = async (id, formData) => {
+    return apiClient.post(`/in-process-franchises/${id}/internal-agreement`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data"
+        }
+    });
+};
+
 export const submitStorePlanningForm = async (id, formData) => {
     return apiClient.post(`/in-process-franchises/${id}/store-planning`, formData, {
         headers: {

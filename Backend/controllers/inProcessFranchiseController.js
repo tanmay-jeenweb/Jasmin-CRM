@@ -24,6 +24,10 @@ const {
     upsertDocPrep
 } = require('../models/docPrepModel.js');
 const {
+    getInternalAgreementByFranchiseId,
+    upsertInternalAgreement
+} = require('../models/internalAgreementModel.js');
+const {
     getStorePlanningByFranchiseId,
     upsertStorePlanning
 } = require('../models/storePlanningModel.js');
@@ -279,6 +283,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
 
         const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
         const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
+        const internalAgreement = isApproved ? await getInternalAgreementByFranchiseId(id) : null;
         const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
         const storeAmbiance = isApproved ? await getStoreAmbianceByFranchiseId(id) : null;
         const franchiseTeam = isApproved ? await getFranchiseTeamByFranchiseId(id) : [];
@@ -300,6 +305,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 findStore,
                 agreementGst,
                 docPrep,
+                internalAgreement,
                 storePlanning,
                 storeAmbiance,
                 franchiseTeam,
@@ -714,6 +720,69 @@ const saveDocPrepController = async (req, res) => {
         });
     } catch (error) {
         console.error('Error saving Document Preparation details:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Internal server error'
+        });
+    }
+};
+
+const saveInternalAgreementController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        // Check if franchise exists
+        const franchise = await getInProcessFranchiseById(id);
+        if (!franchise) {
+            return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
+        }
+
+        // Get file
+        const internalAgreementFile = req.files && req.files.find(f => f.fieldname === 'internalAgreementFile');
+        const existing = await getInternalAgreementByFranchiseId(id);
+
+        let internalAgreementFilePath = undefined;
+        if (internalAgreementFile) {
+            internalAgreementFilePath = internalAgreementFile.filename;
+        }
+
+        if (!internalAgreementFilePath && !existing?.internal_agreement_file) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please upload an internal agreement document.'
+            });
+        }
+
+        const data = {
+            internalAgreementFile: internalAgreementFilePath,
+            submittedBy
+        };
+
+        await upsertInternalAgreement(id, data);
+
+        const updated = await getInternalAgreementByFranchiseId(id);
+
+        // Create audit log
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Internal Agreement',
+            existing ? 'updated' : 'created',
+            existing,
+            data,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Internal Agreement Status saved successfully.',
+            data: updated
+        });
+    } catch (error) {
+        console.error('Error saving Internal Agreement details:', error);
         res.status(500).json({
             success: false,
             message: 'Internal server error'
@@ -1582,6 +1651,7 @@ module.exports = {
     getAllFindStoresController,
     saveAgreementGstController,
     saveDocPrepController,
+    saveInternalAgreementController,
     saveStorePlanningController,
     saveStoreAmbianceController,
     saveFranchiseTeamController,

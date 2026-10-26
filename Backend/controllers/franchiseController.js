@@ -10,6 +10,7 @@ const { createAuditLog } = require('../models/auditLogModel.js');
 const { getFindStoreByFranchiseId } = require('../models/findStoreModel.js');
 const { getAgreementGstByFranchiseId } = require('../models/agreementGstModel.js');
 const { getDocPrepByFranchiseId } = require('../models/docPrepModel.js');
+const { getInternalAgreementByFranchiseId } = require('../models/internalAgreementModel.js');
 const { getStorePlanningByFranchiseId } = require('../models/storePlanningModel.js');
 const { getStoreAmbianceByFranchiseId } = require('../models/storeAmbianceModel.js');
 const { getFranchiseTeamByFranchiseId } = require('../models/franchiseTeamModel.js');
@@ -55,6 +56,7 @@ const getFranchiseByIdController = async (req, res) => {
 
         const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
         const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
+        const internalAgreement = isApproved ? await getInternalAgreementByFranchiseId(id) : null;
         const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
         const storeAmbiance = isApproved ? await getStoreAmbianceByFranchiseId(id) : null;
         const franchiseTeam = isApproved ? await getFranchiseTeamByFranchiseId(id) : [];
@@ -75,6 +77,7 @@ const getFranchiseByIdController = async (req, res) => {
                 findStore,
                 agreementGst,
                 docPrep,
+                internalAgreement,
                 storePlanning,
                 storeAmbiance,
                 franchiseTeam,

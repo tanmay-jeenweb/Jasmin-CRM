@@ -50,6 +50,7 @@ const { createInProcessFranchiseTable } = require("./models/inProcessFranchiseMo
 const { createFindStoreTable } = require("./models/findStoreModel.js");
 const { createAgreementGstTables } = require("./models/agreementGstModel.js");
 const { createDocPrepTable } = require("./models/docPrepModel.js");
+const { createInternalAgreementTable } = require("./models/internalAgreementModel.js");
 const { createStorePlanningTable } = require("./models/storePlanningModel.js");
 const { createStoreAmbianceTable } = require("./models/storeAmbianceModel.js");
 const { createFranchiseTeamTable } = require("./models/franchiseTeamModel.js");
@@ -165,6 +166,7 @@ const startServer = async () => {
         await createFindStoreTable();
         await createAgreementGstTables();
         await createDocPrepTable();
+        await createInternalAgreementTable();
         await createStorePlanningTable();
         await createStoreAmbianceTable();
         await createFranchiseTeamTable();
