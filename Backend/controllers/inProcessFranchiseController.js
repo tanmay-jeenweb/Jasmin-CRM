@@ -155,7 +155,28 @@ const addInProcessFranchiseController = async (req, res) => {
 
 const getAllInProcessFranchisesController = async (req, res) => {
     try {
-        const franchises = await getAllInProcessFranchises(req.user.id, req.user.role);
+        let onlyUnlocked = false;
+
+        // If not admin/super admin, check if user has in_process_tab_agreements read permission
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin') {
+            const [userRows] = await db.execute(
+                'SELECT user_type_id FROM users WHERE id = ?',
+                [req.user.id]
+            );
+            if (userRows.length && userRows[0].user_type_id) {
+                const [permRows] = await db.execute(
+                    `SELECT can_read FROM user_type_permissions 
+                     WHERE user_type_id = ? AND master_name = 'in_process_tab_agreements'`,
+                    [userRows[0].user_type_id]
+                );
+                // If user doesn't have read permission for in_process_tab_agreements, they only see unlocked records
+                if (!permRows.length || !permRows[0].can_read) {
+                    onlyUnlocked = true;
+                }
+            }
+        }
+
+        const franchises = await getAllInProcessFranchises(req.user.id, req.user.role, onlyUnlocked);
         res.status(200).json({
             success: true,
             message: 'In Process Franchises retrieved successfully',
@@ -285,8 +306,44 @@ const getInProcessFranchiseByIdController = async (req, res) => {
         if (!franchise) {
             return res.status(404).json({ success: false, message: 'In Process Franchise not found' });
         }
-        if (req.user.role !== 'admin' && req.user.role !== 'super admin' && franchise.added_by !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+        if (req.user.role !== 'admin' && req.user.role !== 'super admin') {
+            const [userRows] = await db.execute(
+                'SELECT user_type_id FROM users WHERE id = ?',
+                [req.user.id]
+            );
+            const userTypeId = userRows.length ? userRows[0].user_type_id : null;
+            let hasAgreementsPerm = false;
+            let hasPostLockStagePerm = false;
+
+            if (userTypeId) {
+                const [perms] = await db.execute(
+                    `SELECT master_name, can_read FROM user_type_permissions 
+                     WHERE user_type_id = ? AND can_read = 1 AND master_name IN (
+                        'in_process_tab_agreements',
+                        'in_process_tab_planning',
+                        'in_process_tab_mapping',
+                        'in_process_tab_marketing',
+                        'in_process_tab_installation_training',
+                        'in_process_tab_finance_pricing',
+                        'in_process_tab_insurance'
+                     )`,
+                    [userTypeId]
+                );
+                hasAgreementsPerm = perms.some(p => p.master_name === 'in_process_tab_agreements');
+                hasPostLockStagePerm = perms.some(p => p.master_name !== 'in_process_tab_agreements');
+            }
+
+            // If user only has post-lock stages and franchise is not unlocked, deny access
+            if (!hasAgreementsPerm && hasPostLockStagePerm) {
+                if (!franchise.is_unlocked) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'This franchise record is not yet unlocked for your stage.'
+                    });
+                }
+            } else if (req.user.role !== 'office staff' && franchise.added_by !== req.user.id && !hasAgreementsPerm && !hasPostLockStagePerm) {
+                return res.status(403).json({ success: false, message: 'Access denied. You do not own this franchise.' });
+            }
         }
         const findStore = await getFindStoreByFranchiseId(id);
         const isApproved = findStore && findStore.status === 'approved';

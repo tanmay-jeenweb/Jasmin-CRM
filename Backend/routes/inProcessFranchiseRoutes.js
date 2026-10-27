@@ -43,13 +43,24 @@ const upload = require('../middleware/uploadMiddleware.js');
 
 const router = express.Router();
 
+const inProcessReadMasters = [
+    'in_process_franchise',
+    'in_process_tab_agreements',
+    'in_process_tab_planning',
+    'in_process_tab_mapping',
+    'in_process_tab_marketing',
+    'in_process_tab_installation_training',
+    'in_process_tab_finance_pricing',
+    'in_process_tab_insurance'
+];
+
 router.post('/add', verifyToken, verifyPermission('in_process_franchise', 'write'), addInProcessFranchiseController);
-router.get('/all', verifyToken, verifyPermission('in_process_franchise', 'read'), getAllInProcessFranchisesController);
+router.get('/all', verifyToken, verifyPermission(inProcessReadMasters, 'read'), getAllInProcessFranchisesController);
 router.get('/completed/all', verifyToken, verifyPermission('in_process_franchise', 'read'), getAllCompletedFranchisesController);
 router.get('/find-stores/all', verifyToken, verifyPermission('store_details_approval', 'read'), getAllFindStoresController);
 router.get('/deposit-stocks/all', verifyToken, verifyPermission('deposit_stock_approval', 'read'), getAllDepositStocksController);
 router.get('/admin/locked-accordions', verifyToken, verifyAdmin, getAdminLockedAccordionsController);
-router.get('/:id', verifyToken, verifyPermission('in_process_franchise', 'read'), getInProcessFranchiseByIdController);
+router.get('/:id', verifyToken, verifyPermission(inProcessReadMasters, 'read'), getInProcessFranchiseByIdController);
 router.put('/update/:id', verifyToken, verifyPermission('in_process_franchise', 'update'), updateInProcessFranchiseController);
 router.delete('/delete/:id', verifyToken, verifyPermission('in_process_franchise', 'delete'), deleteInProcessFranchiseController);
 

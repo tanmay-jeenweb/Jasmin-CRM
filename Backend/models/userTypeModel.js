@@ -26,6 +26,13 @@ const MASTERS = [
     { key: 'closed_inquiry_report', label: 'Closed Inquiry Report' },
     { key: 'branch_franchise_mapping', label: 'Branch Franchise Mapping Master' },
     { key: 'store_brand_master', label: 'Store Brand Master' },
+    { key: 'in_process_tab_agreements', label: 'In-Process: Agreements and Approvals' },
+    { key: 'in_process_tab_planning', label: 'In-Process: Planning' },
+    { key: 'in_process_tab_mapping', label: 'In-Process: Mapping' },
+    { key: 'in_process_tab_marketing', label: 'In-Process: Marketing' },
+    { key: 'in_process_tab_installation_training', label: 'In-Process: Installation and Training' },
+    { key: 'in_process_tab_finance_pricing', label: 'In-Process: Finance and Pricing' },
+    { key: 'in_process_tab_insurance', label: 'In-Process: Insurance' },
 ];
 
 // ─── Table creation ──────────────────────────────────────────────────────────
@@ -91,6 +98,26 @@ const createUserTypePermissionsTable = async () => {
         `);
         
         console.log("✅ Permission keys migrated and synced master update/delete permissions cleared.");
+
+        // Seed default tab permissions for existing user types that have 'in_process_franchise'
+        const stageTabKeys = [
+            'in_process_tab_agreements',
+            'in_process_tab_planning',
+            'in_process_tab_mapping',
+            'in_process_tab_marketing',
+            'in_process_tab_installation_training',
+            'in_process_tab_finance_pricing',
+            'in_process_tab_insurance'
+        ];
+        for (const tabKey of stageTabKeys) {
+            await db.execute(`
+                INSERT IGNORE INTO user_type_permissions (user_type_id, master_name, can_read, can_write, can_update, can_delete)
+                SELECT utp.user_type_id, ?, utp.can_read, utp.can_write, utp.can_update, utp.can_delete
+                FROM user_type_permissions utp
+                WHERE utp.master_name = 'in_process_franchise'
+            `, [tabKey]);
+        }
+        console.log("✅ In-process stage tab permissions seeded.");
     } catch (err) {
         console.error("Migration/cleanup of user permissions failed:", err.message);
     }

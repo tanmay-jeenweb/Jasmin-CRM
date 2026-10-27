@@ -35,6 +35,18 @@ const PERMISSION_SECTIONS = [
     ]
   },
   {
+    title: "In-Process Franchise Stages & Tabs",
+    masters: [
+      { key: "in_process_tab_agreements", label: "Agreements and Approvals Tab" },
+      { key: "in_process_tab_planning", label: "Planning Tab" },
+      { key: "in_process_tab_mapping", label: "Mapping Tab" },
+      { key: "in_process_tab_marketing", label: "Marketing Tab" },
+      { key: "in_process_tab_installation_training", label: "Installation & Training Tab" },
+      { key: "in_process_tab_finance_pricing", label: "Finance & Pricing Tab" },
+      { key: "in_process_tab_insurance", label: "Insurance Tab" },
+    ]
+  },
+  {
     title: "CRM Configurations & Masters",
     masters: [
       { key: "label_master",          label: "Label Master" },

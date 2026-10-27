@@ -588,7 +588,17 @@ export default function Navbar() {
                         )}
 
                         {/* In Process Franchise Tab */}
-                        {(isAdmin || hasPermission("in_process_franchise", "read") || hasPermission("in_process_franchise", "write")) && (
+                        {(isAdmin || 
+                          hasPermission("in_process_franchise", "read") || 
+                          hasPermission("in_process_franchise", "write") ||
+                          hasPermission("in_process_tab_agreements", "read") ||
+                          hasPermission("in_process_tab_planning", "read") ||
+                          hasPermission("in_process_tab_mapping", "read") ||
+                          hasPermission("in_process_tab_marketing", "read") ||
+                          hasPermission("in_process_tab_installation_training", "read") ||
+                          hasPermission("in_process_tab_finance_pricing", "read") ||
+                          hasPermission("in_process_tab_insurance", "read")
+                        ) && (
                             <div className="relative">
                                 <button
                                     onClick={() => {

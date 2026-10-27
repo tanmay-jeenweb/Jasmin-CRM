@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import {
@@ -38,8 +38,8 @@ export default function InProcessFranchiseDetails() {
   const [loading, setLoading] = useState(true);
 
   // Stages and user checks
-  const [activeStage, setActiveStage] = useState("store-operations");
-  const { hasPermission } = usePermission();
+  const [activeStage, setActiveStage] = useState("");
+  const { hasPermission, isAdmin } = usePermission();
 
   const [users, setUsers] = useState([]);
   const [saving, setSaving] = useState(false);
@@ -265,15 +265,29 @@ export default function InProcessFranchiseDetails() {
     }
   };
 
-  const stages = [
-    { id: "store-operations", name: "Agreements and Approvals" },
-    { id: "planning", name: "Planning" },
-    { id: "mapping", name: "Mapping" },
-    { id: "marketing", name: "Marketing" },
-    { id: "installation-training", name: "Installation and training" },
-    { id: "finance-pricing", name: "Finance and pricing" },
-    { id: "insurance", name: "Insurance" }
-  ];
+  const stages = useMemo(() => [
+    { id: "store-operations", name: "Agreements and Approvals", permKey: "in_process_tab_agreements" },
+    { id: "planning", name: "Planning", permKey: "in_process_tab_planning" },
+    { id: "mapping", name: "Mapping", permKey: "in_process_tab_mapping" },
+    { id: "marketing", name: "Marketing", permKey: "in_process_tab_marketing" },
+    { id: "installation-training", name: "Installation and training", permKey: "in_process_tab_installation_training" },
+    { id: "finance-pricing", name: "Finance and pricing", permKey: "in_process_tab_finance_pricing" },
+    { id: "insurance", name: "Insurance", permKey: "in_process_tab_insurance" }
+  ], []);
+
+  const visibleStages = useMemo(() => {
+    return stages.filter(stage => isAdmin || hasPermission(stage.permKey, "read"));
+  }, [stages, isAdmin, hasPermission]);
+
+  useEffect(() => {
+    if (visibleStages.length > 0) {
+      if (!visibleStages.some(s => s.id === activeStage)) {
+        setActiveStage(visibleStages[0].id);
+      }
+    } else {
+      setActiveStage("");
+    }
+  }, [visibleStages, activeStage]);
 
   const findStoreStatus = franchise?.findStore?.status || "not-submitted";
   const isFindStoreApproved = franchise?.findStore?.status === "approved";
@@ -456,31 +470,51 @@ export default function InProcessFranchiseDetails() {
         </div>
 
         {/* Stages Tab Navigation */}
-        <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 shadow-sm">
-          {stages.map((stage) => {
-            const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
-            const isActive = activeStage === stage.id;
-            return (
-              <button
-                key={stage.id}
-                onClick={() => handleStageClick(stage.id)}
-                className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
-                  ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
-                  : isStageLocked
-                    ? "text-slate-400 cursor-not-allowed opacity-50"
-                    : "text-slate-600 hover:text-[#6804a1] hover:bg-purple-100/80"
-                  }`}
-              >
-                {stage.name}
-                {isStageLocked && (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                  </svg>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {visibleStages.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-md p-10 text-center max-w-lg mx-auto my-12">
+            <div className="w-16 h-16 bg-amber-50 text-amber-500 border border-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-slate-800">No Stage Permissions</h3>
+            <p className="text-slate-500 text-xs mt-1.5 mb-6">
+              Your user role does not have permission to view any stages for this franchise. Please contact an administrator if you require access.
+            </p>
+            <button
+              onClick={() => navigate("/user/in-process-franchises")}
+              className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2 px-5 rounded-xl text-xs transition-all shadow-sm cursor-pointer"
+            >
+              Back to In-Process List
+            </button>
+          </div>
+        ) : (
+          <div className="bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 mb-8 flex flex-wrap gap-1.5 shadow-sm">
+            {visibleStages.map((stage) => {
+              const isStageLocked = stage.id !== "store-operations" && !isUnlocked;
+              const isActive = activeStage === stage.id;
+              return (
+                <button
+                  key={stage.id}
+                  onClick={() => handleStageClick(stage.id)}
+                  className={`flex-1 min-w-[130px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${isActive
+                    ? "bg-[#6804a1] text-white shadow-md shadow-purple-100"
+                    : isStageLocked
+                      ? "text-slate-400 cursor-not-allowed opacity-50"
+                      : "text-slate-600 hover:text-[#6804a1] hover:bg-purple-100/80"
+                    }`}
+                >
+                  {stage.name}
+                  {isStageLocked && (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5 text-slate-400">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Tab Content: Agreements and Approvals */}
         {activeStage === "store-operations" && (

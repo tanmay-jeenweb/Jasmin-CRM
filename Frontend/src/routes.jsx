@@ -79,7 +79,16 @@ export default function AppRoutes() {
                 />
             </Route>
 
-            <Route element={<ProtectedRoute requiredMaster="in_process_franchise" requiredAction="read" />}>
+            <Route element={<ProtectedRoute requiredMasters={[
+                "in_process_franchise",
+                "in_process_tab_agreements",
+                "in_process_tab_planning",
+                "in_process_tab_mapping",
+                "in_process_tab_marketing",
+                "in_process_tab_installation_training",
+                "in_process_tab_finance_pricing",
+                "in_process_tab_insurance"
+            ]} requiredAction="read" />}>
                 <Route
                     path="/user/in-process-franchises"
                     element={<InProcessFranchise />}

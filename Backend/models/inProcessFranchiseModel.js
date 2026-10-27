@@ -90,24 +90,44 @@ const createInProcessFranchise = async (data, addedBy, deviceId) => {
     return result;
 };
 
-const getAllInProcessFranchises = async (userId = null, userRole = null) => {
+const getAllInProcessFranchises = async (userId = null, userRole = null, onlyUnlocked = false) => {
     let whereClause = "WHERE ipf.status = 'in_process' AND (ipf.is_deleted = 0 OR ipf.is_deleted IS NULL)";
     const params = [];
-    if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
+
+    if (onlyUnlocked) {
+        whereClause += ` AND fs.status = 'approved'
+                         AND dp.is_locked = 1
+                         AND ag.is_frozen = 1
+                         AND ia.is_locked = 1
+                         AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0`;
+    } else if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
         params.push(userId);
     }
+
     const query = `
         SELECT 
             ipf.*,
             u_mgr.name AS inquiry_manager_name,
             u_add.name AS added_by_name,
             fs.status AS store_location_status,
-            ds.status AS deposit_stock_status
+            ds.status AS deposit_stock_status,
+            CASE 
+                WHEN fs.status = 'approved'
+                 AND dp.is_locked = 1
+                 AND ag.is_frozen = 1
+                 AND ia.is_locked = 1
+                 AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0
+                THEN 1 
+                ELSE 0 
+            END AS is_unlocked
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
         LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
+        LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
+        LEFT JOIN in_process_franchise_internal_agreement ia ON ipf.id = ia.in_process_franchise_id
         LEFT JOIN in_process_franchise_deposit_stock ds ON ipf.id = ds.in_process_franchise_id
         ${whereClause}
         ORDER BY ipf.timestamp DESC
@@ -129,7 +149,8 @@ const getAllCompletedFranchises = async (userId = null, userRole = null) => {
             u_mgr.name AS inquiry_manager_name,
             u_add.name AS added_by_name,
             fs.status AS store_location_status,
-            ds.status AS deposit_stock_status
+            ds.status AS deposit_stock_status,
+            1 AS is_unlocked
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
@@ -188,10 +209,23 @@ const getInProcessFranchiseById = async (id) => {
         SELECT 
             ipf.*,
             u_mgr.name AS inquiry_manager_name,
-            u_add.name AS added_by_name
+            u_add.name AS added_by_name,
+            CASE 
+                WHEN fs.status = 'approved'
+                 AND dp.is_locked = 1
+                 AND ag.is_frozen = 1
+                 AND ia.is_locked = 1
+                 AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0
+                THEN 1 
+                ELSE 0 
+            END AS is_unlocked
         FROM in_process_franchises ipf
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
+        LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
+        LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
+        LEFT JOIN in_process_franchise_internal_agreement ia ON ipf.id = ia.in_process_franchise_id
         WHERE ipf.id = ?
     `;
     const [rows] = await db.execute(query, [id]);
