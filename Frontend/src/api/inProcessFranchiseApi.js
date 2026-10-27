@@ -52,6 +52,10 @@ export const saveDocChecklist = async (id, checklist) => {
     return apiClient.post(`/in-process-franchises/${id}/doc-checklist`, { checklist });
 };
 
+export const lockDocChecklist = async (id) => {
+    return apiClient.post(`/in-process-franchises/${id}/doc-checklist/lock`);
+};
+
 export const submitAgreementGstForm = async (id, formData) => {
     return apiClient.post(`/in-process-franchises/${id}/agreement-gst`, formData, {
         headers: {

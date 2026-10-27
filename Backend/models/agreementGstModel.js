@@ -97,6 +97,25 @@ const createAgreementGstTables = async () => {
     `;
     await db.execute(query4);
     console.log("In Process Franchise Document Checklist table ready");
+
+    // 5. In Process Franchise Document Checklist Status table (tracks per-franchise lock status)
+    const query5 = `
+        CREATE TABLE IF NOT EXISTS in_process_franchise_doc_checklist_status (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            in_process_franchise_id INT NOT NULL UNIQUE,
+            is_locked TINYINT(1) NOT NULL DEFAULT 0,
+            locked_at TIMESTAMP NULL,
+            locked_by INT NULL,
+            submitted_by INT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (in_process_franchise_id) REFERENCES in_process_franchises(id) ON DELETE CASCADE,
+            FOREIGN KEY (locked_by) REFERENCES users(id) ON DELETE SET NULL,
+            FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL
+        )
+    `;
+    await db.execute(query5);
+    console.log("In Process Franchise Document Checklist Status table ready");
 };
 
 const getAgreementGstByFranchiseId = async (franchiseId) => {
@@ -159,6 +178,11 @@ const getDocChecklistByFranchiseId = async (franchiseId) => {
 };
 
 const saveDocChecklist = async (franchiseId, checklistItems, submittedBy) => {
+    const status = await getDocChecklistStatusByFranchiseId(franchiseId);
+    if (status && status.is_locked) {
+        throw new Error("Document checklist is locked and cannot be modified.");
+    }
+
     if (!checklistItems || !Array.isArray(checklistItems)) return;
 
     for (const item of checklistItems) {
@@ -284,6 +308,48 @@ const unlockAgreementGst = async (franchiseId) => {
     );
 };
 
+const getDocChecklistStatusByFranchiseId = async (franchiseId) => {
+    const query = `
+        SELECT 
+            cls.*,
+            u_l.name AS locked_by_name
+        FROM in_process_franchise_doc_checklist_status cls
+        LEFT JOIN users u_l ON cls.locked_by = u_l.id
+        WHERE cls.in_process_franchise_id = ?
+    `;
+    const [rows] = await db.execute(query, [franchiseId]);
+    return rows.length > 0 ? rows[0] : { in_process_franchise_id: Number(franchiseId), is_locked: 0 };
+};
+
+const lockDocChecklist = async (franchiseId, userId) => {
+    const checkQuery = `SELECT id FROM in_process_franchise_doc_checklist_status WHERE in_process_franchise_id = ?`;
+    const [rows] = await db.execute(checkQuery, [franchiseId]);
+    if (rows.length > 0) {
+        await db.execute(
+            `UPDATE in_process_franchise_doc_checklist_status 
+             SET is_locked = 1, locked_at = CURRENT_TIMESTAMP, locked_by = ? 
+             WHERE in_process_franchise_id = ?`,
+            [userId, franchiseId]
+        );
+    } else {
+        await db.execute(
+            `INSERT INTO in_process_franchise_doc_checklist_status 
+             (in_process_franchise_id, is_locked, locked_at, locked_by, submitted_by) 
+             VALUES (?, 1, CURRENT_TIMESTAMP, ?, ?)`,
+            [franchiseId, userId, userId]
+        );
+    }
+};
+
+const unlockDocChecklist = async (franchiseId) => {
+    await db.execute(
+        `UPDATE in_process_franchise_doc_checklist_status 
+         SET is_locked = 0, locked_at = NULL, locked_by = NULL 
+         WHERE in_process_franchise_id = ?`,
+        [franchiseId]
+    );
+};
+
 module.exports = {
     createAgreementGstTables,
     getAgreementGstByFranchiseId,
@@ -292,5 +358,8 @@ module.exports = {
     saveSingleDocument,
     freezeAgreementGst,
     unlockAgreementGst,
-    upsertAgreementGst
+    upsertAgreementGst,
+    getDocChecklistStatusByFranchiseId,
+    lockDocChecklist,
+    unlockDocChecklist
 };

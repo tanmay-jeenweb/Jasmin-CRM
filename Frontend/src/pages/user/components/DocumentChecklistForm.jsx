@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
-import { saveDocChecklist } from "../../../api/inProcessFranchiseApi";
+import { saveDocChecklist, lockDocChecklist } from "../../../api/inProcessFranchiseApi";
+import LockConfirmationModal from "./LockConfirmationModal";
 import toast from "react-hot-toast";
 
 export default function DocumentChecklistForm({
   franchiseId,
   docChecklistData,
+  docChecklistStatus,
   isFrozen,
   reloadFranchiseData
 }) {
   const [checklist, setChecklist] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [locking, setLocking] = useState(false);
+  const [showLockModal, setShowLockModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const isLocked = Boolean(docChecklistStatus?.is_locked);
+  const isEffectivelyLocked = isLocked || isFrozen;
 
   useEffect(() => {
     if (docChecklistData && Array.isArray(docChecklistData)) {
@@ -24,7 +31,7 @@ export default function DocumentChecklistForm({
   }, [docChecklistData]);
 
   const handleToggle = (masterId) => {
-    if (isFrozen) return;
+    if (isEffectivelyLocked) return;
     setChecklist((prev) =>
       prev.map((item) => {
         if (item.master_id === masterId) {
@@ -36,14 +43,14 @@ export default function DocumentChecklistForm({
   };
 
   const handleSelectAll = (selectVal) => {
-    if (isFrozen) return;
+    if (isEffectivelyLocked) return;
     setChecklist((prev) =>
       prev.map((item) => ({ ...item, is_required: selectVal }))
     );
   };
 
   const handleResetToDefaults = () => {
-    if (isFrozen) return;
+    if (isEffectivelyLocked) return;
     setChecklist((prev) =>
       prev.map((item) => ({
         ...item,
@@ -54,8 +61,8 @@ export default function DocumentChecklistForm({
 
   const handleSave = async (e) => {
     if (e) e.preventDefault();
-    if (isFrozen) {
-      return toast.error("Agreement & GST is frozen. Document checklist cannot be modified.");
+    if (isEffectivelyLocked) {
+      return toast.error("Document checklist is locked and cannot be modified.");
     }
 
     setSaving(true);
@@ -82,6 +89,41 @@ export default function DocumentChecklistForm({
     }
   };
 
+  const handleConfirmLock = async () => {
+    setLocking(true);
+    try {
+      // 1. Save latest checklist configuration first
+      const payload = checklist.map((item) => ({
+        doc_type: item.doc_type,
+        is_required: item.is_required ? 1 : 0
+      }));
+
+      const saveRes = await saveDocChecklist(franchiseId, payload);
+      if (!saveRes.data?.success) {
+        toast.error(saveRes.data?.message || "Failed to save checklist prior to locking.");
+        setLocking(false);
+        return;
+      }
+
+      // 2. Lock the checklist
+      const res = await lockDocChecklist(franchiseId);
+      if (res.data?.success) {
+        toast.success("Document checklist locked successfully! The remaining agreement sections are now unlocked.");
+        setShowLockModal(false);
+        if (reloadFranchiseData) {
+          await reloadFranchiseData();
+        }
+      } else {
+        toast.error(res.data?.message || "Failed to lock checklist");
+      }
+    } catch (err) {
+      console.error("Error locking document checklist:", err);
+      toast.error(err?.response?.data?.message || "Failed to lock document checklist.");
+    } finally {
+      setLocking(false);
+    }
+  };
+
   const filteredChecklist = checklist.filter((item) =>
     item.doc_type?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -91,8 +133,24 @@ export default function DocumentChecklistForm({
 
   return (
     <div className="space-y-5">
-      {/* Top Banner if Frozen */}
-      {isFrozen && (
+      {/* Top Banner if Locked */}
+      {isLocked ? (
+        <div className="bg-slate-100 border border-slate-200 rounded-xl p-3.5 flex items-center justify-between gap-3 text-slate-600 text-xs font-medium">
+          <div className="flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span>
+              <strong className="text-slate-800">Checklist Locked & Finalized:</strong> Document requirements are locked. Subsequent Agreement sections (Agreement Status, Agreement and GST, and Internal Agreement) are now unlocked and accessible.
+            </span>
+          </div>
+          {docChecklistStatus?.locked_at && (
+            <span className="text-[11px] text-slate-400 whitespace-nowrap hidden sm:inline">
+              Locked on {new Date(docChecklistStatus.locked_at).toLocaleDateString()}
+            </span>
+          )}
+        </div>
+      ) : isFrozen ? (
         <div className="bg-slate-100 border border-slate-200 rounded-xl p-3.5 flex items-center gap-3 text-slate-600 text-xs font-medium">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -101,7 +159,7 @@ export default function DocumentChecklistForm({
             <strong className="text-slate-800">Checklist Locked:</strong> Agreement & GST has been finalized and frozen. Document requirements cannot be changed.
           </span>
         </div>
-      )}
+      ) : null}
 
       {/* Info & Summary Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-purple-50/60 border border-purple-100 rounded-xl p-4">
@@ -141,7 +199,7 @@ export default function DocumentChecklistForm({
           </svg>
         </div>
 
-        {!isFrozen && (
+        {!isEffectivelyLocked && (
           <div className="flex items-center gap-2 text-xs">
             <button
               type="button"
@@ -193,17 +251,17 @@ export default function DocumentChecklistForm({
                 filteredChecklist.map((item) => (
                   <tr
                     key={item.master_id}
-                    onClick={() => !isFrozen && handleToggle(item.master_id)}
+                    onClick={() => !isEffectivelyLocked && handleToggle(item.master_id)}
                     className={`transition-colors ${
                       item.is_required
                         ? "bg-purple-50/20 hover:bg-purple-50/40"
                         : "hover:bg-slate-50/60"
-                    } ${!isFrozen ? "cursor-pointer" : ""}`}
+                    } ${!isEffectivelyLocked ? "cursor-pointer" : ""}`}
                   >
                     <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="checkbox"
-                        disabled={isFrozen}
+                        disabled={isEffectivelyLocked}
                         checked={item.is_required}
                         onChange={() => handleToggle(item.master_id)}
                         className="w-4 h-4 text-[#6804a1] rounded border-slate-300 focus:ring-[#6804a1] cursor-pointer disabled:cursor-not-allowed"
@@ -234,34 +292,63 @@ export default function DocumentChecklistForm({
         </div>
       </div>
 
-      {/* Save Button */}
-      {!isFrozen && (
-        <div className="pt-2 flex justify-end">
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleSave}
-            className="bg-[#6804a1] hover:bg-[#52037e] text-white font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                Saving Checklist...
-              </>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Save Document Checklist
-              </>
-            )}
-          </button>
+      {/* Action Buttons */}
+      {!isEffectivelyLocked && (
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-slate-500 italic">
+            Save as draft or lock to permanently freeze requirements and open subsequent sections.
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={saving || locking}
+              onClick={handleSave}
+              className="bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-5 rounded-xl border border-slate-300 transition-all shadow-xs cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {saving ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  Saving Draft...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  Save Draft Checklist
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              disabled={saving || locking}
+              onClick={() => setShowLockModal(true)}
+              className="bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-700 hover:to-rose-700 text-white font-bold py-2.5 px-5 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer text-xs flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              Submit & Lock Checklist
+            </button>
+          </div>
         </div>
       )}
+
+      {/* Lock Confirmation Modal */}
+      <LockConfirmationModal
+        isOpen={showLockModal}
+        onClose={() => setShowLockModal(false)}
+        onConfirm={handleConfirmLock}
+        confirming={locking}
+        title="Lock Document Checklist"
+        description="Are you sure you want to finalize and lock the Required Documents Checklist? Once locked, document requirements cannot be modified without Administrator approval, and the other Agreement sections will be unlocked."
+        confirmText="Yes, Lock Checklist"
+        accentColor="amber"
+      />
     </div>
   );
 }

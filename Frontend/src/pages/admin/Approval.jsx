@@ -742,11 +742,12 @@ function AccordionUnlockContent() {
   };
 
   const filteredData = data.filter((item) => {
+    const isDocChecklistLocked = Boolean(item.doc_checklist_locked);
     const isDocPrepLocked = Boolean(item.doc_prep_locked);
     const isAgreementGstLocked = Boolean(item.agreement_gst_frozen);
     const isInternalAgreementLocked = Boolean(item.internal_agreement_locked);
-    const anyLocked = isDocPrepLocked || isAgreementGstLocked || isInternalAgreementLocked;
-    const allLocked = isDocPrepLocked && isAgreementGstLocked && isInternalAgreementLocked;
+    const anyLocked = isDocChecklistLocked || isDocPrepLocked || isAgreementGstLocked || isInternalAgreementLocked;
+    const allLocked = isDocChecklistLocked && isDocPrepLocked && isAgreementGstLocked && isInternalAgreementLocked;
 
     if (filterType === "any_locked" && !anyLocked) return false;
     if (filterType === "all_locked" && !allLocked) return false;
@@ -845,6 +846,7 @@ function AccordionUnlockContent() {
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
                 {filteredData.map((item) => {
+                  const isDocChecklistLocked = Boolean(item.doc_checklist_locked);
                   const isDocPrepLocked = Boolean(item.doc_prep_locked);
                   const isAgreementGstLocked = Boolean(item.agreement_gst_frozen);
                   const isInternalAgreementLocked = Boolean(item.internal_agreement_locked);
@@ -885,15 +887,34 @@ function AccordionUnlockContent() {
 
                       {/* Checklist */}
                       <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            item.checklist_count > 0
-                              ? "bg-purple-50 text-[#6804a1] border border-purple-200"
-                              : "bg-slate-100 text-slate-500 border border-slate-200"
-                          }`}
-                        >
-                          {item.checklist_count > 0 ? `${item.checklist_count} Docs` : "None"}
-                        </span>
+                        <div className="flex flex-col gap-1 items-start">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              isDocChecklistLocked
+                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                            }`}
+                          >
+                            {isDocChecklistLocked ? "Locked" : "Unlocked"}
+                          </span>
+                          {isDocChecklistLocked && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleOpenUnlockModal(item, "doc-checklist", "Required Documents Checklist")
+                              }
+                              className="text-[11px] font-bold text-[#6804a1] hover:underline cursor-pointer flex items-center gap-1 mt-0.5"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                              </svg>
+                              Unlock
+                            </button>
+                          )}
+                          <span className="text-[10px] text-slate-400">
+                            {item.checklist_count > 0 ? `${item.checklist_count} Docs` : "0 Docs"}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Agreement Status */}

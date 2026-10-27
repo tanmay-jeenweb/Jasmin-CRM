@@ -243,13 +243,14 @@ export default function FranchiseDetails() {
     franchise.docChecklist.some(
       (d) => Number(d.is_customized) === 1 || Boolean(d.is_customized)
     );
+  const isChecklistLocked = Boolean(franchise?.docChecklistStatus?.is_locked);
   const isDocPrepLocked = Boolean(franchise?.docPrep?.is_locked);
   const isAgreementGstLocked = Boolean(franchise?.agreementGst?.is_frozen);
   const isInternalAgreementLocked = Boolean(franchise?.internalAgreement?.is_locked);
 
   const isAllAgreementsLocked =
     isFindStoreApproved &&
-    isChecklistSaved &&
+    isChecklistLocked &&
     isDocPrepLocked &&
     isAgreementGstLocked &&
     isInternalAgreementLocked;
@@ -268,8 +269,8 @@ export default function FranchiseDetails() {
       return;
     }
 
-    if (!isChecklistSaved) {
-      toast.error("Please configure and save the 'Required Documents Checklist' first.");
+    if (!isChecklistLocked) {
+      toast.error("Please finalize and lock the 'Required Documents Checklist' first.");
       return;
     }
 
@@ -542,7 +543,7 @@ export default function FranchiseDetails() {
                     Required Documents Checklist
                   </span>
                   <span className="flex items-center gap-3">
-                    {isAgreementGstLocked ? (
+                    {isChecklistLocked ? (
                       <span className="text-[10px] bg-slate-100 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-full font-bold uppercase">Locked</span>
                     ) : isChecklistSaved ? (
                       <span className="text-[10px] bg-purple-50 text-[#6804a1] border border-purple-100 px-2 py-0.5 rounded-full font-bold uppercase">Configured</span>
@@ -580,6 +581,7 @@ export default function FranchiseDetails() {
                     <DocumentChecklistForm
                       franchiseId={id}
                       docChecklistData={franchise.docChecklist}
+                      docChecklistStatus={franchise.docChecklistStatus}
                       isFrozen={isAgreementGstLocked}
                       reloadFranchiseData={reloadFranchiseData}
                     />
@@ -589,7 +591,7 @@ export default function FranchiseDetails() {
             )}
 
             {/* Accordion 3: Agreement Status */}
-            {!isChecklistSaved ? (
+            {!isChecklistLocked ? (
               <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
@@ -599,7 +601,7 @@ export default function FranchiseDetails() {
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-600 block">Agreement Status</span>
-                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is locked and finalized</span>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
@@ -661,7 +663,7 @@ export default function FranchiseDetails() {
             )}
 
             {/* Accordion 4: Agreement and GST */}
-            {!isChecklistSaved ? (
+            {!isChecklistLocked ? (
               <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
@@ -671,7 +673,7 @@ export default function FranchiseDetails() {
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-600 block">Agreement and GST</span>
-                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is locked and finalized</span>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>
@@ -735,7 +737,7 @@ export default function FranchiseDetails() {
             )}
 
             {/* Accordion 5: Internal Agreement Status */}
-            {!isChecklistSaved ? (
+            {!isChecklistLocked ? (
               <div className="bg-slate-50/80 rounded-2xl border border-dashed border-slate-300 p-4 flex items-center justify-between text-slate-400 select-none">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-xl bg-slate-200/70 flex items-center justify-center text-slate-500">
@@ -745,7 +747,7 @@ export default function FranchiseDetails() {
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-600 block">Internal Agreement Status</span>
-                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is configured and saved</span>
+                    <span className="text-[11px] text-slate-400">Locked until Required Documents Checklist is locked and finalized</span>
                   </div>
                 </div>
                 <span className="text-[10px] font-bold uppercase bg-slate-200/80 text-slate-600 px-2.5 py-1 rounded-full">Locked</span>

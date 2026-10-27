@@ -96,10 +96,10 @@ const getAllInProcessFranchises = async (userId = null, userRole = null, onlyUnl
 
     if (onlyUnlocked) {
         whereClause += ` AND fs.status = 'approved'
+                         AND cls.is_locked = 1
                          AND dp.is_locked = 1
                          AND ag.is_frozen = 1
-                         AND ia.is_locked = 1
-                         AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0`;
+                         AND ia.is_locked = 1`;
     } else if (userRole !== 'admin' && userRole !== 'super admin' && userRole !== 'office staff') {
         whereClause += " AND ipf.added_by = ?";
         params.push(userId);
@@ -114,10 +114,10 @@ const getAllInProcessFranchises = async (userId = null, userRole = null, onlyUnl
             ds.status AS deposit_stock_status,
             CASE 
                 WHEN fs.status = 'approved'
+                 AND cls.is_locked = 1
                  AND dp.is_locked = 1
                  AND ag.is_frozen = 1
                  AND ia.is_locked = 1
-                 AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0
                 THEN 1 
                 ELSE 0 
             END AS is_unlocked
@@ -125,6 +125,7 @@ const getAllInProcessFranchises = async (userId = null, userRole = null, onlyUnl
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
         LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_doc_checklist_status cls ON ipf.id = cls.in_process_franchise_id
         LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
         LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
         LEFT JOIN in_process_franchise_internal_agreement ia ON ipf.id = ia.in_process_franchise_id
@@ -212,10 +213,10 @@ const getInProcessFranchiseById = async (id) => {
             u_add.name AS added_by_name,
             CASE 
                 WHEN fs.status = 'approved'
+                 AND cls.is_locked = 1
                  AND dp.is_locked = 1
                  AND ag.is_frozen = 1
                  AND ia.is_locked = 1
-                 AND (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) > 0
                 THEN 1 
                 ELSE 0 
             END AS is_unlocked
@@ -223,6 +224,7 @@ const getInProcessFranchiseById = async (id) => {
         LEFT JOIN users u_mgr ON ipf.inquiry_manager_id = u_mgr.id
         LEFT JOIN users u_add ON ipf.added_by = u_add.id
         LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+        LEFT JOIN in_process_franchise_doc_checklist_status cls ON ipf.id = cls.in_process_franchise_id
         LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
         LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
         LEFT JOIN in_process_franchise_internal_agreement ia ON ipf.id = ia.in_process_franchise_id

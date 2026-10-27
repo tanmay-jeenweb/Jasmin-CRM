@@ -12,6 +12,7 @@ const {
     saveAgreementGstController,
     getDocChecklistController,
     saveDocChecklistController,
+    lockDocChecklistController,
     saveSingleDocumentController,
     freezeAgreementGstController,
     saveDocPrepController,
@@ -77,6 +78,7 @@ router.post('/:id/find-store/reject', verifyToken, verifyPermission('store_detai
 // Document Checklist routes
 router.get('/:id/doc-checklist', verifyToken, verifyPermission('in_process_franchise', 'read'), verifyFindStoreApproved, getDocChecklistController);
 router.post('/:id/doc-checklist', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, saveDocChecklistController);
+router.post('/:id/doc-checklist/lock', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, lockDocChecklistController);
 
 // Agreement & GST routes
 router.post('/:id/agreement-gst', verifyToken, verifyPermission('in_process_franchise', 'update'), verifyFindStoreApproved, upload.any(), saveAgreementGstController);

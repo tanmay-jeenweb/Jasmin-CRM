@@ -23,7 +23,10 @@ const {
     saveSingleDocument,
     freezeAgreementGst,
     unlockAgreementGst,
-    upsertAgreementGst
+    upsertAgreementGst,
+    getDocChecklistStatusByFranchiseId,
+    lockDocChecklist,
+    unlockDocChecklist
 } = require('../models/agreementGstModel.js');
 const {
     getDocPrepByFranchiseId,
@@ -350,6 +353,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
 
         const agreementGst = isApproved ? await getAgreementGstByFranchiseId(id) : null;
         const docChecklist = isApproved ? await getDocChecklistByFranchiseId(id) : [];
+        const docChecklistStatus = isApproved ? await getDocChecklistStatusByFranchiseId(id) : null;
         const docPrep = isApproved ? await getDocPrepByFranchiseId(id) : null;
         const internalAgreement = isApproved ? await getInternalAgreementByFranchiseId(id) : null;
         const storePlanning = isApproved ? await getStorePlanningByFranchiseId(id) : null;
@@ -373,6 +377,7 @@ const getInProcessFranchiseByIdController = async (req, res) => {
                 findStore,
                 agreementGst,
                 docChecklist,
+                docChecklistStatus,
                 docPrep,
                 internalAgreement,
                 storePlanning,
@@ -725,6 +730,14 @@ const saveDocChecklistController = async (req, res) => {
         const submittedBy = req.user.id;
         const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
 
+        const existingStatus = await getDocChecklistStatusByFranchiseId(id);
+        if (existingStatus && existingStatus.is_locked) {
+            return res.status(403).json({
+                success: false,
+                message: 'Document checklist is locked and cannot be modified.'
+            });
+        }
+
         const existingGst = await getAgreementGstByFranchiseId(id);
         if (existingGst && existingGst.is_frozen) {
             return res.status(403).json({
@@ -761,6 +774,42 @@ const saveDocChecklistController = async (req, res) => {
             success: false,
             message: 'Internal server error'
         });
+    }
+};
+
+const lockDocChecklistController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const submittedBy = req.user.id;
+        const deviceId = req.headers['x-device-id'] || req.headers['device-id'] || 'Unknown';
+
+        const existingStatus = await getDocChecklistStatusByFranchiseId(id);
+        if (existingStatus && existingStatus.is_locked) {
+            return res.status(400).json({ success: false, message: 'Document checklist is already locked.' });
+        }
+
+        await lockDocChecklist(id, submittedBy);
+        const updatedStatus = await getDocChecklistStatusByFranchiseId(id);
+
+        await createAuditLog(
+            submittedBy,
+            req.user?.name || req.user?.username || 'Unknown',
+            deviceId,
+            'In Process Franchise Document Checklist Lock',
+            'locked',
+            existingStatus,
+            updatedStatus,
+            id
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'Document checklist locked successfully. No further modifications can be made.',
+            data: updatedStatus
+        });
+    } catch (error) {
+        console.error('Error locking document checklist:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
 
@@ -1140,7 +1189,10 @@ const adminUnlockAccordionController = async (req, res) => {
         }
 
         let sectionName = '';
-        if (accordionKey === 'doc-prep') {
+        if (accordionKey === 'doc-checklist') {
+            await unlockDocChecklist(id);
+            sectionName = 'Required Documents Checklist';
+        } else if (accordionKey === 'doc-prep') {
             await unlockDocPrep(id);
             sectionName = 'Agreement Status';
         } else if (accordionKey === 'agreement-gst') {
@@ -1191,6 +1243,9 @@ const getAdminLockedAccordionsController = async (req, res) => {
                 ipf.timestamp,
                 fs.status AS find_store_status,
                 (SELECT COUNT(*) FROM in_process_franchise_doc_checklist cl WHERE cl.in_process_franchise_id = ipf.id) AS checklist_count,
+                cls.is_locked AS doc_checklist_locked,
+                cls.locked_at AS doc_checklist_locked_at,
+                u_cls.name AS doc_checklist_locked_by_name,
                 dp.is_locked AS doc_prep_locked,
                 dp.locked_at AS doc_prep_locked_at,
                 u_dp.name AS doc_prep_locked_by_name,
@@ -1202,6 +1257,8 @@ const getAdminLockedAccordionsController = async (req, res) => {
                 u_ia.name AS internal_agreement_locked_by_name
             FROM in_process_franchises ipf
             LEFT JOIN in_process_franchise_find_stores fs ON ipf.id = fs.in_process_franchise_id
+            LEFT JOIN in_process_franchise_doc_checklist_status cls ON ipf.id = cls.in_process_franchise_id
+            LEFT JOIN users u_cls ON cls.locked_by = u_cls.id
             LEFT JOIN in_process_franchise_doc_prep dp ON ipf.id = dp.in_process_franchise_id
             LEFT JOIN users u_dp ON dp.locked_by = u_dp.id
             LEFT JOIN in_process_franchise_agreement_gst ag ON ipf.id = ag.in_process_franchise_id
@@ -2085,6 +2142,7 @@ module.exports = {
     saveAgreementGstController,
     getDocChecklistController,
     saveDocChecklistController,
+    lockDocChecklistController,
     saveSingleDocumentController,
     freezeAgreementGstController,
     saveDocPrepController,
